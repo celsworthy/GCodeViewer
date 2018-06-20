@@ -1,0 +1,14 @@
+#version 400 core
+
+precision mediump float;
+
+uniform sampler2D texture2d;
+
+in vec2 frag_UV;
+in vec4 colour;
+
+out vec4 out_Colour;
+
+void main(){
+    out_Colour = colour * texture(texture2d, frag_UV.st);
+}

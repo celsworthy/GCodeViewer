@@ -1,0 +1,17 @@
+#version 400 core
+
+uniform mat4 projectionMatrix;
+
+in vec2 position;
+in vec2 textCoords;
+in vec4 in_colour;
+
+out vec2 frag_UV;
+out vec4 colour;
+
+void main(void) {
+    
+    frag_UV = textCoords;
+    colour = in_colour;
+    gl_Position = projectionMatrix * vec4(position.xy, 0, 1);
+}
