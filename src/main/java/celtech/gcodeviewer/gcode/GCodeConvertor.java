@@ -32,7 +32,7 @@ public class GCodeConvertor {
      * @return list of {@link LayerNode}s to be processed
      */
     public List<LayerNode> convertGCode(String filePath) {
-        STENO.debug("Beggining parse of G-Code for G-Code viewer.");
+        STENO.debug("Beginning parse of G-Code for G-Code viewer.");
         
         List<LayerNode> layerNodes = new ArrayList<>();
         

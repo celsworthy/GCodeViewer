@@ -74,8 +74,9 @@ public class RenderingEngine {
         PrintVolume printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeHeight, printVolumeDepth);
         
         GCodeConvertor gCodeConvertor = new GCodeConvertor();
-        List<LayerNode> layerNodes = gCodeConvertor.convertGCode("C:/Users/admin/Documents/CEL Robox/PrintJobs/e99ee15d94a14b27/e99ee15d94a14b27_robox.gcode");
-        
+        //List<LayerNode> layerNodes = gCodeConvertor.convertGCode("C:/Users/admin/Documents/CEL Robox/PrintJobs/e99ee15d94a14b27/e99ee15d94a14b27_robox.gcode");
+        List<LayerNode> layerNodes = gCodeConvertor.convertGCode("D:\\CEL\\Dev\\GCodeViewer\\f5210ddd1d114989_robox.gcode");
+       
         NodeHandler nodeHandler = new NodeHandler(model, lineModel);
         List<Layer> layers = nodeHandler.processLayerNodes(layerNodes);
         topLayerToRender = layers.size() - 1;

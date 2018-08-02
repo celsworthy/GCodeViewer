@@ -10,6 +10,7 @@ import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import org.lwjgl.nuklear.NkAllocator;
 import org.lwjgl.nuklear.NkBuffer;
 import org.lwjgl.nuklear.NkContext;
 import org.lwjgl.nuklear.NkConvertConfig;
@@ -25,11 +26,15 @@ import static org.lwjgl.nuklear.Nuklear.NK_VERTEX_POSITION;
 import static org.lwjgl.nuklear.Nuklear.NK_VERTEX_TEXCOORD;
 import static org.lwjgl.nuklear.Nuklear.nk__draw_begin;
 import static org.lwjgl.nuklear.Nuklear.nk__draw_next;
+import static org.lwjgl.nuklear.Nuklear.nk_buffer_clear;
 import static org.lwjgl.nuklear.Nuklear.nk_buffer_free;
+import static org.lwjgl.nuklear.Nuklear.nk_buffer_init;
 import static org.lwjgl.nuklear.Nuklear.nk_clear;
 import static org.lwjgl.nuklear.Nuklear.nk_convert;
 import org.lwjgl.system.MemoryStack;
 import static org.lwjgl.system.MemoryUtil.NULL;
+import static org.lwjgl.system.MemoryUtil.nmemAllocChecked;
+import static org.lwjgl.system.MemoryUtil.nmemFree;
 
 /**
  *
@@ -39,16 +44,23 @@ public class GUIRenderer {
     
     private static final int MAX_VERTEX_BUFFER  = 512 * 1024;
     private static final int MAX_ELEMENT_BUFFER = 128 * 1024;
+    private static final int BUFFER_INITIAL_SIZE = 4 * 1024;
     
     private static final NkDrawVertexLayoutElement.Buffer VERTEX_LAYOUT;
     
+    private static final NkAllocator ALLOCATOR;
+    
     static {
         VERTEX_LAYOUT = NkDrawVertexLayoutElement.create(4)
-        .position(0).attribute(NK_VERTEX_POSITION).format(NK_FORMAT_FLOAT).offset(0)
-        .position(1).attribute(NK_VERTEX_TEXCOORD).format(NK_FORMAT_FLOAT).offset(8)
-        .position(2).attribute(NK_VERTEX_COLOR).format(NK_FORMAT_R8G8B8A8).offset(16)
-        .position(3).attribute(NK_VERTEX_ATTRIBUTE_COUNT).format(NK_FORMAT_COUNT).offset(0)
-        .flip();
+            .position(0).attribute(NK_VERTEX_POSITION).format(NK_FORMAT_FLOAT).offset(0)
+            .position(1).attribute(NK_VERTEX_TEXCOORD).format(NK_FORMAT_FLOAT).offset(8)
+            .position(2).attribute(NK_VERTEX_COLOR).format(NK_FORMAT_R8G8B8A8).offset(16)
+            .position(3).attribute(NK_VERTEX_ATTRIBUTE_COUNT).format(NK_FORMAT_COUNT).offset(0)
+            .flip();
+        
+        ALLOCATOR = NkAllocator.create()
+            .alloc((handle, old, size) -> nmemAllocChecked(size))
+            .mfree((handle, ptr) -> nmemFree(ptr));
     }
     
     private final NkContext nkContext;
@@ -68,6 +80,7 @@ public class GUIRenderer {
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
         this.guiShader.additionalSetupMAYBERENAME();
+        nk_buffer_init(cmds, ALLOCATOR, BUFFER_INITIAL_SIZE);
     }
     
     public void loadProjectionMatrix() {
@@ -146,6 +159,7 @@ public class GUIRenderer {
             offset += cmd.elem_count() * 2;
         }
         nk_clear(nkContext);
+        nk_buffer_clear(cmds);
 
         // default OpenGL state
         guiShader.stop();
