@@ -59,7 +59,7 @@ public class GUIShader extends ShaderProgram {
     @Override
     protected void getAllUniformLocations() {
         location_projectionMatrix = super.getUniformLocation("projectionMatrix");
-        location_texture = super.getUniformLocation("texture");
+        location_texture = super.getUniformLocation("texture2d");
     }
     
     public void loadProjectionMatrix(FloatBuffer projectionMatrixBuffer) {

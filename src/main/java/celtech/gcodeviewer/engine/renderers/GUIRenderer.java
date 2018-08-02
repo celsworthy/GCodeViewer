@@ -101,7 +101,8 @@ public class GUIRenderer {
         calc.layout(nkContext, 300, 50);
         
         // convert from command queue into draw list and draw to screen
-
+        loadProjectionMatrix();
+        
         // allocate vertex and element buffer
         glBindVertexArray(guiShader.getVao());
         glBindBuffer(GL_ARRAY_BUFFER, guiShader.getVbo());
