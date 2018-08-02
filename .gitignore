@@ -1,4 +1,4 @@
 /target/
-/nologname.log
-/nologname.log.1
+*.log
+*.log.*
 /nb-configuration.xml
