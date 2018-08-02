@@ -32,7 +32,6 @@ import static org.lwjgl.nuklear.Nuklear.nk_buffer_init;
 import static org.lwjgl.nuklear.Nuklear.nk_clear;
 import static org.lwjgl.nuklear.Nuklear.nk_convert;
 import org.lwjgl.system.MemoryStack;
-import static org.lwjgl.system.MemoryUtil.NULL;
 import static org.lwjgl.system.MemoryUtil.nmemAllocChecked;
 import static org.lwjgl.system.MemoryUtil.nmemFree;
 
@@ -85,7 +84,6 @@ public class GUIRenderer {
     
     public void loadProjectionMatrix() {
         try (MemoryStack stack = stackPush()) {     
-            guiShader.start();
             guiShader.loadTexture();
             guiShader.loadProjectionMatrix(stack.floats(
                 2.0f / windowWidth, 0.0f, 0.0f, 0.0f,
@@ -99,6 +97,13 @@ public class GUIRenderer {
     public void render() {
         
         calc.layout(nkContext, 300, 50);
+        glEnable(GL_BLEND);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        //glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_SCISSOR_TEST);
+        glActiveTexture(GL_TEXTURE0);
         
         // convert from command queue into draw list and draw to screen
         loadProjectionMatrix();
@@ -143,13 +148,31 @@ public class GUIRenderer {
 //        float fb_scale_x = (float)display_width / (float)windowWidth;
 //        float fb_scale_y = (float)display_height / (float)windowHeight;
 
-        long offset = NULL;
+        System.out.println("Context texture id = " + nkContext.style().font().texture().id());
+
+        long offset = 0;
+        long commandIndex = -1;
         for (NkDrawCommand cmd = nk__draw_begin(nkContext, cmds); cmd != null; cmd = nk__draw_next(cmd, cmds, nkContext)) {
+            ++commandIndex;
+            System.out.println("Command[" + commandIndex + "]");
+            System.out.println("    count = " + cmd.elem_count());
+            System.out.println("    texture id = " + cmd.texture().id());
             if (cmd.elem_count() == 0) {
+                offset += cmd.elem_count() * 2;
+                System.out.println("    skipping");
                 continue;
             }
-            glBindTexture(GL_TEXTURE_2D, nkContext.style().font().texture().id());
-//            glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
+            
+            // If face calling is enabled, the button text is not drawn.
+            // If face culling is disabled, the whole rectangle is filled.
+            // This little hack makes the button outlines and text show.
+            // Perhaps Nuklear is orienting it's triangles incorrectly.
+            if (cmd.texture().id() == nkContext.style().font().texture().id())
+                glDisable(GL_CULL_FACE);
+            else
+                glEnable(GL_CULL_FACE);
+
+            glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
 //            glScissor(
 //                (int)(cmd.clip_rect().x() * fb_scale_x),
 //                (int)((windowHeight - (int)(cmd.clip_rect().y() + cmd.clip_rect().h())) * fb_scale_y),
@@ -157,13 +180,13 @@ public class GUIRenderer {
 //                (int)(cmd.clip_rect().h() * fb_scale_y)
 //            );
             glDrawElements(GL_TRIANGLES, cmd.elem_count(), GL_UNSIGNED_SHORT, offset);
+            glBindTexture(GL_TEXTURE_2D, 0);
             offset += cmd.elem_count() * 2;
         }
         nk_clear(nkContext);
         nk_buffer_clear(cmds);
 
         // default OpenGL state
-        guiShader.stop();
         glBindBuffer(GL_ARRAY_BUFFER, 0);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
         glBindVertexArray(0);
