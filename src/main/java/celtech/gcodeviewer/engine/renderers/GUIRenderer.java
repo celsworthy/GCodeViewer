@@ -148,18 +148,11 @@ public class GUIRenderer {
 //        float fb_scale_x = (float)display_width / (float)windowWidth;
 //        float fb_scale_y = (float)display_height / (float)windowHeight;
 
-        System.out.println("Context texture id = " + nkContext.style().font().texture().id());
-
         long offset = 0;
         long commandIndex = -1;
         for (NkDrawCommand cmd = nk__draw_begin(nkContext, cmds); cmd != null; cmd = nk__draw_next(cmd, cmds, nkContext)) {
             ++commandIndex;
-            System.out.println("Command[" + commandIndex + "]");
-            System.out.println("    count = " + cmd.elem_count());
-            System.out.println("    texture id = " + cmd.texture().id());
             if (cmd.elem_count() == 0) {
-                offset += cmd.elem_count() * 2;
-                System.out.println("    skipping");
                 continue;
             }
             
