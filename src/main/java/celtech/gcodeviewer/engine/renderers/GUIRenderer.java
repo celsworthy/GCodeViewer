@@ -102,7 +102,6 @@ public class GUIRenderer {
         
         // convert from command queue into draw list and draw to screen
         loadProjectionMatrix();
-        
         // allocate vertex and element buffer
         glBindVertexArray(guiShader.getVao());
         glBindBuffer(GL_ARRAY_BUFFER, guiShader.getVbo());
@@ -149,7 +148,8 @@ public class GUIRenderer {
             if (cmd.elem_count() == 0) {
                 continue;
             }
-            glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
+            glBindTexture(GL_TEXTURE_2D, nkContext.style().font().texture().id());
+//            glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
 //            glScissor(
 //                (int)(cmd.clip_rect().x() * fb_scale_x),
 //                (int)((windowHeight - (int)(cmd.clip_rect().y() + cmd.clip_rect().h())) * fb_scale_y),
