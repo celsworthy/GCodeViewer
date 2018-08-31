@@ -12,6 +12,7 @@ import java.util.List;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.parboiled.Parboiled;
+import org.parboiled.errors.ErrorUtils;
 import org.parboiled.parserunners.ReportingParseRunner;
 import org.parboiled.support.ParsingResult;
 
@@ -32,7 +33,7 @@ public class GCodeConvertor {
      * @return list of {@link LayerNode}s to be processed
      */
     public List<LayerNode> convertGCode(String filePath) {
-        STENO.debug("Beggining parse of G-Code for G-Code viewer.");
+        STENO.debug("Beginning parse of G-Code for G-Code viewer.");
         
         List<LayerNode> layerNodes = new ArrayList<>();
         
@@ -42,7 +43,7 @@ public class GCodeConvertor {
             StringBuilder layerBuffer = new StringBuilder();
 
             int layerCounter = -1;
-            int lastFeedrate = 0;
+            float lastFeedrate = 0.0F;
             int lastLineNumber = 0;
         
             for (String lineRead = bufferedReader.readLine(); lineRead != null; lineRead = bufferedReader.readLine()) {
@@ -61,8 +62,11 @@ public class GCodeConvertor {
                         ParsingResult result = runner.run(layerBuffer.toString());
                         
                         if (result.hasErrors() || !result.matched) {
-                            throw new RuntimeException("Parsing failure");
+                            String errorReport = "Parsing failure on layer " + layerCounter + ": " + ErrorUtils.printParseErrors(result.parseErrors);
+                            STENO.error(errorReport);
+                            throw new RuntimeException(errorReport);
                         } else {
+                   
                             LayerNode layerNode = gcodeParser.getLayerNode();
                             lastFeedrate = gcodeParser.getFeedrateInForce();
                             lastLineNumber = gcodeParser.getCurrentLineNumber();

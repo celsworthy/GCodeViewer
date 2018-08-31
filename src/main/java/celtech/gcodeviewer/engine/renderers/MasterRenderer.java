@@ -66,11 +66,13 @@ public class MasterRenderer {
         }
         lineShader.stop();
         
-        floorShader.start();
-        floorShader.loadLight(light);
-        floorShader.loadViewMatrix(camera);
-        floorRenderer.render(floor);
-        floorShader.stop();
+        if (floor != null) {
+            floorShader.start();
+            floorShader.loadLight(light);
+            floorShader.loadViewMatrix(camera);
+            floorRenderer.render(floor);
+            floorShader.stop();
+        }
         
         entities.clear();
         lineEntities.clear();

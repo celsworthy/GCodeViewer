@@ -1,5 +1,7 @@
 package celtech.gcodeviewer.engine;
 
+import celtech.gcodeviewer.comms.CommandQueue;
+import java.io.IOException;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.*;
@@ -30,6 +32,8 @@ public class GCodeViewer {
     private final int windowHeight = 700;  
 
     private long windowId;
+    
+    public CommandQueue commandQueue;
     
     /**
      * Run the program 
@@ -67,7 +71,7 @@ public class GCodeViewer {
         glfwDefaultWindowHints(); // optional, the current window hints are already the default
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
-
+        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
         // Create the window
         windowId = glfwCreateWindow(windowWidth, windowHeight, "GCodeViewer", NULL, NULL);
         if ( windowId == NULL ) {
@@ -116,7 +120,10 @@ public class GCodeViewer {
     }
     
     private void loop() {
-        RenderingEngine renderingEngine = new RenderingEngine(windowId, windowWidth, windowHeight);
+        commandQueue = new CommandQueue();
+        commandQueue.start();
+        
+        RenderingEngine renderingEngine = new RenderingEngine(windowId, windowWidth, windowHeight, commandQueue);
         renderingEngine.start();
     }
     
@@ -128,5 +135,4 @@ public class GCodeViewer {
     public static void main(String[] args) {
         new GCodeViewer().run();
     }
-
 }

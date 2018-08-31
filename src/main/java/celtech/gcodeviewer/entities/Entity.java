@@ -31,9 +31,7 @@ public class Entity {
     }
     
     public void increasePosition(float dx, float dy, float dz) {
-        this.position.x += dx;
-        this.position.y += dy;
-        this.position.z += dz;
+        this.position = new Vector3f(position.getX() + dx, position.getY() + dy, position.getZ() + dz);
     }
     
     public void increaseRotation(float dx, float dy, float dz) {

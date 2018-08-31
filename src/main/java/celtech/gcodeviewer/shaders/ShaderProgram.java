@@ -6,6 +6,7 @@ import static org.lwjgl.opengl.GL20.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.FloatBuffer;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Vector3f;
@@ -15,7 +16,7 @@ public abstract class ShaderProgram {
     
     private static final FloatBuffer MATRIX_BUFFER = BufferUtils.createFloatBuffer(16);
     
-    protected static final String SHADER_DIRECTORY = "src/main/java/celtech/gcodeviewer/shaders/";
+    protected static final String SHADER_DIRECTORY = "/celtech/gcodeviewer/resources/";
     
     protected final int programId;
     private final int vertexShaderId;
@@ -86,8 +87,9 @@ public abstract class ShaderProgram {
     
     private static int loadShader(String file, int type) {
         StringBuilder shaderSource = new StringBuilder();
-        
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+
+        ShaderProgram.class.getResourceAsStream(file);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(ShaderProgram.class.getResourceAsStream(file)))) {
             String line;
             while((line = reader.readLine()) != null) {
                 shaderSource.append(line).append("\n");

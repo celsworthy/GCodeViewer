@@ -1,5 +1,6 @@
 package celtech.gcodeviewer.engine;
 
+import celtech.gcodeviewer.comms.CommandQueue;
 import celtech.gcodeviewer.engine.renderers.MasterRenderer;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.CenterPoint;
@@ -10,14 +11,15 @@ import celtech.gcodeviewer.gcode.GCodeConvertor;
 import celtech.gcodeviewer.gcode.Layer;
 import celtech.gcodeviewer.gcode.NodeHandler;
 import celtech.gcodeviewer.utils.CubeConstants;
-import celtech.gcodeviewer.gui.GUIManager;
 import celtech.roboxbase.postprocessor.nouveau.nodes.LayerNode;
 import java.util.List;
+import java.util.Scanner;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
@@ -44,16 +46,21 @@ public class RenderingEngine {
     private int topLayerToRender = 0;
     
     private final MasterRenderer masterRenderer;
-    private final GUIManager guiManager;
     
     private final ModelLoader modelLoader = new ModelLoader();
+    
+    private final CommandQueue commandQueue;
         
-    public RenderingEngine(long windowId, int windowWidth, int windowHeight) {
+    private List<LayerNode> layerNodes = null;
+    private List<Layer> layers = null;
+    private NodeHandler nodeHandler = null;
+
+    public RenderingEngine(long windowId, int windowWidth, int windowHeight, CommandQueue commandQueue) {
         this.windowId = windowId;
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
+        this.commandQueue = commandQueue;
         masterRenderer = new MasterRenderer(windowWidth, windowHeight);
-        guiManager = new GUIManager(windowId, windowWidth, windowHeight);
     }
     
     public void start() {      
@@ -72,32 +79,26 @@ public class RenderingEngine {
         Camera camera = new Camera(windowId, centerPoint);
         Floor floor = new Floor(printVolumeWidth, printVolumeDepth, modelLoader);
         PrintVolume printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeHeight, printVolumeDepth);
+        nodeHandler = new NodeHandler(model, lineModel);
         
-        GCodeConvertor gCodeConvertor = new GCodeConvertor();
-        List<LayerNode> layerNodes = gCodeConvertor.convertGCode("C:/Users/admin/Documents/CEL Robox/PrintJobs/e99ee15d94a14b27/e99ee15d94a14b27_robox.gcode");
-        
-        NodeHandler nodeHandler = new NodeHandler(model, lineModel);
-        List<Layer> layers = nodeHandler.processLayerNodes(layerNodes);
-        topLayerToRender = layers.size() - 1;
-        
+        glfwSetKeyCallback(windowId, (window, key, scancode, action, mods) -> {
+            if ( key == GLFW.GLFW_KEY_UP)
+                    topLayerToRender += 4;
+            if ( key == GLFW.GLFW_KEY_DOWN)
+                    topLayerToRender -= 4;
+        });
+
         STENO.debug("Running rendering loop.");
         while (!glfwWindowShouldClose(windowId)) {
             GL11.glViewport(0, 0, windowWidth, windowHeight);
             camera.move();
             
-            glfwSetKeyCallback(windowId, (window, key, scancode, action, mods) -> {
-            if ( key == GLFW.GLFW_KEY_UP)
-                if(topLayerToRender < layers.size() - 1)
-                    topLayerToRender += 4;
-            if ( key == GLFW.GLFW_KEY_DOWN)
-                if(topLayerToRender > 0)
-                    topLayerToRender -= 4;
-            });
-            
-            layersToRenderCheck(layers);
-            layers.forEach(masterRenderer::processLayer);
-            masterRenderer.processFloor(floor);
-            
+            if (layers != null)
+            {
+                layersToRenderCheck(layers);
+                layers.forEach(masterRenderer::processLayer);
+                masterRenderer.processFloor(floor);
+            }
             if(centerPoint.isRendered()) {
                 centerPoint.getLineEntities().forEach(masterRenderer::processLine);
             }
@@ -105,13 +106,14 @@ public class RenderingEngine {
             printVolume.getLineEntities().forEach(masterRenderer::processLine);
             masterRenderer.render(camera, light);
             
-            guiManager.render();
-            
             glfwSwapBuffers(windowId); // swap the color buffers
             
             // Poll for window events. The key callback above will only be
             // invoked during this call.
             glfwPollEvents();
+            
+            if (commandQueue.commandAvailable())
+                processCommands();
         }
         
         masterRenderer.cleanUp();
@@ -119,6 +121,10 @@ public class RenderingEngine {
     }
     
     private void layersToRenderCheck(List<Layer> layers) {
+        if (topLayerToRender > layers.size() - 1)
+            topLayerToRender = layers.size() - 1;
+        if (topLayerToRender < 0)
+            topLayerToRender = 0;
         layers.forEach((layer) -> {
             layer.setRendered(layer.getLayerNo() <= topLayerToRender);
         });
@@ -133,4 +139,46 @@ public class RenderingEngine {
         });
     }
 
+    private void processCommands() {
+        while (commandQueue.commandAvailable()) {
+            String command = commandQueue.getNextCommandFromQueue().trim();
+            System.out.println("Processing command " + command);
+            if (command.equalsIgnoreCase("q")) {
+                glfwSetWindowShouldClose(windowId, true);
+                break;
+            }
+            else {
+                Scanner commandScanner = new Scanner(command);
+                if (commandScanner.hasNext()) {
+                    String commandWord = commandScanner.next().toLowerCase();
+                    switch (commandWord)
+                    {
+                        case "load":
+                            try {
+                                String gCodeFile = commandScanner.nextLine().trim();
+                                GCodeConvertor gCodeConvertor = new GCodeConvertor();
+                                layerNodes = gCodeConvertor.convertGCode(gCodeFile);
+                                layers = nodeHandler.processLayerNodes(layerNodes);
+                                topLayerToRender = layers.size() - 1;
+                                System.out.println("layerCount " + layers.size());
+                            }
+                            catch (RuntimeException ex)
+                            {
+                                layerNodes = null;
+                                layers = null;
+                                topLayerToRender = 0;
+                                System.out.println("Parsing error");
+                            }
+                            break;
+                            
+                        case "top":
+                            if (commandScanner.hasNextInt()) {
+                                topLayerToRender = commandScanner.nextInt();
+                            }
+                            break;
+                    }
+                }
+            }
+        }
+    }
 }
