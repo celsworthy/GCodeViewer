@@ -23,13 +23,13 @@ import libertysystems.stenographer.StenographerFactory;
  */
 public class GCodeViewer {
 
-    private static final Stenographer STENO = StenographerFactory.getStenographer(
-            GCodeViewer.class.getName());
+    private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewer.class.getName());
     
     private static final String PROGRAM_NAME = "G-Code Viewer";
     
     private final int windowWidth = 1280;
     private final int windowHeight = 700;  
+    private GCodeViewerConfiguration configuration = null;
 
     private long windowId;
     
@@ -41,6 +41,7 @@ public class GCodeViewer {
     public void run() {
         STENO.debug("Running " + PROGRAM_NAME);
         
+        configuration = GCodeViewerConfiguration.loadFromFile("D:\\CEL\\Dev\\GCodeViewer\\GCodeViewer.config");
         init();
         loop();
 
@@ -123,7 +124,11 @@ public class GCodeViewer {
         commandQueue = new CommandQueue();
         commandQueue.start();
         
-        RenderingEngine renderingEngine = new RenderingEngine(windowId, windowWidth, windowHeight, commandQueue);
+        RenderingEngine renderingEngine = new RenderingEngine(windowId,
+                                                              windowWidth,
+                                                              windowHeight,
+                                                              configuration,
+                                                              commandQueue);
         renderingEngine.start();
     }
     

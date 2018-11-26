@@ -1,0 +1,25 @@
+#version 400 core
+
+uniform int topVisibleLayer;
+uniform int bottomVisibleLayer;
+uniform int showMoves;
+
+in vec3 position;
+in vec3 direction;
+in vec3 colour;
+in vec3 attributes;
+
+out vec3 vDirection;
+out vec4 vColour;
+
+void main(void) {
+    gl_Position = vec4(position, 1.0);
+	vDirection = direction;
+	
+	vColour.rgb = colour;
+	
+	if ((showMoves == 1 || attributes.x == 0.0) && attributes.y >= bottomVisibleLayer && attributes.y <= topVisibleLayer)
+		vColour.a = 1.0;
+	else
+		vColour.a = 0.0;
+}

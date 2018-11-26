@@ -8,8 +8,8 @@ import org.lwjgl.util.vector.Vector3f;
 
 public class StaticShader extends ShaderProgram {
 
-    private static final String VERTEX_FILE = SHADER_DIRECTORY + "vertexShader.txt";
-    private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "fragmentShader.txt";
+    private static final String VERTEX_FILE = SHADER_DIRECTORY + "staticVertexShader.txt";
+    private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "staticFragmentShader.txt";
     
     private int location_transformationMatrix;
     private int location_viewMatrix;

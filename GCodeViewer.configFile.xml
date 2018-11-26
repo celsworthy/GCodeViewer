@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<ApplicationConfiguration>
+	<AppFolderName>CEL Robox</AppFolderName>
+        <ApplicationName>CEL Robox</ApplicationName>
+        <ApplicationShortName>GCodeViewer</ApplicationShortName>
+        <ApplicationDataStorageDirectory>D:\CEL\Dev\GCodeViewer\</ApplicationDataStorageDirectory>
+        <UserDataStorageDirectory>$USER_HOME$/</UserDataStorageDirectory>
+        <requiredFirmwareVersion>765</requiredFirmwareVersion>
+        <DefaultMode>Normal</DefaultMode>
+        <DefaultLocaleLanguageTag>en-GB</DefaultLocaleLanguageTag>
+		<FakeInstallDirectory>D:\CEL\Dev\GCodeViewer\</FakeInstallDirectory>
+    </ApplicationConfiguration>
+    <Stenographer>
+       <logfilename>#ApplicationConfiguration:ApplicationDataStorageDirectory#\GCodeViewer.log</logfilename>
+       <logmode>LOCAL</logmode>
+       <logtee>T</logtee>
+    </Stenographer>
+</root>

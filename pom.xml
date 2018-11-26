@@ -123,9 +123,9 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>celtech</groupId>
-            <artifactId>RoboxBase</artifactId>
-            <version>1.2</version>
+            <groupId>org.parboiled</groupId>
+            <artifactId>parboiled-java</artifactId>
+            <version>1.1.7</version>
         </dependency>
         <dependency>
             <groupId>org.lwjgl</groupId>
@@ -246,6 +246,12 @@
             <groupId>org.lwjgl.lwjgl</groupId>
             <artifactId>lwjgl_util</artifactId>
             <version>2.9.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.json/json -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20180813</version>
         </dependency>
         <dependency>
             <groupId>org.hamcrest</groupId>

@@ -1,8 +1,5 @@
 package celtech.gcodeviewer.gcode;
 
-import celtech.roboxbase.postprocessor.nouveau.LayerPostProcessResult;
-import celtech.roboxbase.postprocessor.nouveau.RoboxGCodeParser;
-import celtech.roboxbase.postprocessor.nouveau.nodes.LayerNode;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;

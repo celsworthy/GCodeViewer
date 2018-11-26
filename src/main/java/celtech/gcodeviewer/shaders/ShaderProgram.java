@@ -2,6 +2,7 @@ package celtech.gcodeviewer.shaders;
 
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL32.*;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -20,17 +21,36 @@ public abstract class ShaderProgram {
     
     protected final int programId;
     private final int vertexShaderId;
+    private final int geometryShaderId;
     private final int fragmentShaderId;
     
     public ShaderProgram(String vertexFile, String fragmentFile) {
+        this(vertexFile, null, fragmentFile);
+    }
+
+    public ShaderProgram(String vertexFile, String geometryFile, String fragmentFile) {
         vertexShaderId = loadShader(vertexFile, GL_VERTEX_SHADER);
+        if (geometryFile != null)
+            geometryShaderId = loadShader(geometryFile, GL_GEOMETRY_SHADER);
+        else
+            geometryShaderId = -1;
         fragmentShaderId = loadShader(fragmentFile, GL_FRAGMENT_SHADER);
         programId = glCreateProgram();
         glAttachShader(programId, vertexShaderId);
+        if (geometryShaderId != -1)
+            glAttachShader(programId, geometryShaderId);
         glAttachShader(programId, fragmentShaderId);
         bindAttributes();
         glLinkProgram(programId);
+        if(glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE)
+        {
+            System.err.println(glGetProgramInfoLog(programId, 1024));
+        }
         glValidateProgram(programId);
+        if(glGetProgrami(programId, GL_VALIDATE_STATUS) == GL_FALSE)
+        {
+            System.err.println(glGetProgramInfoLog(programId, 1024));
+        }
         getAllUniformLocations();
     }
     
@@ -53,8 +73,12 @@ public abstract class ShaderProgram {
     public void cleanUp() {
         stop();
         glDetachShader(programId, vertexShaderId);
+        if (geometryShaderId != -1)
+            glDetachShader(programId, geometryShaderId);            
         glDetachShader(programId, fragmentShaderId);
         glDeleteShader(vertexShaderId);
+        if (geometryShaderId != -1)
+            glDeleteShader(geometryShaderId);            
         glDeleteShader(fragmentShaderId);
         glDeleteProgram(programId);        
     }
@@ -65,6 +89,10 @@ public abstract class ShaderProgram {
     
     protected void loadFloat(int location, float value) {
         glUniform1f(location, value);
+    }
+    
+    protected void loadInt(int location, int value) {
+        glUniform1i(location, value);
     }
     
     protected void loadVector3(int location, Vector3f vector) {
