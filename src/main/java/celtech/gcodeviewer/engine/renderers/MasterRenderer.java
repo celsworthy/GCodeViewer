@@ -2,6 +2,7 @@ package celtech.gcodeviewer.engine.renderers;
 
 import celtech.gcodeviewer.engine.RawEntity;
 import celtech.gcodeviewer.engine.RawModel;
+import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.engine.RenderingEngine;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.CenterPoint;
@@ -10,9 +11,10 @@ import celtech.gcodeviewer.entities.Floor;
 import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.entities.LineEntity;
 import celtech.gcodeviewer.gcode.GCodeLine;
-import celtech.gcodeviewer.shaders.EntityShader;
+import celtech.gcodeviewer.shaders.SegmentShader;
 import celtech.gcodeviewer.shaders.FloorShader;
 import celtech.gcodeviewer.shaders.LineShader;
+import celtech.gcodeviewer.shaders.MoveShader;
 //import celtech.gcodeviewer.shaders.StaticShader;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,8 +33,11 @@ public class MasterRenderer {
 //    private final StaticShader staticShader = new StaticShader();
 //    private final StaticRenderer staticEntityRenderer;
     
-    private final EntityShader entityShader = new EntityShader();
-    private final RawEntityRenderer entityRenderer;
+    private final SegmentShader segmentShader = new SegmentShader();
+    private final SegmentRenderer segmentRenderer;
+
+    private final MoveShader moveShader = new MoveShader();
+    private final MoveRenderer moveRenderer;
 
     private final LineShader lineShader = new LineShader();
     private final LineRenderer lineRenderer;
@@ -40,7 +45,8 @@ public class MasterRenderer {
     private final FloorShader floorShader = new FloorShader();
     private final FloorRenderer floorRenderer;
     
-    private RawEntity rawEntity = null;
+    private RawEntity segmentEntity = null;
+    private RawEntity moveEntity = null;
     private final Map<RawModel, List<Entity>> entities = new HashMap<>();
     private final List<LineEntity> lineEntities = new ArrayList<>();
     private Floor floor;
@@ -48,104 +54,26 @@ public class MasterRenderer {
     
     private Matrix4f projectionMatrix;
 
-    private boolean showMovesFlag = false;
-    private boolean showTool0Flag = true;
-    private boolean showTool1Flag = true;
-    RenderingEngine.ColourMode colourMode = RenderingEngine.ColourMode.COLOUR_AS_TOOL;
-    private Vector3f tool0Colour = new Vector3f(1.0f, 1.0f, 0.0f);
-    private Vector3f tool1Colour = new Vector3f(0.0f, 1.0f, 1.0f);
-    private int topLayerToShow = 0;
-    private int bottomLayerToShow = 0;
-    private int firstLineToShow = 0;
-    private int lastLineToShow = 0;
+    private RenderParameters renderParameters;
     
-    public MasterRenderer(int windowWidth, int windowHeight) {
+    public MasterRenderer(int windowWidth, int windowHeight, RenderParameters renderParameters) {
         createProjectionMatrix(windowWidth, windowHeight);
-//        staticEntityRenderer = new StaticRenderer(staticShader, projectionMatrix);
-        entityRenderer = new RawEntityRenderer(entityShader, projectionMatrix);
-        lineRenderer = new LineRenderer(lineShader, projectionMatrix);
-        floorRenderer = new FloorRenderer(floorShader, projectionMatrix);
-        
+//        this.staticEntityRenderer = new StaticRenderer(staticShader, projectionMatrix);
+        this.segmentRenderer = new SegmentRenderer(segmentShader, projectionMatrix);
+        this.moveRenderer = new MoveRenderer(moveShader, projectionMatrix);
+        this.lineRenderer = new LineRenderer(lineShader, projectionMatrix);
+        this.floorRenderer = new FloorRenderer(floorShader, projectionMatrix);
+        this.renderParameters = renderParameters;
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
     }
-
-    public void setShowFlags(boolean showMovesFlag, boolean showTool0Flag, boolean showTool1Flag)
-    {
-        this.showMovesFlag = showMovesFlag;
-        this.showTool0Flag = showTool0Flag;
-        this.showTool1Flag = showTool1Flag;
-    }
-
-    public boolean showMoves()
-    {
-        return showMovesFlag;
-    }
     
-    public boolean showTool0()
-    {
-        return showTool0Flag;
+    public RenderParameters getRenderParameters() {
+        return renderParameters;
     }
 
-    public boolean showTool1()
-    {
-        return showTool0Flag;
-    }
-
-    public void setColourMode(RenderingEngine.ColourMode colourMode)
-    {
-        this.colourMode = colourMode;
-    }
-
-    public void setToolColours(Vector3f tool0Colour, Vector3f tool1Colour)
-    {
-        this.tool0Colour = tool0Colour;
-        this.tool1Colour = tool1Colour;
-    }
-
-    public RenderingEngine.ColourMode getColourMode()
-    {
-        return colourMode;
-    }
-
-    public void setTopLayerToShow(int topLayerToShow)
-    {
-        this.topLayerToShow = topLayerToShow;
-    }
-
-    public int getTopLayerToShow()
-    {
-        return topLayerToShow;
-    }
-    
-    public void setBottomLayerToShow(int bottomLayerToShow)
-    {
-        this.bottomLayerToShow = bottomLayerToShow;
-    }
-
-    public int getBottomLayerToShow()
-    {
-        return bottomLayerToShow;
-    }
-
-    public void setFirstLineToShow(int firstLineToShow)
-    {
-        this.firstLineToShow = firstLineToShow;
-    }
-
-    public int getFirstLineToShow()
-    {
-        return firstLineToShow;
-    }
-
-    public void setLastLineToShow(int lastLineToShow)
-    {
-        this.lastLineToShow = lastLineToShow;
-    }
-
-    public int getLastLineToShow()
-    {
-        return lastLineToShow;
+    public void setRenderParameters(RenderParameters renderParameters) {
+        this.renderParameters = renderParameters;
     }
 
     public void render(Camera camera, Light light) {   
@@ -169,18 +97,14 @@ public class MasterRenderer {
             lineShader.stop();
         }
 
-        if (rawEntity != null) {
-            int showFlags = (showMovesFlag ? 1 : 0) + (showTool0Flag ? 2 : 0) + (showTool1Flag ? 4 : 0);
-            if (colourMode == RenderingEngine.ColourMode.COLOUR_AS_TYPE)
-                showFlags += 8;
-            entityRenderer.render(rawEntity,
-                                  camera, light,
-                                  tool0Colour, tool1Colour,
-                                  showFlags,
-                                  topLayerToShow, bottomLayerToShow,
-                                  firstLineToShow, lastLineToShow);
+        if (segmentEntity != null) {
+            segmentRenderer.render(segmentEntity, camera, light, renderParameters);
         }
         
+        if (moveEntity != null && renderParameters.getShowMoves()) {
+            moveRenderer.render(moveEntity, camera, light, renderParameters);
+        }
+
         if (floor != null) {
             floorShader.start();
             floorShader.loadLight(light);
@@ -188,12 +112,13 @@ public class MasterRenderer {
             floorRenderer.render(floor);
             floorShader.stop();
         }
+        checkErrors();
     }
     
-    public void checkErrors() {
+    public static void checkErrors() {
         int i = glGetError ();
         if (i != GL_NO_ERROR) {
-            System.out.println("Master Renderer OpenGL error " + Integer.toString(i));
+            System.out.println("OpenGL error " + Integer.toString(i));
         }
     }
     
@@ -211,8 +136,16 @@ public class MasterRenderer {
         }
     }
     
-    public void processRawEntity(RawEntity rawEntity) {
-        this.rawEntity = rawEntity;
+    public void processSegmentEntity(RawEntity segmentEntity) {
+        this.segmentEntity = segmentEntity;
+    }
+
+    public RawEntity getSegmentEntity() {
+        return segmentEntity;
+    }
+    
+    public void processMoveEntity(RawEntity moveEntity) {
+        this.moveEntity = moveEntity;
     }
 
     public void processFloor(Floor floor) {
@@ -228,7 +161,8 @@ public class MasterRenderer {
     }
     
     public void clearEntities() {
-        this.rawEntity = null;
+        this.segmentEntity = null;
+        this.moveEntity = null;
         entities.clear();
         lineEntities.clear();
     }
@@ -237,7 +171,7 @@ public class MasterRenderer {
         //staticShader.cleanUp();
         floorShader.cleanUp();
         lineShader.cleanUp();
-        entityShader.cleanUp();
+        segmentShader.cleanUp();
     }
     
     private void prepare() {
@@ -273,7 +207,8 @@ public class MasterRenderer {
     public final void reLoadProjectionMatrix() {
 //        staticEntityRenderer.loadProjectionMatrix(projectionMatrix);
         lineRenderer.loadProjectionMatrix(projectionMatrix);
-        entityRenderer.setProjectionMatrix(projectionMatrix);
+        segmentRenderer.setProjectionMatrix(projectionMatrix);
+        moveRenderer.setProjectionMatrix(projectionMatrix);
         floorRenderer.loadProjectionMatrix(projectionMatrix);
     }
 
@@ -284,8 +219,6 @@ public class MasterRenderer {
     public final void prepareEntities() {
         entities.keySet().stream().forEach(model -> prepareModelEntities(model));
     }
-    
-    
 }
 
 

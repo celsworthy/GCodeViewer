@@ -1,5 +1,6 @@
 package celtech.gcodeviewer.entities;
 
+import celtech.gcodeviewer.gui.GUIManager;
 import java.nio.DoubleBuffer;
 import org.lwjgl.BufferUtils;
 import static org.lwjgl.glfw.GLFW.*;
@@ -10,6 +11,11 @@ import org.lwjgl.util.vector.Vector3f;
  * @author George Salter
  */
 public class Camera {
+
+    private static final int GUI_PANEL_MIN_X = 10;
+    private static final int GUI_PANEL_MAX_X = 230;
+    private static final int GUI_PANEL_MIN_Y = 10;
+    private static final int GUI_PANEL_MAX_Y = 230;
 
     private static final float MOUSE_CONTROL_SENSITIVITY = 5;
     private static final float MOUSE_ZOOM_SENSITIVITY = 4;
@@ -30,11 +36,15 @@ public class Camera {
     
     private double previousXPosition = 0;
     private double previousYPosition = 0;
+    private boolean dragging = false;
     
-    public Camera(long window, CenterPoint centerPoint) {
+    private GUIManager guiManager;
+    
+    public Camera(long window, CenterPoint centerPoint, GUIManager guiManager) {
         this.window = window;
         this.centerPoint = centerPoint;
-        setUpmovementCallbacks();
+        this.guiManager = guiManager;
+        setUpMovementCallbacks();
     }
     
     public void move() {
@@ -61,64 +71,87 @@ public class Camera {
         position.y = centerPoint.getPosition().y + verticalDistance;
     }
 
-    private void setUpmovementCallbacks() {
+    private void setUpMovementCallbacks() {
         glfwSetScrollCallback(window, (window, xoffset, yoffset) -> {
+           //guiManager.onScroll(window, xoffset, yoffset);
             distanceFromCenter += -yoffset * MOUSE_ZOOM_SENSITIVITY;
         });
         
         glfwSetMouseButtonCallback(window, (window, mouseButton, action, mods) -> {
-            if((mouseButton == GLFW_MOUSE_BUTTON_1 || mouseButton == GLFW_MOUSE_BUTTON_2)
-                    && action == GLFW_PRESS) {
-                DoubleBuffer xpos = BufferUtils.createDoubleBuffer(1);
-                DoubleBuffer ypos = BufferUtils.createDoubleBuffer(1);
-                glfwGetCursorPos(window, xpos, ypos);
-                previousXPosition = xpos.get();
-                previousYPosition = ypos.get();
-                centerPoint.setRendered(true);
+            DoubleBuffer xposdb = BufferUtils.createDoubleBuffer(1);
+            DoubleBuffer yposdb = BufferUtils.createDoubleBuffer(1);
+            glfwGetCursorPos(window, xposdb, yposdb);
+            double xpos = xposdb.get();
+            double ypos = yposdb.get();
+            //System.out.println("mouse[" + Integer.toString(mouseButton) + " = (" + Double.toString(xpos) + ", " + Double.toString(ypos) + ")");
+            //System.out.println("action = " + (action == GLFW_PRESS ? "GLFW_PRESS" : "GLFW_RELEASE"));
+            if (!dragging &&
+                xpos >= GUI_PANEL_MIN_X &&
+                xpos <= GUI_PANEL_MAX_X &&
+                ypos >= GUI_PANEL_MIN_Y &&
+                ypos <= GUI_PANEL_MAX_Y)
+            {
+                //System.out.println("calling guiManager.onMouseButton");
+                guiManager.onMouseButton(window, xpos, ypos, mouseButton, action, mods);
             }
-            if((mouseButton == GLFW_MOUSE_BUTTON_1 || mouseButton == GLFW_MOUSE_BUTTON_2)
-                    && action == GLFW_RELEASE) {
-                centerPoint.setRendered(false);
+            else
+            {
+                if((mouseButton == GLFW_MOUSE_BUTTON_1 ||
+                    mouseButton == GLFW_MOUSE_BUTTON_2) &&
+                   action == GLFW_PRESS) {
+                    dragging = true;
+                    previousXPosition = xpos;
+                    previousYPosition = ypos;
+                    centerPoint.setRendered(true);
+                }
+                if((mouseButton == GLFW_MOUSE_BUTTON_1 ||
+                    mouseButton == GLFW_MOUSE_BUTTON_2) &&
+                    action == GLFW_RELEASE) {
+                    dragging = false;
+                    centerPoint.setRendered(false);
+                }
             }
         });
         
         glfwSetCursorPosCallback(window, (window, xpos, ypos) -> {
+            guiManager.onCursorPos(window, xpos, ypos);                    
+            if (dragging) {
+                double xPositionDiff = previousXPosition - xpos;
+                double yPositionDiff = previousYPosition - ypos;
 
-            double xPositionDiff = previousXPosition - xpos;
-            double yPositionDiff = previousYPosition - ypos;
-            
-            if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_RELEASE) {
-                angleAroundCenter += xPositionDiff / MOUSE_CONTROL_SENSITIVITY;
-                pitch += -yPositionDiff / MOUSE_CONTROL_SENSITIVITY;
-                if(pitch >= MAXIMUM_CAMERA_PITCH) {
-                    pitch = MAXIMUM_CAMERA_PITCH;
+                if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_RELEASE) {
+                    angleAroundCenter += xPositionDiff / MOUSE_CONTROL_SENSITIVITY;
+                    pitch += -yPositionDiff / MOUSE_CONTROL_SENSITIVITY;
+                    if(pitch >= MAXIMUM_CAMERA_PITCH) {
+                        pitch = MAXIMUM_CAMERA_PITCH;
+                    }
+                    if (pitch <= MINIMUM_CAMERA_PITCH) {
+                        pitch = MINIMUM_CAMERA_PITCH;
+                    }
                 }
-                if (pitch <= MINIMUM_CAMERA_PITCH) {
-                    pitch = MINIMUM_CAMERA_PITCH;
-                }
-            }
- 
-           if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE) {
-               Vector3f viewVector = calculateNormalisedViewVector();
-               Vector3f leftRightVect = new Vector3f(viewVector.z, 0, -viewVector.x);
-               Vector3f upDownVect = new Vector3f();
-               Vector3f.cross(leftRightVect, viewVector, upDownVect);
-               
-               leftRightVect.normalise();
-               upDownVect.normalise();
-                              
-               // Deal with left right pan
-               centerPoint.getPosition().x += (leftRightVect.x * xPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
-               centerPoint.getPosition().z += (leftRightVect.z * xPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
 
-               // Deal with up down pan
-               centerPoint.getPosition().x += (upDownVect.x * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
-               centerPoint.getPosition().y += (upDownVect.y * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
-               centerPoint.getPosition().z += (upDownVect.z * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+                if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE) {
+                   Vector3f viewVector = calculateNormalisedViewVector();
+                   Vector3f leftRightVect = new Vector3f(viewVector.z, 0, -viewVector.x);
+                   Vector3f upDownVect = new Vector3f();
+                   Vector3f.cross(leftRightVect, viewVector, upDownVect);
+
+                   leftRightVect.normalise();
+                   upDownVect.normalise();
+
+                   // Deal with left right pan
+                   centerPoint.getPosition().x += (leftRightVect.x * xPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+                   centerPoint.getPosition().z += (leftRightVect.z * xPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+
+                   // Deal with up down pan
+                   centerPoint.getPosition().x += (upDownVect.x * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+                   centerPoint.getPosition().y += (upDownVect.y * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+                   centerPoint.getPosition().z += (upDownVect.z * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+                }
+
+                previousXPosition = xpos;
+                previousYPosition = ypos;
             }
-           
-            previousXPosition = xpos;
-            previousYPosition = ypos;
         });
     }
     

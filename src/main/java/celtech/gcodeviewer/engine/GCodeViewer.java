@@ -15,6 +15,9 @@ import java.nio.*;
 
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
+import static org.lwjgl.opengl.ARBDebugOutput.*;
+import static org.lwjgl.opengl.GL11.GL_NO_ERROR;
+import static org.lwjgl.opengl.GL11.glGetError;
 
 /**
  * Main entry point for the program. Window initialisation happens here.
@@ -39,9 +42,10 @@ public class GCodeViewer {
      * Run the program 
      */
     public void run() {
+        STENO.changeLogLevel(libertysystems.stenographer.LogLevel.INFO);
         STENO.debug("Running " + PROGRAM_NAME);
         
-        configuration = GCodeViewerConfiguration.loadFromFile("D:\\CEL\\Dev\\GCodeViewer\\GCodeViewer.config");
+        configuration = GCodeViewerConfiguration.loadFromFile("GCodeViewer.config");
         init();
         loop();
 
@@ -72,7 +76,7 @@ public class GCodeViewer {
         glfwDefaultWindowHints(); // optional, the current window hints are already the default
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
-        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
+//        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
         // Create the window
         windowId = glfwCreateWindow(windowWidth, windowHeight, "GCodeViewer", NULL, NULL);
         if ( windowId == NULL ) {
@@ -106,6 +110,7 @@ public class GCodeViewer {
 
         // Make the OpenGL context current
         glfwMakeContextCurrent(windowId);
+
         // Enable v-sync
         glfwSwapInterval(1);
         
@@ -114,7 +119,30 @@ public class GCodeViewer {
         // LWJGL detects the context that is current in the current thread,
         // creates the GLCapabilities instance and makes the OpenGL
         // bindings available for use.
-        GL.createCapabilities();
+        GLCapabilities caps = GL.createCapabilities();
+        Callback debugProc = GLUtil.setupDebugMessageCallback();
+        
+        if (caps.OpenGL43) {
+            GL43.glDebugMessageControl(GL43.GL_DEBUG_SOURCE_API,
+                                       GL43.GL_DEBUG_TYPE_OTHER,
+                                       GL43.GL_DEBUG_SEVERITY_NOTIFICATION,
+                                       (IntBuffer)null,
+                                       false);
+        }
+        else if (caps.GL_KHR_debug) {
+            KHRDebug.glDebugMessageControl(KHRDebug.GL_DEBUG_SOURCE_API,
+                                           KHRDebug.GL_DEBUG_TYPE_OTHER,
+                                           KHRDebug.GL_DEBUG_SEVERITY_NOTIFICATION,
+                                           (IntBuffer)null,
+                                           false);
+        }
+        else if (caps.GL_ARB_debug_output) {
+            glDebugMessageControlARB(GL_DEBUG_SOURCE_API_ARB,
+                                     GL_DEBUG_TYPE_OTHER_ARB,
+                                     GL_DEBUG_SEVERITY_LOW_ARB,
+                                     (IntBuffer)null,
+                                     false);
+        }
         
         // Make the window visible
         glfwShowWindow(windowId);

@@ -5,16 +5,20 @@ import org.lwjgl.util.vector.Vector3f;
 
 public class Entity {
 
+    public final static int N_DATA_VALUES = 5;
     public final static int NULL_LAYER = -9999;
     
     private RawModel model;
+    private String type;
     private Vector3f position;
     private Vector3f direction;
     private Vector3f normal;
     private float length;
     private float width;
+    private final float dataValues[];
     
     private Vector3f colour = new Vector3f(1, 1, 1);
+    private Vector3f typeColour = new Vector3f(1, 1, 1);
 
     private int layer;
     private int lineNumber;
@@ -23,8 +27,9 @@ public class Entity {
 
     public Entity(RawModel model, Vector3f position, Vector3f direction, Vector3f normal,
             float length, float width,
-            int layer, int lineNumber, int toolNumber, boolean isMoveFlag) {
+            int layer, int lineNumber, int toolNumber, boolean isMoveFlag, float dataValues[]) {
         this.model = model;
+        this.type = "";
         this.position = position;
         this.direction = direction;
         this.normal = normal;
@@ -34,6 +39,13 @@ public class Entity {
         this.lineNumber = lineNumber;
         this.toolNumber = toolNumber;
         this.isMoveFlag = isMoveFlag;
+        this.dataValues = new float[N_DATA_VALUES];
+        for (int i = 0; i < N_DATA_VALUES; ++i) {
+            if (dataValues != null && i < dataValues.length)
+                this.dataValues[i] = dataValues[i];
+            else
+                this.dataValues[i] = 0.0f;
+        }
     }
     
     public RawModel getModel() {
@@ -92,6 +104,22 @@ public class Entity {
         this.colour = colour;
     }
     
+    public Vector3f getTypeColour() {
+        return typeColour;
+    }
+
+    public void setTypeColour(Vector3f colour) {
+        this.typeColour = colour;
+    }
+    
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public int getLayer() {
         return (layer > NULL_LAYER ? layer : lineNumber);
     }
@@ -122,5 +150,23 @@ public class Entity {
 
     public void setIsMove(boolean isMoveFlag) {
         this.isMoveFlag = isMoveFlag;
+    }
+
+    public float getDataValue(int i) {
+        return ((i >= 0 && i < N_DATA_VALUES) ? dataValues[i] : 0.0f);
+    }
+
+    public void setDataValue(int i, float value) {
+        if (i >= 0 && i < N_DATA_VALUES)
+            dataValues[i] = value;
+    }
+
+    public void setDataValues(float dataValues[]) {
+        for (int i = 0; i < N_DATA_VALUES; ++i) {
+            if (dataValues != null && i < dataValues.length)
+                this.dataValues[i] = dataValues[i];
+            else
+                this.dataValues[i] = 0.0f;
+        }
     }
 }

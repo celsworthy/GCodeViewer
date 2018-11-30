@@ -1,10 +1,11 @@
 package celtech.gcodeviewer.engine.renderers;
 
 import celtech.gcodeviewer.engine.RawEntity;
+import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.Entity;
 import celtech.gcodeviewer.entities.Light;
-import celtech.gcodeviewer.shaders.EntityShader;
+import celtech.gcodeviewer.shaders.SegmentShader;
 import celtech.gcodeviewer.utils.MatrixUtils;
 import java.util.List;
 import java.util.Map;
@@ -14,12 +15,12 @@ import static org.lwjgl.opengl.GL30.*;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
-public class RawEntityRenderer {
+public class SegmentRenderer {
    
-    private final EntityShader shader;
+    private final SegmentShader shader;
     private Matrix4f projectionMatrix;
     
-    public RawEntityRenderer(EntityShader shader, Matrix4f projectionMatrix) {
+    public SegmentRenderer(SegmentShader shader, Matrix4f projectionMatrix) {
         this.shader = shader;
         this.projectionMatrix = projectionMatrix;
     }
@@ -27,21 +28,20 @@ public class RawEntityRenderer {
     public void render(RawEntity rawEntity,
                        Camera camera,
                        Light light,
-                       Vector3f tool0Colour,
-                       Vector3f tool1Colour,
-                       int showFlags,
-                       int topLayerToShow, int bottomLayerToShow,
-                       int firstLineToShow, int lastLineToShow) {
+                       RenderParameters renderParameters) {
         if (rawEntity != null) {
             shader.start();
             shader.setProjectionMatrix(projectionMatrix);
             shader.setViewMatrix(camera);
             shader.loadCompositeMatrix();
             shader.loadLight(light);
-            shader.loadLayerLimits(topLayerToShow, bottomLayerToShow);
-            shader.loadLineLimits(firstLineToShow, lastLineToShow);
-            shader.loadShowFlags(showFlags);
-            shader.loadToolColours(tool0Colour, tool1Colour);
+            shader.loadLayerLimits(renderParameters.getTopLayerToRender(),
+                                   renderParameters.getBottomLayerToRender());
+            shader.loadLineLimits(renderParameters.getFirstLineToRender(),
+                                  renderParameters.getLastLineToRender());
+            shader.loadShowFlags(renderParameters.getShowFlags());
+            shader.loadToolColours(renderParameters.getColourForTool(0),
+                                   renderParameters.getColourForTool(1));
             bindRawModel(rawEntity);
             glDrawArrays(GL_POINTS, 0, rawEntity.getVertexCount());
             unbindRawModel();
@@ -69,12 +69,5 @@ public class RawEntityRenderer {
         glDisableVertexAttribArray(3);
         glDisableVertexAttribArray(4);
         glBindVertexArray(0);
-    }
-    
-    public void checkErrors() {
-        int i = glGetError ();
-        if (i != GL_NO_ERROR) {
-            System.out.println("Entity renderer: OpenGL error " + Integer.toString(i));
-        }
     }
 }

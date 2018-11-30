@@ -11,7 +11,7 @@ in vec3 position;
 in vec4 direction;
 in vec4 normal;
 in vec3 colour;
-in vec4 attributes; // x = isMove, y = layer, z = line, w = tool
+in vec4 attributes; // x = 0, y = layer, z = line, w = tool
 
 out vec4 vDirection;
 out vec4 vNormal;
@@ -22,18 +22,17 @@ void main(void) {
 	vDirection = direction;
 	vNormal = normal;
 	
-	if ((showFlags & 8) == 8 || attributes.x != 0)
+	if ((showFlags & 8) == 8)
 		vColour.rgb = colour;
 	else if (attributes.w == 0)
 		vColour.rgb = t0Colour;
 	else
 		vColour.rgb = t1Colour;
 		
-	bool showMove = ((showFlags & 1) == 1 && attributes.x != 0);
 	bool showTool = (attributes.x == 0 &&
 					 (((showFlags & 2) == 2 && attributes.w == 0) ||
 					  ((showFlags & 4) == 4 && attributes.w == 1)));
-	if ((showMove || showTool) &&
+	if (showTool &&
      	(attributes.y >= bottomVisibleLayer && attributes.y <= topVisibleLayer) &&
      	(attributes.z >= firstVisibleLine && attributes.z <= lastVisibleLine))
 		vColour.a = 1.0;

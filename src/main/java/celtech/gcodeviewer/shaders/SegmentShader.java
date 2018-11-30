@@ -11,10 +11,10 @@ import org.lwjgl.util.vector.Vector3f;
  *
  * @author George Salter
  */
-public class EntityShader  extends ShaderProgram {
-    private static final String VERTEX_FILE = SHADER_DIRECTORY + "entityVertexShader.txt";
-    private static final String GEOMETRY_FILE = SHADER_DIRECTORY + "entityGeometryShader.txt";
-    private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "entityFragmentShader.txt";
+public class SegmentShader  extends ShaderProgram {
+    private static final String VERTEX_FILE = SHADER_DIRECTORY + "segmentVertexShader.txt";
+    private static final String GEOMETRY_FILE = SHADER_DIRECTORY + "segmentGeometryShader.txt";
+    private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "segmentFragmentShader.txt";
     
     private int location_lightPosition;
     private int location_lightColour;
@@ -30,7 +30,7 @@ public class EntityShader  extends ShaderProgram {
     private Matrix4f projectionMatrix;
     private Matrix4f viewMatrix;
             
-    public EntityShader() {
+    public SegmentShader() {
         super(VERTEX_FILE, GEOMETRY_FILE, FRAGMENT_FILE);
     }
             

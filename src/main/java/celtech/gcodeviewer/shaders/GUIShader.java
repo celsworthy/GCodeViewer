@@ -2,6 +2,8 @@ package celtech.gcodeviewer.shaders;
 
 import java.nio.FloatBuffer;
 import org.lwjgl.nuklear.NkDrawNullTexture;
+import static org.lwjgl.opengl.GL11.GL_NO_ERROR;
+import static org.lwjgl.opengl.GL11.glGetError;
 import static org.lwjgl.opengl.GL11C.GL_FLOAT;
 import static org.lwjgl.opengl.GL11C.GL_NEAREST;
 import static org.lwjgl.opengl.GL11C.GL_RGBA;
@@ -59,7 +61,7 @@ public class GUIShader extends ShaderProgram {
     @Override
     protected void getAllUniformLocations() {
         location_projectionMatrix = super.getUniformLocation("projectionMatrix");
-        location_texture = super.getUniformLocation("texture");
+        location_texture = super.getUniformLocation("texture2d");
     }
     
     public void loadProjectionMatrix(FloatBuffer projectionMatrixBuffer) {
@@ -70,7 +72,7 @@ public class GUIShader extends ShaderProgram {
         glUniform1i(location_texture, 0);
     }
     
-    public void additionalSetupMAYBERENAME() {
+    public void createVAOandVBO() {
         int attrib_pos = glGetAttribLocation(programId, "position");
         int attrib_uv  = glGetAttribLocation(programId, "textCoords");
         int attrib_col = glGetAttribLocation(programId, "colour");

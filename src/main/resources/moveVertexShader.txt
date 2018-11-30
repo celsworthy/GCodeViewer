@@ -1,0 +1,24 @@
+#version 400 core
+
+uniform mat4 compositeMatrix;
+uniform int firstVisibleLine;
+uniform int lastVisibleLine;
+uniform int topVisibleLayer;
+uniform int bottomVisibleLayer;
+uniform vec3 moveColour;
+
+in vec3 position;
+in vec2 attributes; // x = layer, y = line, z = 0
+
+out vec4 colour;
+
+void main(void) {
+    gl_Position = compositeMatrix * vec4(position, 1.0);
+
+	colour.rgb = moveColour;
+	if ((attributes.x >= bottomVisibleLayer && attributes.x <= topVisibleLayer) &&
+     	(attributes.y >= firstVisibleLine && attributes.y <= lastVisibleLine))
+		colour.a = 1.0;
+	else
+		colour.a = 0.0;
+}

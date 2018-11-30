@@ -20,41 +20,27 @@ public class GCodeVisualiser implements GCodeConsumer
     private final double MINIMUM_STEP = 0.1;
     private final double MINIMUM_EXTRUSION = 0.0001;
     
-    private class ToolState
-    {
-        public int toolNumber;
-        public double currentB = 0.0;
-        public double currentF = 0.0;
-        
-        public ToolState(int toolNumber)
-        {
-            this.toolNumber = toolNumber;
-        }
-
-        public void reset()
-        {
-            currentB = 0.0;
-            currentF = 0.0;
-        }
-    }
-    
     private final GCodeViewerConfiguration configuration;
 
     private double previousX = 0.0;
     private double previousY = 0.0;
     private double previousZ = 0.0;
+    private double previousA = 0.0;
+    private double previousB = 0.0;
     private double previousD = 0.0;
     private double previousE = 0.0;
+    private double previousF = 0.0;
 
     private double currentX = 0.0;
     private double currentY = 0.0;
     private double currentZ = 0.0;
+    private double currentA = 0.0;
+    private double currentB = 0.0;
     private double currentD = 0.0;
     private double currentE = 0.0;
+    private double currentF = 0.0;
 
-    private ToolState t0 = new ToolState(0);
-    private ToolState t1 = new ToolState(1);
-    private ToolState currentTool = t0;
+    private int currentTool = 0;
  
     boolean relativeMoves = false;
     private boolean relativeExtrusion = false;
@@ -66,7 +52,9 @@ public class GCodeVisualiser implements GCodeConsumer
 
     private RawModel lineModel;
     
-    private List<Entity> lines = new ArrayList<>();
+    // Moves a rendered separately from lines.
+    private List<Entity> segments = new ArrayList<>();
+    private List<Entity> moves = new ArrayList<>();
     
     static private final double RADIANS_TO_DEGREES = 57.2957795131;
     
@@ -87,28 +75,38 @@ public class GCodeVisualiser implements GCodeConsumer
         return currentHeight;
     }
     
-    public List<Entity> getLines()
+    public List<Entity> getSegments()
     {
-        return lines;
+        return segments;
     }
     
+    public List<Entity> getMoves()
+    {
+        return moves;
+    }
+
     @Override
     public void reset()
     {
         previousX = 0.0;
         previousY = 0.0;
         previousZ = 0.0;
+        previousA = 0.0;
+        previousB = 0.0;
         previousD = 0.0;
         previousE = 0.0;
+        previousF = 0.0;
 
         currentX = 0.0;
         currentY = 0.0;
         currentZ = 0.0;
+        currentA = 0.0;
+        currentB = 0.0;
         currentD = 0.0;
         currentE = 0.0;
-        currentTool = t0;
-        t0.reset();
-        t1.reset();
+        currentF = 0.0;
+
+        currentTool = 0;
         
         relativeMoves = false;
         relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
@@ -117,7 +115,8 @@ public class GCodeVisualiser implements GCodeConsumer
         currentHeight = 0;
         currentType = "";
         
-        lines.clear();
+        segments.clear();
+        moves.clear();
     }
 
     @Override
@@ -195,22 +194,8 @@ public class GCodeVisualiser implements GCodeConsumer
 
     public void processTCode(GCodeLine line)
     {
-        switch (line.commandNumber)
-        {
-            case 0:
-                currentTool = t0;
-                processMove(line);
-                break;
-
-            case 1:
-                currentTool = t1;
-                processMove(line);
-                break;
-
-            default:
-                // Ignore code that does not affect visualisation.
-                break;
-        }
+        currentTool = line.commandNumber;
+        processMove(line);
     }
 
     public void processCommentLine(GCodeLine line)
@@ -253,6 +238,11 @@ public class GCodeVisualiser implements GCodeConsumer
             currentE = line.getValue('E', currentE);
         }
         
+        // The rest are always absolute?
+        currentA = line.getValue('A', currentA);
+        currentB = line.getValue('B', currentB);
+        currentF = line.getValue('F', currentF);
+        
         generateEntity();
     }
 
@@ -265,10 +255,16 @@ public class GCodeVisualiser implements GCodeConsumer
             currentY = 0.0;
         if (line.isValueSet('Z'))
             currentZ = 0.0;
+        if (line.isValueSet('A'))
+            currentA = 0.0;
+        if (line.isValueSet('B'))
+            currentB = 0.0;
         if (line.isValueSet('D'))
             currentD = 0.0;
         if (line.isValueSet('E'))
             currentE = 0.0;
+        if (line.isValueSet('F'))
+            currentF = 0.0;
         generateEntity();
     }
 
@@ -290,6 +286,16 @@ public class GCodeVisualiser implements GCodeConsumer
             currentZ = line.getValue('Z', currentZ);
             previousZ = currentZ;
         }
+        if (line.isValueSet('A'))
+        {
+            currentA = line.getValue('A', currentA);
+            previousA = currentA;
+        }
+        if (line.isValueSet('B'))
+        {
+            currentB = line.getValue('B', currentB);
+            previousB = currentB;
+        }
         if (line.isValueSet('D'))
         {
             currentD = line.getValue('D', currentD);
@@ -299,6 +305,11 @@ public class GCodeVisualiser implements GCodeConsumer
         {
             currentE = line.getValue('E', currentE);
             previousE = currentE;
+        }
+        if (line.isValueSet('F'))
+        {
+            currentF = line.getValue('F', currentF);
+            previousF = currentF;
         }
     }
     
@@ -343,19 +354,36 @@ public class GCodeVisualiser implements GCodeConsumer
             Vector3f entityPosition = VectorUtils.calculateCenterBetweenVectors(fromPosition, toPosition);
             Entity entity = new Entity(lineModel, entityPosition, direction, normal,
                                        length, width,
-                                       currentLayer, currentLine, currentTool.toolNumber, !isExtrusion);
+                                       currentLayer, currentLine, currentTool, !isExtrusion, null);
             if (isExtrusion)
-                entity.setColour(configuration.getColourForType(currentType));
+            {
+                entity.setType(currentType);
+                Vector3f typeColour = configuration.getColourForType(currentType);
+                entity.setTypeColour(typeColour);
+                entity.setColour(typeColour);
+                entity.setDataValue(0, (float)currentA);
+                entity.setDataValue(1, (float)currentB);
+                entity.setDataValue(2, (float)currentD);
+                entity.setDataValue(3, (float)currentE);
+                entity.setDataValue(4, (float)currentF);
+                segments.add(entity);
+            }
             else
-                entity.setColour(configuration.getColourForMove());
+            {
+                entity.setColour(null);
+                entity.setTypeColour(null);
+                entity.setDataValues(null);
+                moves.add(entity);
+            }
 
-            lines.add(entity);
-            
             previousX = currentX;
             previousY = currentY;
             previousZ = currentZ;
+            previousA = currentA;
+            previousB = currentB;
             previousD = currentD;
             previousE = currentE;
+            previousF = currentF;
         }
         else if (isExtrusion)
         {
