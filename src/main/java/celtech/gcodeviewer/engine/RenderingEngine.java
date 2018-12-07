@@ -1,6 +1,6 @@
 package celtech.gcodeviewer.engine;
 
-import celtech.gcodeviewer.comms.CommandQueue;
+import celtech.gcodeviewer.comms.CommandHandler;
 import celtech.gcodeviewer.engine.renderers.MasterRenderer;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.CenterPoint;
@@ -59,7 +59,7 @@ public class RenderingEngine {
     
     private final GCodeViewerConfiguration configuration;
 
-    private final CommandQueue commandQueue;
+    private final CommandHandler commandHandler;
 
     private RawModel lineModel;
     private RawModel model;
@@ -68,41 +68,25 @@ public class RenderingEngine {
     Floor floor = null;
     PrintVolume printVolume = null;
 
-    private float minDataValues[];
-    private float maxDataValues[];
-    
     public RenderingEngine(long windowId,
                            int windowWidth,
                            int windowHeight,
                            GCodeViewerConfiguration configuration,
-                           CommandQueue commandQueue) {
+                           CommandHandler commandHandler) {
         this.windowId = windowId;
         this.windowWidth = windowWidth;
         this.windowHeight = windowHeight;
         this.configuration = configuration;
-        this.commandQueue = commandQueue;
         Vector3f printVolume = configuration.getPrintVolume();
         this.printVolumeWidth = (float)printVolume.getX();
         this.printVolumeHeight = (float)printVolume.getZ();
         this.printVolumeDepth = (float)printVolume.getY();
 
-        renderParameters.setMoveColour(configuration.getMoveColour());
-        renderParameters.setToolColours(configuration.getToolColours());
-        renderParameters.setDataColourPalette(configuration.getDataColourPalette());
+        renderParameters.setFromConfiguration(configuration);
 
-        this.minDataValues = new float[Entity.N_DATA_VALUES];
-        this.minDataValues[0] = -30.0f;
-        this.minDataValues[1] = -180.0f;
-        this.minDataValues[2] = -1.0f;
-        this.minDataValues[3] = -1.0f;
-        this.minDataValues[4] = 0.0f;
-
-        this.maxDataValues = new float[Entity.N_DATA_VALUES];
-        this.maxDataValues[0] = 30.0f;
-        this.maxDataValues[1] = 180.0f;
-        this.maxDataValues[2] = 1.0f;
-        this.maxDataValues[3] = 1.0f;
-        this.maxDataValues[4] = 5000.0f;
+        this.commandHandler = commandHandler;
+        commandHandler.setRenderParameters(renderParameters);
+        commandHandler.setRenderingEngine(this);
  
         masterRenderer = new MasterRenderer(windowWidth, windowHeight, renderParameters);
         guiManager = new GUIManager(windowId, windowWidth, windowHeight, renderParameters);
@@ -168,8 +152,8 @@ public class RenderingEngine {
             
             guiManager.pollEvents(windowId);
 
-            if (commandQueue.commandAvailable())
-                processCommands();
+            if (commandHandler.processCommands())
+                glfwSetWindowShouldClose(windowId, true);
         }
         
         masterRenderer.cleanUp();
@@ -191,10 +175,10 @@ public class RenderingEngine {
         });
     }
 
-    private void loadGCodeFile(String gCodeFile) {
+    public void loadGCodeFile(String gCodeFile) {
         try {
             GCodeProcessor processor = new GCodeProcessor();
-            GCodeVisualiser visualiser = new GCodeVisualiser(model, configuration);
+            GCodeVisualiser visualiser = new GCodeVisualiser(model, renderParameters, configuration);
             if (processor.processFile(gCodeFile, visualiser))
             {
                 segments = visualiser.getSegments();
@@ -209,8 +193,8 @@ public class RenderingEngine {
                         numberOfLines = n;
                 }
                 renderParameters.setNumberOfLines(numberOfLines);
-                renderParameters.setFirstLineToRender(0);
-                renderParameters.setLastLineToRender(renderParameters.getNumberOfLines());
+                renderParameters.setFirstSelectedLine(0);
+                renderParameters.setLastSelectedLine(0);
                 STENO.info("Number of lines = " + Integer.toString(renderParameters.getNumberOfLines()));
 
                 if (processor.getNumberOfTopLayer() > Entity.NULL_LAYER)
@@ -223,7 +207,7 @@ public class RenderingEngine {
                     renderParameters.setIndexOfBottomLayer(0);
                 renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
                 renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
-                STENO.info("Top layer = " + Integer.toString(renderParameters.getIndexOfTopLayer()));
+                guiManager.setToolSet(visualiser.getToolSet());
             }
         }
         catch (RuntimeException ex)
@@ -244,205 +228,18 @@ public class RenderingEngine {
         masterRenderer.processFloor(floor);
         printVolume.getLineEntities().forEach(masterRenderer::processLine);
     }
-    
-    private void processCommands() {
-        while (commandQueue.commandAvailable()) {
-            String command = commandQueue.getNextCommandFromQueue().trim();
-            STENO.debug("Processing command " + command);
-            if (command.equalsIgnoreCase("q") || command.equalsIgnoreCase("quit")) {
-                glfwSetWindowShouldClose(windowId, true);
-                break;
-            }
-            else {
-                try {
-                    String commandParameter;
-                    Scanner commandScanner = new Scanner(command);
-                    if (commandScanner.hasNext()) {
-                        String commandWord = commandScanner.next().toLowerCase();
-                        switch (commandWord) {
-                            case "load":
-                                loadGCodeFile(commandScanner.nextLine().trim());
-                                break;
 
-                            case "l1":
-                                loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\snake.gcode");
-                                break;
-
-                            case "l2":
-                                loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\gear-box.gcode");
-                                break;
-
-                            case "l3":
-                                loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\spiral-65-0p5.gcode");
-                                break;
-
-                            case "l4":
-                                loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\cones_robox.gcode");
-                                break;
-
-                            case "l5":
-                                loadGCodeFile("D:\\CEL\\Dev\\ImpactWire\\step\\test_part_spline_offset_top_minus.gcode");
-                                break;
-
-                            case "show":
-                            case "s":
-                                commandParameter = commandScanner.next().toLowerCase();
-                                switch (commandParameter) {
-                                    case "moves":
-                                    case "m":
-                                        renderParameters.setShowMoves(true);
-                                        break;
-
-                                    case "tool0":
-                                    case "t0":
-                                    case "0":
-                                        renderParameters.setShowTool0(true);
-                                        break;
-
-                                    case "tool1":
-                                    case "t1":
-                                    case "1":
-                                        renderParameters.setShowTool1(true);
-                                        break;
-
-                                    default:
-                                        STENO.error("Unrecognised option in command " + command);
-                                }
-                                break;
-
-                            case "hide":
-                            case "h":
-                                commandParameter = commandScanner.next().toLowerCase();
-                                switch (commandParameter) {
-                                    case "moves":
-                                    case "m":
-                                        renderParameters.setShowMoves(false);
-                                        break;
-
-                                    case "tool0":
-                                    case "t0":
-                                    case "0":
-                                        renderParameters.setShowTool0(false);
-                                        break;
-
-                                    case "tool1":
-                                    case "t1":
-                                    case "1":
-                                        renderParameters.setShowTool1(false);
-                                        break;
-
-                                    default:
-                                        STENO.error("Unrecognised option in command " + command);
-                                }
-                                break;
-
-                            case "top":
-                            case "t":
-                                if (commandScanner.hasNextInt())
-                                    renderParameters.setTopLayerToRender(commandScanner.nextInt());
-                                else
-                                    renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
-                                break;
-
-                            case "bottom":
-                            case "b":
-                                if (commandScanner.hasNextInt())
-                                    renderParameters.setBottomLayerToRender(commandScanner.nextInt());
-                                else
-                                    renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
-                                break;
-
-
-                            case "first":
-                            case "f":
-                                if (commandScanner.hasNextInt())
-                                    renderParameters.setFirstLineToRender(commandScanner.nextInt());
-                                else
-                                    renderParameters.setFirstLineToRender(0);
-                                break;
-
-                            case "last":
-                            case "l":
-                                if (commandScanner.hasNextInt())
-                                    renderParameters.setLastLineToRender(commandScanner.nextInt());
-                                else
-                                    renderParameters.setLastLineToRender(renderParameters.getNumberOfLines());
-                                break;
-
-                            case "colour":
-                            case "c":
-                                commandParameter = commandScanner.next().toLowerCase();
-                                switch (commandParameter) {
-                                    case "type":
-                                    case "ty":
-                                        colourSegmentsFromType();
-                                        reloadSegments();
-                                        renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
-                                        break;
-
-                                    case "tool":
-                                    case "to":
-                                        renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TOOL);
-                                        break;
-
-                                    case "data":
-                                    case "d":
-                                        int dataIndex = -1;
-                                        if (commandScanner.hasNextInt()) {
-                                            dataIndex = commandScanner.nextInt();
-                                            if (dataIndex < 0 || dataIndex >= Entity.N_DATA_VALUES)
-                                                dataIndex = -1;
-                                        }
-                                        else {
-                                            commandParameter = commandScanner.next().toLowerCase();
-                                            switch (commandParameter)
-                                            {
-                                                case "a":
-                                                    dataIndex = 0;
-                                                    break;
-                                                case "b":
-                                                    dataIndex = 1;
-                                                    break;
-                                                case "d":
-                                                    dataIndex = 2;
-                                                    break;
-                                                case "e":
-                                                    dataIndex = 3;
-                                                    break;
-                                                case "f":
-                                                    dataIndex = 4;
-                                                    break;
-                                                default:
-                                                    break;
-                                            }
-                                        }
-                                        if (dataIndex >= 0)
-                                        {
-                                            colourSegmentsFromData(dataIndex, minDataValues[dataIndex], maxDataValues[dataIndex]);
-                                            reloadSegmentColours();
-                                            renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
-                                        }
-                                        break;
-                                
-                                    default:
-                                        System.out.println("Unrecognised colour mode in command " + command);
-                                }
-                                break;
-
-                            default:
-                                STENO.error("Ignoring command " + command);
-                                break;
-                        }
-                    }
-                }
-                catch (RuntimeException ex) {
-                    STENO.exception("Command parsing error", ex);
-                }
-            }
-        }
+    public void clearGCode() {
+        renderParameters.clearLinesAndLayer();
+        masterRenderer.clearEntities();
+        segmentLoader.cleanUp();
+        moveLoader.cleanUp();
+        masterRenderer.processCentrePoint(centerPoint);
+        masterRenderer.processFloor(floor);
+        printVolume.getLineEntities().forEach(masterRenderer::processLine);
     }
 
-    private void reloadSegments() {
+    public void reloadSegments() {
         masterRenderer.processSegmentEntity(null);
         segmentLoader.cleanUp();
         if (segments != null && segments.size() > 0) {
@@ -450,7 +247,7 @@ public class RenderingEngine {
         }
     }
     
-    private void reloadSegmentColours() {
+    public void reloadSegmentColours() {
         if (segments != null &&
             segments.size() > 0 &&
             masterRenderer.getSegmentEntity() != null) {
@@ -458,7 +255,7 @@ public class RenderingEngine {
         }
     }
         
-    private void colourSegmentsFromType() {
+    public void colourSegmentsFromType() {
         if (segments != null && segments.size() > 0) {
             segments.forEach(segment -> {
                 segment.setColour(segment.getTypeColour());
@@ -466,7 +263,7 @@ public class RenderingEngine {
         }
     }
     
-    private void colourSegmentsFromData(int dataIndex, float minValue, float maxValue) {
+    public void colourSegmentsFromData(int dataIndex, float minValue, float maxValue) {
         List<Vector3f> colourPalette = renderParameters.getDataColourPalette();
         if (dataIndex >= 0 &&
             dataIndex < Entity.N_DATA_VALUES &&

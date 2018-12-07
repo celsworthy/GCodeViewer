@@ -37,11 +37,12 @@ public class SegmentRenderer {
             shader.loadLight(light);
             shader.loadLayerLimits(renderParameters.getTopLayerToRender(),
                                    renderParameters.getBottomLayerToRender());
-            shader.loadLineLimits(renderParameters.getFirstLineToRender(),
-                                  renderParameters.getLastLineToRender());
+            shader.loadLineLimits(renderParameters.getFirstSelectedLine(),
+                                  renderParameters.getLastSelectedLine());
             shader.loadShowFlags(renderParameters.getShowFlags());
-            shader.loadToolColours(renderParameters.getColourForTool(0),
-                                   renderParameters.getColourForTool(1));
+            shader.loadShowTools(renderParameters.getShowTools());
+            shader.loadToolColours(renderParameters.getToolColours());
+            shader.loadSelectColour(renderParameters.getSelectColour());
             bindRawModel(rawEntity);
             glDrawArrays(GL_POINTS, 0, rawEntity.getVertexCount());
             unbindRawModel();

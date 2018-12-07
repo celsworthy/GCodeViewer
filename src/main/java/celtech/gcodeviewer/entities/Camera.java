@@ -1,5 +1,6 @@
 package celtech.gcodeviewer.entities;
 
+import celtech.gcodeviewer.gui.GCVControlPanel;
 import celtech.gcodeviewer.gui.GUIManager;
 import java.nio.DoubleBuffer;
 import org.lwjgl.BufferUtils;
@@ -11,11 +12,6 @@ import org.lwjgl.util.vector.Vector3f;
  * @author George Salter
  */
 public class Camera {
-
-    private static final int GUI_PANEL_MIN_X = 10;
-    private static final int GUI_PANEL_MAX_X = 230;
-    private static final int GUI_PANEL_MIN_Y = 10;
-    private static final int GUI_PANEL_MAX_Y = 230;
 
     private static final float MOUSE_CONTROL_SENSITIVITY = 5;
     private static final float MOUSE_ZOOM_SENSITIVITY = 4;
@@ -86,10 +82,10 @@ public class Camera {
             //System.out.println("mouse[" + Integer.toString(mouseButton) + " = (" + Double.toString(xpos) + ", " + Double.toString(ypos) + ")");
             //System.out.println("action = " + (action == GLFW_PRESS ? "GLFW_PRESS" : "GLFW_RELEASE"));
             if (!dragging &&
-                xpos >= GUI_PANEL_MIN_X &&
-                xpos <= GUI_PANEL_MAX_X &&
-                ypos >= GUI_PANEL_MIN_Y &&
-                ypos <= GUI_PANEL_MAX_Y)
+                xpos >= GCVControlPanel.GUI_PANEL_X &&
+                xpos <= (GCVControlPanel.GUI_PANEL_X + GCVControlPanel.GUI_PANEL_WIDTH) &&
+                ypos >= GCVControlPanel.GUI_PANEL_Y &&
+                ypos <= GCVControlPanel.GUI_PANEL_Y + guiManager.getControlPanelHeight())
             {
                 //System.out.println("calling guiManager.onMouseButton");
                 guiManager.onMouseButton(window, xpos, ypos, mouseButton, action, mods);

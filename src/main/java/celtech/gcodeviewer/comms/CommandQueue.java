@@ -51,7 +51,7 @@ public class CommandQueue extends Thread
     @Override
     public void run()
     {
-        System.out.println("Reading commands from StdIn ...");
+        //System.out.println("Reading commands from StdIn ...");
         Scanner scanner = new Scanner(System.in);
         boolean running = true;
         while (running) {

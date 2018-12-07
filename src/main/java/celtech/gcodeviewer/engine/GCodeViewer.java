@@ -1,6 +1,6 @@
 package celtech.gcodeviewer.engine;
 
-import celtech.gcodeviewer.comms.CommandQueue;
+import celtech.gcodeviewer.comms.CommandHandler;
 import java.io.IOException;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -36,16 +36,18 @@ public class GCodeViewer {
 
     private long windowId;
     
-    public CommandQueue commandQueue;
+    public CommandHandler commandHandler;
     
     /**
      * Run the program 
      */
-    public void run() {
-        STENO.changeLogLevel(libertysystems.stenographer.LogLevel.INFO);
+    public void run(String[] args) {
+        System.out.println("Hello!");
+        StenographerFactory.changeAllLogLevels(libertysystems.stenographer.LogLevel.INFO);
         STENO.debug("Running " + PROGRAM_NAME);
         
-        configuration = GCodeViewerConfiguration.loadFromFile("GCodeViewer.config");
+        configuration = GCodeViewerConfiguration.loadFromConfig();
+
         init();
         loop();
 
@@ -56,6 +58,7 @@ public class GCodeViewer {
         // Terminate GLFW and free the error callback
         glfwTerminate();
         glfwSetErrorCallback(null).free();
+        System.out.println("Goodbye!");
     }
 
     /**
@@ -149,14 +152,14 @@ public class GCodeViewer {
     }
     
     private void loop() {
-        commandQueue = new CommandQueue();
-        commandQueue.start();
+        commandHandler = new CommandHandler();
+        commandHandler.start();
         
         RenderingEngine renderingEngine = new RenderingEngine(windowId,
                                                               windowWidth,
                                                               windowHeight,
                                                               configuration,
-                                                              commandQueue);
+                                                              commandHandler);
         renderingEngine.start();
     }
     
@@ -166,6 +169,6 @@ public class GCodeViewer {
      * @param args 
      */
     public static void main(String[] args) {
-        new GCodeViewer().run();
+        new GCodeViewer().run(args);
     }
 }

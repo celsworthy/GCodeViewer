@@ -9,13 +9,17 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.FloatBuffer;
+import java.util.List;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.util.vector.Vector3f;
 import org.lwjgl.util.vector.Matrix4f;
+import org.lwjgl.util.vector.Vector4f;
 
 public abstract class ShaderProgram {
     
+    private static final int MAX_UNIFORM_VECTOR = 8;
     private static final FloatBuffer MATRIX_BUFFER = BufferUtils.createFloatBuffer(16);
+    private static final FloatBuffer UNIFORM_VECTOR_BUFFER = BufferUtils.createFloatBuffer(MAX_UNIFORM_VECTOR * 4);
     
     protected static final String SHADER_DIRECTORY = "/celtech/gcodeviewer/resources/";
     
@@ -99,6 +103,34 @@ public abstract class ShaderProgram {
         glUniform3f(location, vector.x, vector.y, vector.z);
     }
     
+    protected void loadVector4(int location, Vector4f vector) {
+        glUniform4f(location, vector.x, vector.y, vector.z, vector.w);
+    }
+
+    protected void loadVector3ArraytoUVector4(int location, List<Vector3f> vl) {
+        UNIFORM_VECTOR_BUFFER.clear();
+        for (int i = 0; i < MAX_UNIFORM_VECTOR; ++i)
+        {
+            if (i < vl.size())
+            {
+                Vector3f v4 = vl.get(i);
+                UNIFORM_VECTOR_BUFFER.put(v4.getX());
+                UNIFORM_VECTOR_BUFFER.put(v4.getY());
+                UNIFORM_VECTOR_BUFFER.put(v4.getZ());
+                UNIFORM_VECTOR_BUFFER.put(1.0f);
+            }
+            else
+            {
+                UNIFORM_VECTOR_BUFFER.put(0.0f);
+                UNIFORM_VECTOR_BUFFER.put(0.0f);
+                UNIFORM_VECTOR_BUFFER.put(0.0f);
+                UNIFORM_VECTOR_BUFFER.put(0.0f);
+            }
+        }
+        UNIFORM_VECTOR_BUFFER.flip();
+        glUniform4fv(location, UNIFORM_VECTOR_BUFFER);
+    }
+
     protected void loadBoolean(int location, boolean value) {
         float toLoad = 0;
         if(value) {

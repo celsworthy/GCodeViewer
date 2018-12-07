@@ -3,9 +3,13 @@ package celtech.gcodeviewer.engine;
 import celtech.gcodeviewer.entities.Entity;
 import celtech.gcodeviewer.utils.VectorUtils;
 import celtech.gcodeviewer.gcode.GCodeLine;
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.lwjgl.util.vector.Vector3f;
@@ -21,6 +25,7 @@ public class GCodeVisualiser implements GCodeConsumer
     private final double MINIMUM_EXTRUSION = 0.0001;
     
     private final GCodeViewerConfiguration configuration;
+    private final RenderParameters renderParameters;
 
     private double previousX = 0.0;
     private double previousY = 0.0;
@@ -40,7 +45,26 @@ public class GCodeVisualiser implements GCodeConsumer
     private double currentE = 0.0;
     private double currentF = 0.0;
 
+    private double minX = 0.0;
+    private double minY = 0.0;
+    private double minZ = 0.0;
+    private double minA = 0.0;
+    private double minB = 0.0;
+    private double minD = 0.0;
+    private double minE = 0.0;
+    private double minF = 0.0;
+
+    private double maxX = 0.0;
+    private double maxY = 0.0;
+    private double maxZ = 0.0;
+    private double maxA = 0.0;
+    private double maxB = 0.0;
+    private double maxD = 0.0;
+    private double maxE = 0.0;
+    private double maxF = 0.0;
+
     private int currentTool = 0;
+    private Set<Integer> toolSet = new HashSet<>();
  
     boolean relativeMoves = false;
     private boolean relativeExtrusion = false;
@@ -49,6 +73,7 @@ public class GCodeVisualiser implements GCodeConsumer
     private int currentLine = 0;
     private double currentHeight = 0;
     private String currentType = "";
+    private Set<String> typeSet = new HashSet<>();
 
     private RawModel lineModel;
     
@@ -58,10 +83,11 @@ public class GCodeVisualiser implements GCodeConsumer
     
     static private final double RADIANS_TO_DEGREES = 57.2957795131;
     
-    public GCodeVisualiser(RawModel lineModel, GCodeViewerConfiguration configuration)
+    public GCodeVisualiser(RawModel lineModel, RenderParameters renderParameters, GCodeViewerConfiguration configuration)
     {
         this.lineModel = lineModel;
         this.configuration = configuration;
+        this.renderParameters = renderParameters;
         this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
     }
 
@@ -83,6 +109,22 @@ public class GCodeVisualiser implements GCodeConsumer
     public List<Entity> getMoves()
     {
         return moves;
+    }
+
+    public Set<Integer> getToolSet()
+    {
+        // If the toolSet is empty when
+        // retrieved, then no tool was selected.
+        // The default tool is tool 0, so add
+        // it to the toolSet.
+        if (toolSet.size() == 0)
+            toolSet.add(currentTool);
+        return toolSet;
+    }
+
+    public Set<String> getTypeSet()
+    {
+        return typeSet;
     }
 
     @Override
@@ -107,6 +149,7 @@ public class GCodeVisualiser implements GCodeConsumer
         currentF = 0.0;
 
         currentTool = 0;
+        toolSet.clear();
         
         relativeMoves = false;
         relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
@@ -114,6 +157,7 @@ public class GCodeVisualiser implements GCodeConsumer
         currentLayer = Entity.NULL_LAYER;
         currentHeight = 0;
         currentType = "";
+        typeSet.clear();
         
         segments.clear();
         moves.clear();
@@ -195,6 +239,7 @@ public class GCodeVisualiser implements GCodeConsumer
     public void processTCode(GCodeLine line)
     {
         currentTool = line.commandNumber;
+        toolSet.add(currentTool);
         processMove(line);
     }
 
@@ -209,6 +254,7 @@ public class GCodeVisualiser implements GCodeConsumer
             line.type != currentType)
         {
             currentType = line.type;
+            typeSet.add(currentType);
         }
     }
     
@@ -341,7 +387,7 @@ public class GCodeVisualiser implements GCodeConsumer
             if (isExtrusion)
             {
                 // Calculate volume of filament to extrude.
-                double v = configuration.getFilamentFactor() * (deltaD >= deltaE ? deltaD : deltaE);
+                double v = renderParameters.getFilamentFactorForTool(currentTool) * (deltaD >= deltaE ? deltaD : deltaE);
                 
                 // Calculate width of triangular block with the length of this segment with the equivalent volume.
                 v *= 2.0 / length;
@@ -394,5 +440,22 @@ public class GCodeVisualiser implements GCodeConsumer
             previousD = currentD;
             previousE = currentE;
         }
+        minX = min(currentX, minX);
+        minY = min(currentY, minX);
+        minZ = min(currentZ, minX);
+        minA = min(currentA, minX);
+        minB = min(currentB, minX);
+        minD = min(currentD, minX);
+        minE = min(currentE, minX);
+        minF = min(currentF, minX);
+
+        maxX = max(currentX, maxX);
+        maxY = max(currentY, maxX);
+        maxZ = max(currentZ, maxX);
+        maxA = max(currentA, maxX);
+        maxB = max(currentB, maxX);
+        maxD = max(currentD, maxX);
+        maxE = max(currentE, maxX);
+        maxF = max(currentF, maxX);
     }
 }

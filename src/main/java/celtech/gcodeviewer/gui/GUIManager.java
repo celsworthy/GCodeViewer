@@ -27,6 +27,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.nuklear.NkAllocator;
@@ -34,7 +35,11 @@ import org.lwjgl.nuklear.NkColor;
 import org.lwjgl.nuklear.NkContext;
 import org.lwjgl.nuklear.NkMouse;
 import org.lwjgl.nuklear.NkStyleItem;
+import org.lwjgl.nuklear.NkStyleItemData;
 import org.lwjgl.nuklear.NkStyleProperty;
+import org.lwjgl.nuklear.NkStyleToggle;
+import org.lwjgl.nuklear.NkStyleWindow;
+import org.lwjgl.nuklear.NkStyleWindowHeader;
 import org.lwjgl.nuklear.NkUserFont;
 import org.lwjgl.nuklear.NkUserFontGlyph;
 import org.lwjgl.nuklear.NkVec2;
@@ -139,7 +144,7 @@ public class GUIManager {
         int BITMAP_W = 1024;
         int BITMAP_H = 1024;
 
-        int FONT_HEIGHT = 18;
+        int FONT_HEIGHT = 28;
         int fontTexID   = glGenTextures();
 
         STBTTFontinfo fontInfo = STBTTFontinfo.create();
@@ -243,31 +248,77 @@ public class GUIManager {
     
     public void setupStyle() {
         try (MemoryStack stack = stackPush()) {
-            NkColor normalColour = NkColor.mallocStack(stack);
-            normalColour.r((byte)0).g((byte)0).b((byte)0).a((byte)128);
-            NkColor hoverColour = NkColor.mallocStack(stack);
-            hoverColour.r((byte)128).g((byte)128).b((byte)128).a((byte)255);
-            NkColor activeColour = NkColor.mallocStack(stack);
-            activeColour.r((byte)255).g((byte)255).b((byte)255).a((byte)255);
+
+            NkColor normalFGColour = NkColor.mallocStack(stack);
+            normalFGColour.r((byte)255).g((byte)255).b((byte)255).a((byte)255);
+            NkColor normalBGColour = NkColor.mallocStack(stack);
+            normalBGColour.r((byte)64).g((byte)64).b((byte)64).a((byte)255);
+            NkColor hoverFGColour = NkColor.mallocStack(stack);
+            hoverFGColour.r((byte)224).g((byte)224).b((byte)224).a((byte)255);
+            NkColor activeFGColour = NkColor.mallocStack(stack);
+            activeFGColour.r((byte)192).g((byte)192).b((byte)192).a((byte)255);
+
+            NkStyleWindow windowStyle = nkContext.style().window();
+            windowStyle.fixed_background().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)64);
+            
+            NkStyleWindowHeader headerStyle = windowStyle.header();
+            headerStyle.active().type(NK_STYLE_ITEM_COLOR);
+            headerStyle.active().data().color().r((byte)96).g((byte)96).b((byte)96).a((byte)160);
+            headerStyle.label_active().set(normalFGColour);
+            headerStyle.minimize_button().normal().type(NK_STYLE_ITEM_COLOR);
+            headerStyle.minimize_button().normal().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            headerStyle.minimize_button().active().type(NK_STYLE_ITEM_COLOR);
+            headerStyle.minimize_button().active().data().color().r((byte)32).g((byte)32).b((byte)32).a((byte)255);
+            headerStyle.minimize_button().hover().type(NK_STYLE_ITEM_COLOR);
+            headerStyle.minimize_button().hover().data().color().r((byte)32).g((byte)32).b((byte)32).a((byte)255);
 
             NkStyleProperty propertyStyle = nkContext.style().property();
-            propertyStyle.label_normal().set(normalColour);
-            propertyStyle.label_hover().set(hoverColour);
-            propertyStyle.label_active().set(activeColour);
-            propertyStyle.edit().text_normal().set(normalColour);
-            propertyStyle.edit().text_hover().set(hoverColour);
-            propertyStyle.edit().text_active().set(activeColour);
-            propertyStyle.sym_left(NK_SYMBOL_TRIANGLE_UP);
-            propertyStyle.sym_right(NK_SYMBOL_TRIANGLE_DOWN);
-            propertyStyle.dec_button().normal().data().color().set(normalColour);
-            propertyStyle.dec_button().hover().data().color().set(hoverColour);
-            propertyStyle.inc_button().active().data().color().set(activeColour);
-            propertyStyle.inc_button().normal().data().color().set(normalColour);
-            propertyStyle.inc_button().hover().data().color().set(hoverColour);
-            propertyStyle.inc_button().active().data().color().set(activeColour);
+            propertyStyle.label_normal().set(normalFGColour);
+            propertyStyle.label_hover().set(hoverFGColour);
+            propertyStyle.label_active().set(activeFGColour);
+            propertyStyle.edit().text_normal().set(normalFGColour);
+            propertyStyle.edit().text_hover().set(hoverFGColour);
+            propertyStyle.edit().text_active().set(activeFGColour);
+            propertyStyle.edit().active().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.edit().active().data().color(normalFGColour);
+            propertyStyle.edit().hover().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.edit().hover().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            propertyStyle.edit().normal().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.edit().normal().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            propertyStyle.sym_left(NK_SYMBOL_MINUS);
+            propertyStyle.sym_right(NK_SYMBOL_PLUS);
+            propertyStyle.dec_button().normal().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.dec_button().normal().data().color().set(normalFGColour);
+            propertyStyle.dec_button().hover().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.dec_button().hover().data().color().set(hoverFGColour);
+            propertyStyle.dec_button().active().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.dec_button().active().data().color().set(activeFGColour);
+            propertyStyle.inc_button().normal().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.inc_button().normal().data().color().set(normalFGColour);
+            propertyStyle.inc_button().hover().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.inc_button().hover().data().color().set(hoverFGColour);
+            propertyStyle.inc_button().active().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.inc_button().active().data().color().set(activeFGColour);
+            propertyStyle.active().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.active().data().color(normalFGColour);
+            propertyStyle.hover().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.hover().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            propertyStyle.normal().type(NK_STYLE_ITEM_COLOR);
+            propertyStyle.normal().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+
+            NkStyleToggle checkboxStyle = nkContext.style().checkbox();
+            checkboxStyle.border(1.0f);
+            checkboxStyle.border_color(normalFGColour);
+            checkboxStyle.text_active(activeFGColour);
+            checkboxStyle.text_normal(normalFGColour);
+            checkboxStyle.text_hover(hoverFGColour);
         }
     }
     
+    public void setToolSet(Set<Integer> toolSet) {
+        guiRenderer.setToolSet(toolSet);
+    }
+
     public void render() {
         guiShader.start();
         guiRenderer.render();
@@ -277,6 +328,14 @@ public class GUIManager {
     public void cleanUp() {
         guiRenderer.cleanUp();
         guiShader.cleanUp();
+    }
+    
+    public boolean isControlPanelOpen() {
+        return guiRenderer.isControlPanelOpen();
+    }
+    
+    public int getControlPanelHeight() {
+        return guiRenderer.getControlPanelHeight();
     }
     
     public void onWindowResize(int windowWidth, int windowHeight) {

@@ -1,6 +1,7 @@
 package celtech.gcodeviewer.engine.renderers;
 
 import celtech.gcodeviewer.engine.RenderParameters;
+import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.gui.GCVControlPanel;
 import celtech.gcodeviewer.shaders.GUIShader;
 import static org.lwjgl.nuklear.Nuklear.nk_buffer_init_fixed;
@@ -11,6 +12,7 @@ import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
 import java.util.Objects;
+import java.util.Set;
 import org.lwjgl.nuklear.NkAllocator;
 import org.lwjgl.nuklear.NkBuffer;
 import org.lwjgl.nuklear.NkContext;
@@ -74,7 +76,6 @@ public class GUIRenderer {
 
     private final GCVControlPanel panel = new GCVControlPanel();
 
-    
     public GUIRenderer(NkContext nkContext,
                        GUIShader guiShader,
                        int windowWidth,
@@ -101,9 +102,13 @@ public class GUIRenderer {
         }
     }
     
+    public void setToolSet(Set<Integer> toolSet) {
+        panel.setToolSet(toolSet);
+    }
+
     public void render() {
         
-        panel.layout(nkContext, 10, 10, renderParameters);
+        panel.layout(nkContext, GCVControlPanel.GUI_PANEL_X, GCVControlPanel.GUI_PANEL_Y, renderParameters);
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -167,14 +172,8 @@ public class GUIRenderer {
                 continue;
             }
             
-            // If face calling is enabled, the button text is not drawn.
-            // If face culling is disabled, the whole rectangle is filled.
-            // This little hack makes the button outlines and text show.
-            // Perhaps Nuklear is orienting it's triangles incorrectly.
-            if (cmd.texture().id() == nkContext.style().font().texture().id())
-                glDisable(GL_CULL_FACE);
-            else
-                glEnable(GL_CULL_FACE);
+            // If face calling is enabled, only the text is drawn.
+            glDisable(GL_CULL_FACE);
 
             glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
 //            glScissor(
@@ -206,4 +205,12 @@ public class GUIRenderer {
     public void cleanUp() {
         nk_buffer_free(cmds);
     }
+    
+    public boolean isControlPanelOpen() {
+        return panel.isPanelOpen();
+    }
+    
+    public int getControlPanelHeight() {
+        return panel.getPanelHeight();
+    }    
 }

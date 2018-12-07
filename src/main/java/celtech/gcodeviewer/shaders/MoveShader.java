@@ -18,9 +18,11 @@ public class MoveShader  extends ShaderProgram {
     private int location_compositeMatrix;
     private int location_topVisibleLayer;
     private int location_bottomVisibleLayer;
-    private int location_firstVisibleLine;
-    private int location_lastVisibleLine;
+    private int location_firstSelectedLine;
+    private int location_lastSelectedLine;
     private int location_moveColour;
+    private int location_selectColour;
+    private int location_showFlags;
     
     private Matrix4f projectionMatrix;
     private Matrix4f viewMatrix;
@@ -40,9 +42,11 @@ public class MoveShader  extends ShaderProgram {
         location_compositeMatrix = super.getUniformLocation("compositeMatrix");
         location_topVisibleLayer = super.getUniformLocation("topVisibleLayer");
         location_bottomVisibleLayer = super.getUniformLocation("bottomVisibleLayer");
-        location_firstVisibleLine = super.getUniformLocation("firstVisibleLine");
-        location_lastVisibleLine = super.getUniformLocation("lastVisibleLine");
+        location_firstSelectedLine = super.getUniformLocation("firstSelectedLine");
+        location_lastSelectedLine = super.getUniformLocation("lastSelectedLine");
         location_moveColour = super.getUniformLocation("moveColour");
+        location_selectColour = super.getUniformLocation("selectColour");
+        location_showFlags = super.getUniformLocation("showFlags");
     }
     
     public void setViewMatrix(Camera camera) {
@@ -75,12 +79,20 @@ public class MoveShader  extends ShaderProgram {
         super.loadInt(location_bottomVisibleLayer, bottomVisibleLayer);
     }
 
-    public void loadLineLimits(int firstVisibleLine, int lastVisibleLine) {
-        super.loadInt(location_firstVisibleLine, firstVisibleLine);
-        super.loadInt(location_lastVisibleLine, lastVisibleLine);
+    public void loadLineLimits(int firstSelectedLine, int lastSelectedLine) {
+        super.loadInt(location_firstSelectedLine, firstSelectedLine);
+        super.loadInt(location_lastSelectedLine, lastSelectedLine);
     }
 
     public void loadMoveColour(Vector3f moveColour) {
         super.loadVector3(location_moveColour, moveColour);
+    }
+
+    public void loadSelectColour(Vector3f selectColour) {
+        super.loadVector3(location_selectColour, selectColour);
+    }
+
+    public void loadShowFlags(int showFlags) {
+        super.loadInt(location_showFlags, showFlags);
     }
 }

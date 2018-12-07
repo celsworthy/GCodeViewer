@@ -1,12 +1,12 @@
 #version 400 core
 
-in vec4 colour;
+in vec4 vColour;
 
 out vec4 out_Colour;
 
 void main(void) {
     
-	if (colour.a <= 0.01)
+	if (vColour.a <= 0.001)
 		discard;
-    out_Colour = colour;
+    out_Colour = vColour;
 }

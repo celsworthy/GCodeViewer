@@ -4,6 +4,7 @@ import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.Light;
 import static celtech.gcodeviewer.shaders.ShaderProgram.SHADER_DIRECTORY;
 import celtech.gcodeviewer.utils.MatrixUtils;
+import java.util.List;
 import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
@@ -21,11 +22,12 @@ public class SegmentShader  extends ShaderProgram {
     private int location_compositeMatrix;
     private int location_topVisibleLayer;
     private int location_bottomVisibleLayer;
-    private int location_firstVisibleLine;
-    private int location_lastVisibleLine;
+    private int location_firstSelectedLine;
+    private int location_lastSelectedLine;
     private int location_showFlags;
-    private int location_t0Colour;
-    private int location_t1Colour;
+    private int location_showTools;
+    private int location_toolColours;
+    private int location_selectColour;
     
     private Matrix4f projectionMatrix;
     private Matrix4f viewMatrix;
@@ -50,11 +52,12 @@ public class SegmentShader  extends ShaderProgram {
         location_compositeMatrix = super.getUniformLocation("compositeMatrix");
         location_topVisibleLayer = super.getUniformLocation("topVisibleLayer");
         location_bottomVisibleLayer = super.getUniformLocation("bottomVisibleLayer");
-        location_firstVisibleLine = super.getUniformLocation("firstVisibleLine");
-        location_lastVisibleLine = super.getUniformLocation("lastVisibleLine");
+        location_firstSelectedLine = super.getUniformLocation("firstSelectedLine");
+        location_lastSelectedLine = super.getUniformLocation("lastSelectedLine");
         location_showFlags = super.getUniformLocation("showFlags");
-        location_t0Colour = super.getUniformLocation("t0Colour");
-        location_t1Colour = super.getUniformLocation("t1Colour");
+        location_showTools = super.getUniformLocation("showTools");
+        location_toolColours = super.getUniformLocation("toolColours");
+        location_selectColour = super.getUniformLocation("selectColour");
     }
     
     public void setViewMatrix(Camera camera) {
@@ -92,17 +95,24 @@ public class SegmentShader  extends ShaderProgram {
         super.loadInt(location_bottomVisibleLayer, bottomVisibleLayer);
     }
 
-    public void loadLineLimits(int firstVisibleLine, int lastVisibleLine) {
-        super.loadInt(location_firstVisibleLine, firstVisibleLine);
-        super.loadInt(location_lastVisibleLine, lastVisibleLine);
+    public void loadLineLimits(int firstSelectedLine, int lastSelectedLine) {
+        super.loadInt(location_firstSelectedLine, firstSelectedLine);
+        super.loadInt(location_lastSelectedLine, lastSelectedLine);
     }
 
     public void loadShowFlags(int showFlags) {
         super.loadInt(location_showFlags, showFlags);
     }
 
-    public void loadToolColours(Vector3f t0Colour, Vector3f t1Colour) {
-        super.loadVector3(location_t0Colour, t0Colour);
-        super.loadVector3(location_t1Colour, t1Colour);
+    public void loadShowTools(int showTools) {
+        super.loadInt(location_showTools, showTools);
+    }
+
+    public void loadToolColours(List<Vector3f> toolColours) {
+        super.loadVector3ArraytoUVector4(location_toolColours, toolColours);
+    }
+
+    public void loadSelectColour(Vector3f selectColour) {
+        super.loadVector3(location_selectColour, selectColour);
     }
 }
