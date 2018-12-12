@@ -11,11 +11,13 @@ import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.entities.PrintVolume;
 import celtech.gcodeviewer.gui.GUIManager;
 import celtech.gcodeviewer.utils.CubeConstants;
+import java.nio.IntBuffer;
 import java.util.List;
 import java.util.Scanner;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.lwjgl.glfw.GLFW;
+import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
@@ -25,6 +27,8 @@ import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryStack;
+import static org.lwjgl.system.MemoryStack.stackPush;
 import org.lwjgl.util.vector.Vector3f;
 
 /**
@@ -38,8 +42,6 @@ public class RenderingEngine {
             RenderingEngine.class.getName());
     
     private final long windowId;
-    private int windowWidth;
-    private int windowHeight;
     
     private final float printVolumeWidth;
     private final float printVolumeHeight;
@@ -48,6 +50,7 @@ public class RenderingEngine {
     private RenderParameters renderParameters = new RenderParameters();
     private List<Entity> segments = null;
     private List<Entity> moves = null;
+    private List<String> lines = null;
         
     private final MasterRenderer masterRenderer;
     private final GUIManager guiManager;
@@ -74,8 +77,6 @@ public class RenderingEngine {
                            GCodeViewerConfiguration configuration,
                            CommandHandler commandHandler) {
         this.windowId = windowId;
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
         this.configuration = configuration;
         Vector3f printVolume = configuration.getPrintVolume();
         this.printVolumeWidth = (float)printVolume.getX();
@@ -83,13 +84,15 @@ public class RenderingEngine {
         this.printVolumeDepth = (float)printVolume.getY();
 
         renderParameters.setFromConfiguration(configuration);
+        renderParameters.setWindowWidth(windowWidth);
+        renderParameters.setWindowHeight(windowHeight);
 
         this.commandHandler = commandHandler;
         commandHandler.setRenderParameters(renderParameters);
         commandHandler.setRenderingEngine(this);
  
-        masterRenderer = new MasterRenderer(windowWidth, windowHeight, renderParameters);
-        guiManager = new GUIManager(windowId, windowWidth, windowHeight, renderParameters);
+        masterRenderer = new MasterRenderer(renderParameters);
+        guiManager = new GUIManager(windowId, renderParameters);
         model = null;
         lineModel = null;
     }
@@ -118,19 +121,7 @@ public class RenderingEngine {
         });
         
         glfwSetKeyCallback(windowId, (window, key, scancode, action, mods) -> {
-            if (action == GLFW.GLFW_PRESS || action == GLFW.GLFW_REPEAT) {
-                int step = 4;
-                if (mods == GLFW.GLFW_MOD_SHIFT)
-                    step = 1;
-                else if (mods == GLFW.GLFW_MOD_CONTROL)
-                    step = 2;
-                if (key == GLFW.GLFW_KEY_UP)
-                    renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() + step);
-                else if (key == GLFW.GLFW_KEY_DOWN)
-                    renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() - step);
-                else
-                    guiManager.onKey(window, key, scancode, action, mods);
-            }
+            guiManager.onKey(window, key, scancode, action, mods);
         });
 
         masterRenderer.processFloor(floor);
@@ -139,7 +130,15 @@ public class RenderingEngine {
             
         STENO.debug("Running rendering loop.");
         while (!glfwWindowShouldClose(windowId)) {
-            GL11.glViewport(0, 0, windowWidth, windowHeight);
+            GL11.glViewport(0, 0, renderParameters.getWindowWidth(), renderParameters.getWindowHeight());
+            try (MemoryStack stack = stackPush()) {
+                IntBuffer w = stack.mallocInt(1);
+                IntBuffer h = stack.mallocInt(1);
+
+                glfwGetFramebufferSize(windowId, w, h);
+                renderParameters.setDisplayWidth(w.get(0));
+                renderParameters.setDisplayHeight(h.get(0));
+            }
 
             camera.move();
             renderParameters.checkLimits();
@@ -165,34 +164,23 @@ public class RenderingEngine {
     
     private void createWindowResizeCallback() {
         glfwSetWindowSizeCallback(windowId, (window, width, height) -> {
-            windowWidth = width;
-            windowHeight = height;
-            masterRenderer.createProjectionMatrix(windowWidth, windowHeight);
+            renderParameters.setWindowWidth(width);
+            renderParameters.setWindowHeight(height);
+            masterRenderer.createProjectionMatrix(width, height);
             masterRenderer.reLoadProjectionMatrix();
-            
-            guiManager.onWindowResize(windowWidth, windowHeight);
-            
         });
     }
 
     public void loadGCodeFile(String gCodeFile) {
         try {
             GCodeProcessor processor = new GCodeProcessor();
-            GCodeVisualiser visualiser = new GCodeVisualiser(model, renderParameters, configuration);
-            if (processor.processFile(gCodeFile, visualiser))
+            GCodeLineProcessor lineProcessor = new GCodeLineProcessor(model, renderParameters, configuration);
+            if (processor.processFile(gCodeFile, lineProcessor))
             {
-                segments = visualiser.getSegments();
-                moves = visualiser.getMoves();
-                int numberOfLines = 0;
-                if (segments.size() > 0)
-                    numberOfLines = segments.get(segments.size() - 1).getLineNumber();
-                if (moves.size() > 0)
-                {
-                    int n = moves.get(moves.size() - 1).getLineNumber();
-                    if (numberOfLines < n)
-                        numberOfLines = n;
-                }
-                renderParameters.setNumberOfLines(numberOfLines);
+                segments = lineProcessor.getSegments();
+                moves = lineProcessor.getMoves();
+                
+                renderParameters.setNumberOfLines(processor.getLines().size());
                 renderParameters.setFirstSelectedLine(0);
                 renderParameters.setLastSelectedLine(0);
                 STENO.info("Number of lines = " + Integer.toString(renderParameters.getNumberOfLines()));
@@ -207,7 +195,8 @@ public class RenderingEngine {
                     renderParameters.setIndexOfBottomLayer(0);
                 renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
                 renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
-                guiManager.setToolSet(visualiser.getToolSet());
+                guiManager.setToolSet(lineProcessor.getToolSet());
+                guiManager.setLines(processor.getLines());
             }
         }
         catch (RuntimeException ex)

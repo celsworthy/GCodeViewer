@@ -3,6 +3,7 @@ package celtech.gcodeviewer.engine.renderers;
 import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.gui.GCVControlPanel;
+import celtech.gcodeviewer.gui.GCVGCodePanel;
 import celtech.gcodeviewer.shaders.GUIShader;
 import static org.lwjgl.nuklear.Nuklear.nk_buffer_init_fixed;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -11,6 +12,7 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import org.lwjgl.nuklear.NkAllocator;
@@ -44,6 +46,11 @@ import static org.lwjgl.system.MemoryUtil.nmemFree;
  */
 public class GUIRenderer {
     
+    public static final int GUI_GCODE_PANEL_X = 20;
+    public static final int GUI_GCODE_PANEL_Y = 20;
+    public static final int GUI_CONTROL_PANEL_X = 20;
+    public static final int GUI_CONTROL_PANEL_Y = 20;
+
     private static final int MAX_VERTEX_BUFFER  = 512 * 1024;
     private static final int MAX_ELEMENT_BUFFER = 128 * 1024;
     private static final int BUFFER_INITIAL_SIZE = 4 * 1024;
@@ -69,23 +76,17 @@ public class GUIRenderer {
     private final GUIShader guiShader;
     private final RenderParameters renderParameters;
     
-    private int windowWidth;
-    private int windowHeight;
-    
     private final NkBuffer cmds = NkBuffer.create();
 
-    private final GCVControlPanel panel = new GCVControlPanel();
+    private final GCVControlPanel controlPanel = new GCVControlPanel();
+    private final GCVGCodePanel gCodePanel = new GCVGCodePanel();
 
     public GUIRenderer(NkContext nkContext,
                        GUIShader guiShader,
-                       int windowWidth,
-                       int windowHeight,
                        RenderParameters renderParameters) {
         this.nkContext = nkContext;
         this.guiShader = guiShader;
         this.renderParameters = renderParameters;
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
         this.guiShader.createVAOandVBO();
         nk_buffer_init(cmds, ALLOCATOR, BUFFER_INITIAL_SIZE);
     }
@@ -94,8 +95,8 @@ public class GUIRenderer {
         try (MemoryStack stack = stackPush()) {     
             guiShader.loadTexture();
             guiShader.loadProjectionMatrix(stack.floats(
-                2.0f / windowWidth, 0.0f, 0.0f, 0.0f,
-                0.0f, -2.0f / windowHeight, 0.0f, 0.0f,
+                2.0f / renderParameters.getWindowWidth(), 0.0f, 0.0f, 0.0f,
+                0.0f, -2.0f / renderParameters.getWindowHeight(), 0.0f, 0.0f,
                 0.0f, 0.0f, -1.0f, 0.0f,
                 -1.0f, 1.0f, 0.0f, 1.0f
             ));
@@ -103,22 +104,35 @@ public class GUIRenderer {
     }
     
     public void setToolSet(Set<Integer> toolSet) {
-        panel.setToolSet(toolSet);
+        controlPanel.setToolSet(toolSet);
+    }
+
+    public void setLines(List<String> lines) {
+        gCodePanel.setLines(lines);
+    }
+
+    public RenderParameters getRenderParameters() {
+        return renderParameters;
     }
 
     public void render() {
-        
-        panel.layout(nkContext, GCVControlPanel.GUI_PANEL_X, GCVControlPanel.GUI_PANEL_Y, renderParameters);
+        controlPanel.layout(nkContext, GUI_CONTROL_PANEL_X, GUI_CONTROL_PANEL_Y, renderParameters);
+        gCodePanel.layout(nkContext,
+                          renderParameters.getWindowWidth() - gCodePanel.getWidth() - GUI_GCODE_PANEL_X,
+                          GUI_GCODE_PANEL_Y,
+                          renderParameters);
+
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        // See comment below about enabling/disabling face culling.
+        // If face calling is enabled, only the text is drawn.
         glDisable(GL_CULL_FACE);
+
         glDisable(GL_DEPTH_TEST);
-        // If this is enabled, the panel disappears as when the window is made larger.
+        // If this is enabled, the panel disappears when the window is made larger.
         // Don't know why.
-        //glEnable(GL_SCISSOR_TEST);
-        glDisable(GL_SCISSOR_TEST);
+        glEnable(GL_SCISSOR_TEST);
+        //glDisable(GL_SCISSOR_TEST);
         glActiveTexture(GL_TEXTURE0);
         
         // convert from command queue into draw list and draw to screen
@@ -161,8 +175,8 @@ public class GUIRenderer {
         glUnmapBuffer(GL_ARRAY_BUFFER);
 
         // iterate over and execute each draw command
-//        float fb_scale_x = (float)display_width / (float)windowWidth;
-//        float fb_scale_y = (float)display_height / (float)windowHeight;
+        float fb_scale_x = (float)renderParameters.getDisplayWidth() / (float)renderParameters.getWindowWidth();
+        float fb_scale_y = (float)renderParameters.getDisplayHeight() / (float)renderParameters.getWindowHeight();
 
         long offset = 0;
         long commandIndex = -1;
@@ -171,17 +185,13 @@ public class GUIRenderer {
             if (cmd.elem_count() == 0) {
                 continue;
             }
-            
-            // If face calling is enabled, only the text is drawn.
-            glDisable(GL_CULL_FACE);
-
             glBindTexture(GL_TEXTURE_2D, cmd.texture().id());
-//            glScissor(
-//                (int)(cmd.clip_rect().x() * fb_scale_x),
-//                (int)((windowHeight - (int)(cmd.clip_rect().y() + cmd.clip_rect().h())) * fb_scale_y),
-//                (int)(cmd.clip_rect().w() * fb_scale_x),
-//                (int)(cmd.clip_rect().h() * fb_scale_y)
-//            );
+            glScissor(
+                (int)(cmd.clip_rect().x() * fb_scale_x),
+                (int)((renderParameters.getWindowHeight() - (int)(cmd.clip_rect().y() + cmd.clip_rect().h())) * fb_scale_y),
+                (int)(cmd.clip_rect().w() * fb_scale_x),
+                (int)(cmd.clip_rect().h() * fb_scale_y)
+            );
             glDrawElements(GL_TRIANGLES, cmd.elem_count(), GL_UNSIGNED_SHORT, offset);
             glBindTexture(GL_TEXTURE_2D, 0);
             offset += cmd.elem_count() * 2;
@@ -197,20 +207,18 @@ public class GUIRenderer {
         glDisable(GL_SCISSOR_TEST);
     }
     
-    public void onWindowResize(int windowWidth, int windowHeight) {
-        this.windowWidth = windowWidth;
-        this.windowHeight = windowHeight;
-    }
-    
     public void cleanUp() {
         nk_buffer_free(cmds);
     }
     
-    public boolean isControlPanelOpen() {
-        return panel.isPanelOpen();
+    public boolean pointOverGuiPanel(int x, int y) {
+        return ((x >= GUI_CONTROL_PANEL_X &&
+                x <= GUI_CONTROL_PANEL_X + controlPanel.getWidth() &&
+                y >= GUI_CONTROL_PANEL_Y &&
+                y <= GUI_CONTROL_PANEL_Y + controlPanel.getHeight()) ||
+                (x >= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X - gCodePanel.getWidth() &&
+                x <= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X  &&
+                y >= GUI_GCODE_PANEL_Y &&
+                y <= GUI_GCODE_PANEL_Y + gCodePanel.getHeight()));
     }
-    
-    public int getControlPanelHeight() {
-        return panel.getPanelHeight();
-    }    
 }

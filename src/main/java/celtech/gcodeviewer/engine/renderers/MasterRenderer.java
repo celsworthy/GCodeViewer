@@ -56,8 +56,8 @@ public class MasterRenderer {
 
     private RenderParameters renderParameters;
     
-    public MasterRenderer(int windowWidth, int windowHeight, RenderParameters renderParameters) {
-        createProjectionMatrix(windowWidth, windowHeight);
+    public MasterRenderer(RenderParameters renderParameters) {
+        createProjectionMatrix(renderParameters.getWindowWidth(), renderParameters.getWindowHeight());
 //        this.staticEntityRenderer = new StaticRenderer(staticShader, projectionMatrix);
         this.segmentRenderer = new SegmentRenderer(segmentShader, projectionMatrix);
         this.moveRenderer = new MoveRenderer(moveShader, projectionMatrix);

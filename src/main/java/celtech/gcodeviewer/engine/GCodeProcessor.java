@@ -28,6 +28,8 @@ public class GCodeProcessor {
     int numberOfBottomLayer = Entity.NULL_LAYER;
     int numberOfTopLayer = Entity.NULL_LAYER;
     
+    List<String> lines = new ArrayList<>();
+    
     /**
      * Read G-Code file from the given file path passing each line to the consumer.
      * 
@@ -47,6 +49,7 @@ public class GCodeProcessor {
             for (String lineRead = bufferedReader.readLine(); lineRead != null; lineRead = bufferedReader.readLine()) {
                 ++lineNumber;
                 lineRead = lineRead.trim();
+                lines.add(lineRead);
                 if (!lineRead.isEmpty())
                 {
                     gCodeParser.resetLine();
@@ -147,5 +150,10 @@ public class GCodeProcessor {
     public int getNumberOfBottomLayer()
     {
         return numberOfBottomLayer;
+    }
+
+    public List<String> getLines()
+    {
+        return lines;
     }
 }

@@ -69,8 +69,17 @@ public class Camera {
 
     private void setUpMovementCallbacks() {
         glfwSetScrollCallback(window, (window, xoffset, yoffset) -> {
-           //guiManager.onScroll(window, xoffset, yoffset);
-            distanceFromCenter += -yoffset * MOUSE_ZOOM_SENSITIVITY;
+            DoubleBuffer xposdb = BufferUtils.createDoubleBuffer(1);
+            DoubleBuffer yposdb = BufferUtils.createDoubleBuffer(1);
+            glfwGetCursorPos(window, xposdb, yposdb);
+            double xpos = xposdb.get();
+            double ypos = yposdb.get();
+            //System.out.println("mouse[" + Integer.toString(mouseButton) + " = (" + Double.toString(xpos) + ", " + Double.toString(ypos) + ")");
+            //System.out.println("action = " + (action == GLFW_PRESS ? "GLFW_PRESS" : "GLFW_RELEASE"));
+            if (guiManager.overGuiPanel((int)xpos, (int)ypos))
+                guiManager.onScroll(window, xoffset, yoffset);
+            else
+                distanceFromCenter += -yoffset * MOUSE_ZOOM_SENSITIVITY;
         });
         
         glfwSetMouseButtonCallback(window, (window, mouseButton, action, mods) -> {
@@ -81,11 +90,7 @@ public class Camera {
             double ypos = yposdb.get();
             //System.out.println("mouse[" + Integer.toString(mouseButton) + " = (" + Double.toString(xpos) + ", " + Double.toString(ypos) + ")");
             //System.out.println("action = " + (action == GLFW_PRESS ? "GLFW_PRESS" : "GLFW_RELEASE"));
-            if (!dragging &&
-                xpos >= GCVControlPanel.GUI_PANEL_X &&
-                xpos <= (GCVControlPanel.GUI_PANEL_X + GCVControlPanel.GUI_PANEL_WIDTH) &&
-                ypos >= GCVControlPanel.GUI_PANEL_Y &&
-                ypos <= GCVControlPanel.GUI_PANEL_Y + guiManager.getControlPanelHeight())
+            if (!dragging && guiManager.overGuiPanel((int)xpos, (int)ypos))
             {
                 //System.out.println("calling guiManager.onMouseButton");
                 guiManager.onMouseButton(window, xpos, ypos, mouseButton, action, mods);

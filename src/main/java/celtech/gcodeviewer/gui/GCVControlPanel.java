@@ -27,36 +27,12 @@ import static org.lwjgl.system.MemoryUtil.*;
 public class GCVControlPanel {
 
     // These values are used GUI GCVControlPanel.
-    public static final int GUI_PANEL_X = 10;
-    public static final int GUI_PANEL_WIDTH = 230;
-    public static final int GUI_PANEL_Y = 10;
-    public static final int GUI_PANEL_OPEN_HEIGHT = 331;
-    public static final int GUI_PANEL_ROW_HEIGHT = 35;
-    public static final int GUI_TOOL_ROW_HEIGHT = 40;
-    public static final int GUI_PANEL_CLOSED_HEIGHT = 30;
+    public static final int GUI_CONTROL_PANEL_WIDTH = 230;
+    public static final int GUI_CONTROL_PANEL_OPEN_HEIGHT = 295;
+    public static final int GUI_CONTROL_PANEL_ROW_HEIGHT = 35;
+    public static final int GUI_CONTROL_PANEL_TOOL_ROW_HEIGHT = 40;
+    public static final int GUI_CONTROL_PANEL_CLOSED_HEIGHT = 30;
 
-    private final IntBuffer topValueBuffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private int topValue = 0;
-    private final IntBuffer bottomValueBuffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private int bottomValue = 0;
-    private final IntBuffer firstValueBuffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private int firstValue = 0;
-    private final IntBuffer lastValueBuffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private int lastValue = 0;
-    private final IntBuffer showMovesBuffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private boolean showMovesValue = false;
-    private final IntBuffer showOnlySelectedBuffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private boolean showOnlySelectedValue = false;
-    private final IntBuffer showTool0Buffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private boolean showTool0Value = false;
-    private final IntBuffer showTool1Buffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private boolean showTool1Value = false;
-    private final IntBuffer colourAsTypeBuffer = BufferUtils.createIntBuffer(1).put(0, 0);
-    private boolean colourAsTypeValue = false;
-
-    private final Map<Integer, IntBuffer> toolBuffers = new HashMap<>();
-    private final Map<Integer, Boolean> toolValues = new HashMap<>();
-    
     private boolean panelOpen = false;
     List<Integer>  toolList = new ArrayList<>();
     
@@ -67,23 +43,20 @@ public class GCVControlPanel {
         return panelOpen;
     }
     
-    public int getPanelHeight() {
-        return (panelOpen ? GUI_PANEL_OPEN_HEIGHT + toolList.size() * GUI_TOOL_ROW_HEIGHT
-                          : GUI_PANEL_CLOSED_HEIGHT);
+    public int getWidth() {
+        return GUI_CONTROL_PANEL_WIDTH;
     }
-    
+
+    public int getHeight() {
+        return (panelOpen ? GUI_CONTROL_PANEL_OPEN_HEIGHT + toolList.size() * GUI_CONTROL_PANEL_TOOL_ROW_HEIGHT
+                          : GUI_CONTROL_PANEL_CLOSED_HEIGHT);
+    }
+
     public void setToolSet(Set<Integer> toolSet) {
-        toolBuffers.clear();
-        toolValues.clear();
         toolList = toolSet.stream()
                          .filter(ts -> (ts >= 0 && ts < 8))
                          .collect(Collectors.toList());
         Collections.sort(toolList);
-       
-       toolList.forEach(t -> {
-            toolBuffers.put(t, BufferUtils.createIntBuffer(1).put(0, 0));
-            toolValues.put(t, false);
-       });
     }
 
     public void layout(NkContext ctx, int x, int y, RenderParameters renderParameters) {
@@ -91,151 +64,100 @@ public class GCVControlPanel {
             NkRect rect = NkRect.mallocStack(stack);
             panelOpen = nk_begin(ctx,
                          "Control Panel",
-                         nk_rect(x, y, GUI_PANEL_WIDTH, GUI_PANEL_OPEN_HEIGHT + toolList.size() * GUI_TOOL_ROW_HEIGHT, rect),
-                         NK_WINDOW_MINIMIZABLE);
+                         nk_rect(x, y, GUI_CONTROL_PANEL_WIDTH, GUI_CONTROL_PANEL_OPEN_HEIGHT + toolList.size() * GUI_CONTROL_PANEL_TOOL_ROW_HEIGHT, rect),
+                         NK_WINDOW_MINIMIZABLE | NK_WINDOW_NO_SCROLLBAR);
             if (panelOpen) {
-                topValue = layoutPropertyRow(ctx, 
-                                             "Top",
-                                             renderParameters.getBottomLayerToRender(),
-                                             topValueBuffer,
-                                             renderParameters.getIndexOfTopLayer(),
-                                             5,
-                                             1,
-                                             renderParameters.getTopLayerToRender(),
-                                             topValue,
-                                             renderParameters::setTopLayerToRender);
-                bottomValue = layoutPropertyRow(ctx, 
-                                                "Bottom",
-                                                renderParameters.getIndexOfBottomLayer(),
-                                                bottomValueBuffer,
-                                                renderParameters.getTopLayerToRender(),
-                                                5,
-                                                1,
-                                                renderParameters.getBottomLayerToRender(),
-                                                bottomValue,
-                                                renderParameters::setBottomLayerToRender);
-                int step = 1000;
-                if (renderParameters.getNumberOfLines() < 1000)
-                    step = 10;
-                else if (renderParameters.getNumberOfLines() < 10000)
-                    step = 100;
-                else if (renderParameters.getNumberOfLines() < 100000)
-                    step = 5000;
-                else
-                    step = 1000;
-                lastValue = layoutPropertyRow(ctx,
-                                              "Last",
-                                              renderParameters.getFirstSelectedLine(),
-                                              lastValueBuffer,
-                                              renderParameters.getNumberOfLines(),
-                                              step,
-                                              step,
-                                              renderParameters.getLastSelectedLine(),
-                                              lastValue,
-                                              renderParameters::setLastSelectedLine);
-                firstValue = layoutPropertyRow(ctx,
-                                               "First",
-                                               0,
-                                               firstValueBuffer,
-                                               renderParameters.getLastSelectedLine(),
-                                               step,
-                                               step,
-                                               renderParameters.getFirstSelectedLine(),
-                                               firstValue,
-                                               renderParameters::setFirstSelectedLine);
+                layoutPropertyRow(ctx, 
+                                  "Top",
+                                  renderParameters.getBottomLayerToRender(),
+                                  renderParameters.getIndexOfTopLayer(),
+                                  5,
+                                  1,
+                                  renderParameters.getTopLayerToRender(),
+                                  renderParameters::setTopLayerToRender);
+                layoutPropertyRow(ctx, 
+                                  "Bottom",
+                                  renderParameters.getIndexOfBottomLayer(),
+                                  renderParameters.getTopLayerToRender(),
+                                  5,
+                                  1,
+                                  renderParameters.getBottomLayerToRender(),
+                                  renderParameters::setBottomLayerToRender);
+                nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
+                nk_layout_row_push(ctx, 200);
+                if(nk_button_label(ctx, "Show all layers")) {
+                    renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
+                    renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
+                }
+                layoutCheckboxRow(ctx,
+                                  "Colour As Type",
+                                  (renderParameters.getColourMode() == RenderParameters.ColourMode.COLOUR_AS_TYPE),
+                                  (f) -> { renderParameters.setColourMode(f ? RenderParameters.ColourMode.COLOUR_AS_TYPE 
+                                                                            : RenderParameters.ColourMode.COLOUR_AS_TOOL); });
+                layoutCheckboxRow(ctx,
+                                  "Show Moves",
+                                  renderParameters.getShowMoves(),
+                                  renderParameters::setShowMoves);
 
-                colourAsTypeValue = layoutCheckboxRow(ctx,
-                                                   "Colour As Type",
-                                                   colourAsTypeBuffer,
-                                                   (renderParameters.getColourMode() == RenderParameters.ColourMode.COLOUR_AS_TYPE),
-                                                   colourAsTypeValue,
-                                                   (f) -> { renderParameters.setColourMode(f ? RenderParameters.ColourMode.COLOUR_AS_TYPE 
-                                                                                             : RenderParameters.ColourMode.COLOUR_AS_TOOL); });
-                showMovesValue = layoutCheckboxRow(ctx,
-                                                   "Show Moves",
-                                                   showMovesBuffer,
-                                                   renderParameters.getShowMoves(),
-                                                   showMovesValue,
-                                                   renderParameters::setShowMoves);
-
-                showOnlySelectedValue = layoutCheckboxRow(ctx,
-                                                   "Show Only Selected",
-                                                   showOnlySelectedBuffer,
-                                                   renderParameters.getShowOnlySelected(),
-                                                   showOnlySelectedValue,
-                                                   renderParameters::setShowOnlySelected);
+                layoutCheckboxRow(ctx,
+                                  "Show Only Selected",
+                                  renderParameters.getShowOnlySelected(),
+                                  renderParameters::setShowOnlySelected);
                 
+                IntBuffer toolBuffer = stack.mallocInt(1);
                 toolList.forEach(t -> {
                     String label = "Show Tool " + Integer.toString(t);
-                    boolean previousValue = toolValues.get(t);
                     boolean currentValue = renderParameters.getShowFlagForTool(t);
-                    IntBuffer toolBuffer = toolBuffers.get(t);
-                    if (previousValue != currentValue) {
-                        toolBuffer.put(0, (currentValue ? 1 : 0));
-                    }
-                    nk_layout_row_begin(ctx, NK_STATIC, GUI_PANEL_ROW_HEIGHT, 1);
+                    toolBuffer.put(0, (currentValue ? 1 : 0));
+                    nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
                     nk_layout_row_push(ctx, 200);
                     nk_checkbox_label(ctx, label, toolBuffer);
                     nk_layout_row_end(ctx);
-                    boolean newValue = (toolBuffer.get(0) != 0);
-                    renderParameters.setShowFlagForTool(t, newValue);
-                    toolValues.put(t, newValue);
+                    renderParameters.setShowFlagForTool(t, (toolBuffer.get(0) != 0));
                 });
-//                showTool0Value = layoutCheckboxRow(ctx,
-//                       "Show Tool 0",
-//                       showTool0Buffer,
-//                       renderParameters.getShowFlagForTool(0),
-//                       showTool0Value,
-//                       (f) -> { renderParameters.setShowFlagForTool(0, f); });
-//                showTool1Value = layoutCheckboxRow(ctx,
-//                                                   "Show Tool 1",
-//                                                   showTool1Buffer,
-//                                                   renderParameters.getShowFlagForTool(1),
-//                                                   showTool1Value,
-//                                                   (f) -> { renderParameters.setShowFlagForTool(1, f); });
             }
             nk_end(ctx);
         }
     }
     
-    private int layoutPropertyRow(NkContext ctx,
+    private void layoutPropertyRow(NkContext ctx,
                                   String label,
                                   int minValue,
-                                  IntBuffer valueBuffer,
                                   int maxValue,
                                   int step,
                                   int incPerPixel,
                                   int currentValue,
-                                  int previousValue,
                                   Consumer<Integer> setValue) {
-        if (previousValue != currentValue) {
+        try (MemoryStack stack = stackPush()) {
+            IntBuffer valueBuffer = stack.mallocInt(1);
             valueBuffer.put(0, currentValue);
+            nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
+            nk_layout_row_push(ctx, 200);
+            if (nk_input_is_key_down(ctx.input(), NK_KEY_CTRL))
+                nk_button_set_behavior(ctx, NK_BUTTON_REPEATER);
+            if (nk_input_is_key_down(ctx.input(), NK_KEY_SHIFT))
+                step = 1;
+            nk_property_int(ctx, label, minValue, valueBuffer, maxValue, step, incPerPixel);
+            nk_button_set_behavior(ctx, NK_BUTTON_DEFAULT);
+            nk_layout_row_end(ctx);
+            setValue.accept(valueBuffer.get(0));
         }
-        nk_layout_row_begin(ctx, NK_STATIC, GUI_PANEL_ROW_HEIGHT, 1);
-        nk_layout_row_push(ctx, 200);
-        nk_property_int(ctx, label, minValue, valueBuffer, maxValue, step, incPerPixel);
-        nk_layout_row_end(ctx);
-        int newValue = valueBuffer.get(0);
-        setValue.accept(newValue);
-        return newValue;
     }
     
-    private boolean layoutCheckboxRow(NkContext ctx,
-                                  String label,
-                                  IntBuffer valueBuffer,
-                                  boolean currentValue,
-                                  boolean previousValue,
-                                  Consumer<Boolean> setSelected) {
+    private void layoutCheckboxRow(NkContext ctx,
+                                   String label,
+                                   boolean currentValue,
+                                   Consumer<Boolean> setSelected) {
 
-        if (previousValue != currentValue) {
-            valueBuffer.put(0, (currentValue ? 1 : 0));
+        try (MemoryStack stack = stackPush()) {
+            IntBuffer valueBuffer = stack.mallocInt(1);
+            valueBuffer.put(0, currentValue ? 1 : 0);
+            nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
+            nk_layout_row_push(ctx, 200);
+            nk_checkbox_label(ctx, label, valueBuffer);
+            nk_layout_row_end(ctx);
+            boolean newValue = (valueBuffer.get(0) != 0);
+            setSelected.accept(newValue);
         }
-        nk_layout_row_begin(ctx, NK_STATIC, GUI_PANEL_ROW_HEIGHT, 1);
-        nk_layout_row_push(ctx, 200);
-        nk_checkbox_label(ctx, label, valueBuffer);
-        nk_layout_row_end(ctx);
-        boolean newValue = (valueBuffer.get(0) != 0);
-        setSelected.accept(newValue);
-        return newValue;
     }
 }

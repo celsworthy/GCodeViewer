@@ -40,7 +40,11 @@ public class RenderParameters {
     private List<Vector3f> dataColourPalette = new ArrayList<>();
     private Vector3f defaultColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private List<Double> toolFilamentFactors = new ArrayList<>();
-    private Double defaultFilamentFactor = 0.0;
+    private double defaultFilamentFactor = 0.0;
+    private int displayWidth = 0;
+    private int displayHeight = 0;
+    private int windowWidth = 0;
+    private int windowHeight = 0;
 
     RenderParameters(){
     }
@@ -270,5 +274,37 @@ public class RenderParameters {
             lastSelectedLine = numberOfLines;
         if (lastSelectedLine < firstSelectedLine)
             lastSelectedLine = firstSelectedLine;
+    }
+
+    public int getDisplayWidth() {
+        return displayWidth;
+    }
+
+    public void setDisplayWidth(int displayWidth) {
+        this.displayWidth = displayWidth;
+    }
+
+    public int getDisplayHeight() {
+        return displayHeight;
+    }
+
+    public void setDisplayHeight(int displayHeight) {
+        this.displayHeight = displayHeight;
+    }
+
+    public int getWindowWidth() {
+        return windowWidth;
+    }
+
+    public void setWindowWidth(int windowWidth) {
+        this.windowWidth = windowWidth;
+    }
+
+    public int getWindowHeight() {
+        return windowHeight;
+    }
+
+    public void setWindowHeight(int windowHeight) {
+        this.windowHeight = windowHeight;
     }
 }

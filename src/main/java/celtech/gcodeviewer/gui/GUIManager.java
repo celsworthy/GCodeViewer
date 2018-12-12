@@ -27,6 +27,7 @@ import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Set;
 
 import org.lwjgl.BufferUtils;
@@ -72,14 +73,14 @@ public class GUIManager {
     private NkContext nkContext = NkContext.create();
     private NkUserFont default_font = NkUserFont.create();
     
-    public GUIManager(long windowId, int windowWidth, int windowHeight, RenderParameters renderParameters) {
+    public GUIManager(long windowId, RenderParameters renderParameters) {
         try {
             this.ttf = ioResourceToByteBuffer("/celtech/gcodeviewer/resources/FiraSans-Regular.ttf", 512 * 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         setup(windowId);
-        guiRenderer = new GUIRenderer(nkContext, guiShader, windowWidth, windowHeight, renderParameters);
+        guiRenderer = new GUIRenderer(nkContext, guiShader, renderParameters);
         setupFont();
         setupStyle();
     }
@@ -224,8 +225,12 @@ public class GUIManager {
                     FloatBuffer x = stack.floats(0.0f);
                     FloatBuffer y = stack.floats(0.0f);
 
-                    STBTTAlignedQuad q       = STBTTAlignedQuad.mallocStack(stack);
-                    IntBuffer        advance = stack.mallocInt(1);
+                    STBTTAlignedQuad q= STBTTAlignedQuad.mallocStack(stack);
+                    IntBuffer advance = stack.mallocInt(1);
+                    
+                    // Replace non-ASCII printable characters with a space.
+                    if (codepoint < 32 || codepoint > 127)
+                        codepoint = 32; // Space
 
                     stbtt_GetPackedQuad(cdata, BITMAP_W, BITMAP_H, codepoint - 32, x, y, q, false);
                     stbtt_GetCodepointHMetrics(fontInfo, codepoint, advance, null);
@@ -319,6 +324,10 @@ public class GUIManager {
         guiRenderer.setToolSet(toolSet);
     }
 
+    public void setLines(List<String> lines) {
+        guiRenderer.setLines(lines);
+    }
+
     public void render() {
         guiShader.start();
         guiRenderer.render();
@@ -330,16 +339,8 @@ public class GUIManager {
         guiShader.cleanUp();
     }
     
-    public boolean isControlPanelOpen() {
-        return guiRenderer.isControlPanelOpen();
-    }
-    
-    public int getControlPanelHeight() {
-        return guiRenderer.getControlPanelHeight();
-    }
-    
-    public void onWindowResize(int windowWidth, int windowHeight) {
-        guiRenderer.onWindowResize(windowWidth, windowHeight);
+    public boolean overGuiPanel(int x, int y) {
+        return guiRenderer.pointOverGuiPanel(x, y);
     }
     
     public void onScroll(long window, double xoffset, double yoffset) {
@@ -357,6 +358,7 @@ public class GUIManager {
 
     public void onKey(long window, int key, int scancode, int action, int mods) {
         boolean press = (action == GLFW_PRESS);
+
         switch (key) {
             case GLFW_KEY_DELETE:
                 nk_input_key(nkContext, NK_KEY_DEL, press);
@@ -371,11 +373,33 @@ public class GUIManager {
                 nk_input_key(nkContext, NK_KEY_BACKSPACE, press);
                 break;
             case GLFW_KEY_UP:
-                nk_input_key(nkContext, NK_KEY_UP, press);
-                break;
             case GLFW_KEY_DOWN:
-                nk_input_key(nkContext, NK_KEY_DOWN, press);
+                if (action == GLFW_PRESS || action == GLFW_REPEAT) {
+                    RenderParameters renderParameters = guiRenderer.getRenderParameters();
+                    int step = 4;
+                    if (mods == GLFW_MOD_SHIFT)
+                        step = 1;
+                    else if (mods == GLFW_MOD_CONTROL)
+                        step = 2;
+                    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || 
+                        glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+                        if (key == GLFW_KEY_UP)
+                            renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() + step);
+                        else
+                            renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() - step);
+                    }
+                    else {
+                        if (key == GLFW_KEY_UP)
+                            renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() + step);
+                        else
+                            renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() - step);
+                    }
+                }
+//                nk_input_key(nkContext, NK_KEY_UP, press);
                 break;
+//            case GLFW_KEY_DOWN:
+//                nk_input_key(nkContext, NK_KEY_DOWN, press);
+//                break;
             case GLFW_KEY_HOME:
                 nk_input_key(nkContext, NK_KEY_TEXT_START, press);
                 nk_input_key(nkContext, NK_KEY_SCROLL_START, press);
@@ -390,30 +414,39 @@ public class GUIManager {
             case GLFW_KEY_PAGE_UP:
                 nk_input_key(nkContext, NK_KEY_SCROLL_UP, press);
                 break;
+            case GLFW_KEY_LEFT:
+                nk_input_key(nkContext, NK_KEY_LEFT, press);
+            case GLFW_KEY_RIGHT:
+                nk_input_key(nkContext, NK_KEY_RIGHT, press);
             case GLFW_KEY_LEFT_SHIFT:
             case GLFW_KEY_RIGHT_SHIFT:
-                nk_input_key(nkContext, NK_KEY_SHIFT, press);
+                if (action != GLFW_REPEAT) {
+                    nk_input_key(nkContext, NK_KEY_SHIFT, press);
+                }
                 break;
             case GLFW_KEY_LEFT_CONTROL:
             case GLFW_KEY_RIGHT_CONTROL:
-                if (press) {
-                    nk_input_key(nkContext, NK_KEY_COPY, glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_PASTE, glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_CUT, glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_TEXT_UNDO, glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_TEXT_REDO, glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_TEXT_WORD_LEFT, glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_TEXT_WORD_RIGHT, glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_TEXT_LINE_START, glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_TEXT_LINE_END, glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS);
-                } else {
-                    nk_input_key(nkContext, NK_KEY_LEFT, glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_RIGHT, glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
-                    nk_input_key(nkContext, NK_KEY_COPY, false);
-                    nk_input_key(nkContext, NK_KEY_PASTE, false);
-                    nk_input_key(nkContext, NK_KEY_CUT, false);
-                    nk_input_key(nkContext, NK_KEY_SHIFT, false);
+                if (action != GLFW_REPEAT) {
+                    nk_input_key(nkContext, NK_KEY_CTRL, press);
                 }
+//                if (press) {
+//                    nk_input_key(nkContext, NK_KEY_COPY, glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_PASTE, glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_CUT, glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_TEXT_UNDO, glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_TEXT_REDO, glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_TEXT_WORD_LEFT, glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_TEXT_WORD_RIGHT, glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_TEXT_LINE_START, glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_TEXT_LINE_END, glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS);
+//                } else {
+//                    nk_input_key(nkContext, NK_KEY_LEFT, glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_RIGHT, glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS);
+//                    nk_input_key(nkContext, NK_KEY_COPY, false);
+//                    nk_input_key(nkContext, NK_KEY_PASTE, false);
+//                    nk_input_key(nkContext, NK_KEY_CUT, false);
+//                    nk_input_key(nkContext, NK_KEY_SHIFT, false);
+//                }
                 break;
         }
     }

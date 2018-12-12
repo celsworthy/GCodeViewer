@@ -18,9 +18,9 @@ import org.lwjgl.util.vector.Vector3f;
  *
  * @author Tony Aldhous
  */
-public class GCodeVisualiser implements GCodeConsumer
+public class GCodeLineProcessor implements GCodeConsumer
 {
-    private final Stenographer steno = StenographerFactory.getStenographer(GCodeVisualiser.class.getName());
+    private final Stenographer steno = StenographerFactory.getStenographer(GCodeLineProcessor.class.getName());
     private final double MINIMUM_STEP = 0.1;
     private final double MINIMUM_EXTRUSION = 0.0001;
     
@@ -83,7 +83,7 @@ public class GCodeVisualiser implements GCodeConsumer
     
     static private final double RADIANS_TO_DEGREES = 57.2957795131;
     
-    public GCodeVisualiser(RawModel lineModel, RenderParameters renderParameters, GCodeViewerConfiguration configuration)
+    public GCodeLineProcessor(RawModel lineModel, RenderParameters renderParameters, GCodeViewerConfiguration configuration)
     {
         this.lineModel = lineModel;
         this.configuration = configuration;
