@@ -70,12 +70,15 @@ public class RenderingEngine {
     private CenterPoint centerPoint = null;
     Floor floor = null;
     PrintVolume printVolume = null;
+    
+    GCodeLoader fileLoader = null;
+    private final double minDataValues[];
+    private final double maxDataValues[];
 
     public RenderingEngine(long windowId,
                            int windowWidth,
                            int windowHeight,
-                           GCodeViewerConfiguration configuration,
-                           CommandHandler commandHandler) {
+                           GCodeViewerConfiguration configuration) {
         this.windowId = windowId;
         this.configuration = configuration;
         Vector3f printVolume = configuration.getPrintVolume();
@@ -87,7 +90,7 @@ public class RenderingEngine {
         renderParameters.setWindowWidth(windowWidth);
         renderParameters.setWindowHeight(windowHeight);
 
-        this.commandHandler = commandHandler;
+        this.commandHandler = new CommandHandler();
         commandHandler.setRenderParameters(renderParameters);
         commandHandler.setRenderingEngine(this);
  
@@ -95,6 +98,14 @@ public class RenderingEngine {
         guiManager = new GUIManager(windowId, renderParameters);
         model = null;
         lineModel = null;
+        
+        this.minDataValues = new double[Entity.N_DATA_VALUES];
+        this.maxDataValues = new double[Entity.N_DATA_VALUES];
+        for (int dataIndex = 0; dataIndex < Entity.N_DATA_VALUES; ++dataIndex)
+        {
+            this.minDataValues[dataIndex] = 0.0;
+            this.maxDataValues[dataIndex] = 0.0;
+        }
     }
     
     public void start() {      
@@ -127,7 +138,9 @@ public class RenderingEngine {
         masterRenderer.processFloor(floor);
         masterRenderer.processCentrePoint(centerPoint);
         printVolume.getLineEntities().forEach(masterRenderer::processLine);
-            
+
+        commandHandler.start();
+
         STENO.debug("Running rendering loop.");
         while (!glfwWindowShouldClose(windowId)) {
             GL11.glViewport(0, 0, renderParameters.getWindowWidth(), renderParameters.getWindowHeight());
@@ -153,13 +166,18 @@ public class RenderingEngine {
 
             if (commandHandler.processCommands())
                 glfwSetWindowShouldClose(windowId, true);
+            
+            if (fileLoader != null && fileLoader.loadFinished())
+                completeLoadingGCodeFile();
         }
         
+        commandHandler.stop();
         masterRenderer.cleanUp();
         guiManager.cleanUp();
         modelLoader.cleanUp();
         segmentLoader.cleanUp();
         moveLoader.cleanUp();
+        fileLoader = null;
     }
     
     private void createWindowResizeCallback() {
@@ -171,51 +189,67 @@ public class RenderingEngine {
         });
     }
 
-    public void loadGCodeFile(String gCodeFile) {
-        try {
-            GCodeProcessor processor = new GCodeProcessor();
-            GCodeLineProcessor lineProcessor = new GCodeLineProcessor(model, renderParameters, configuration);
-            if (processor.processFile(gCodeFile, lineProcessor))
-            {
-                segments = lineProcessor.getSegments();
-                moves = lineProcessor.getMoves();
-                
-                renderParameters.setNumberOfLines(processor.getLines().size());
-                renderParameters.setFirstSelectedLine(0);
-                renderParameters.setLastSelectedLine(0);
-                STENO.info("Number of lines = " + Integer.toString(renderParameters.getNumberOfLines()));
+    public void startLoadingGCodeFile(String gCodeFile) {
+        fileLoader = new GCodeLoader(gCodeFile, model, renderParameters, configuration);
+        fileLoader.start();
+    }
 
-                if (processor.getNumberOfTopLayer() > Entity.NULL_LAYER)
-                    renderParameters.setIndexOfTopLayer(processor.getNumberOfTopLayer());
-                else
-                    renderParameters.setIndexOfTopLayer(renderParameters.getNumberOfLines());
-                if (processor.getNumberOfBottomLayer() > Entity.NULL_LAYER)
-                    renderParameters.setIndexOfBottomLayer(processor.getNumberOfBottomLayer());
-                else
-                    renderParameters.setIndexOfBottomLayer(0);
-                renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
-                renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
-                guiManager.setToolSet(lineProcessor.getToolSet());
-                guiManager.setLines(processor.getLines());
+    public void completeLoadingGCodeFile() {
+        if (fileLoader != null && fileLoader.loadFinished()) {
+            try {
+                if (fileLoader.loadSuccess())
+                {
+                    GCodeProcessor processor = fileLoader.getProcessor();
+                    GCodeLineProcessor lineProcessor = fileLoader.getLineProcessor();
+
+                    segments = lineProcessor.getSegments();
+                    moves = lineProcessor.getMoves();
+                    
+                    for (int dataIndex = 0; dataIndex < Entity.N_DATA_VALUES; ++dataIndex)
+                    {
+                        minDataValues[dataIndex] = lineProcessor.getMinDataValue(dataIndex);
+                        maxDataValues[dataIndex] = lineProcessor.getMaxDataValue(dataIndex);
+                    }
+
+                    renderParameters.setNumberOfLines(processor.getLines().size());
+                    renderParameters.setFirstSelectedLine(0);
+                    renderParameters.setLastSelectedLine(0);
+                    STENO.info("Number of lines = " + Integer.toString(renderParameters.getNumberOfLines()));
+
+                    if (processor.getNumberOfTopLayer() > Entity.NULL_LAYER)
+                        renderParameters.setIndexOfTopLayer(processor.getNumberOfTopLayer());
+                    else
+                        renderParameters.setIndexOfTopLayer(renderParameters.getNumberOfLines());
+                    if (processor.getNumberOfBottomLayer() > Entity.NULL_LAYER)
+                        renderParameters.setIndexOfBottomLayer(processor.getNumberOfBottomLayer());
+                    else
+                        renderParameters.setIndexOfBottomLayer(0);
+                    renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
+                    renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
+                    guiManager.setToolSet(lineProcessor.getToolSet());
+                    guiManager.setLines(processor.getLines());
+                }
             }
+            catch (RuntimeException ex)
+            {
+                renderParameters.clearLinesAndLayer();
+                STENO.error("Parsing error");
+            }
+            fileLoader = null;
+            
+            masterRenderer.clearEntities();
+            segmentLoader.cleanUp();
+            if (segments != null && segments.size() > 0) {
+                masterRenderer.processSegmentEntity(segmentLoader.loadToVAO(segments));           
+            }
+            moveLoader.cleanUp();
+            if (moves != null && moves.size() > 0) {
+                masterRenderer.processMoveEntity(moveLoader.loadToVAO(moves));           
+            }
+            masterRenderer.processCentrePoint(centerPoint);
+            masterRenderer.processFloor(floor);
+            printVolume.getLineEntities().forEach(masterRenderer::processLine);
         }
-        catch (RuntimeException ex)
-        {
-            renderParameters.clearLinesAndLayer();
-            STENO.error("Parsing error");
-        }
-        masterRenderer.clearEntities();
-        segmentLoader.cleanUp();
-        if (segments != null && segments.size() > 0) {
-            masterRenderer.processSegmentEntity(segmentLoader.loadToVAO(segments));           
-        }
-        moveLoader.cleanUp();
-        if (moves != null && moves.size() > 0) {
-            masterRenderer.processMoveEntity(moveLoader.loadToVAO(moves));           
-        }
-        masterRenderer.processCentrePoint(centerPoint);
-        masterRenderer.processFloor(floor);
-        printVolume.getLineEntities().forEach(masterRenderer::processLine);
     }
 
     public void clearGCode() {
@@ -252,20 +286,23 @@ public class RenderingEngine {
         }
     }
     
-    public void colourSegmentsFromData(int dataIndex, float minValue, float maxValue) {
+    public void colourSegmentsFromData(int dataIndex) {
+        
         List<Vector3f> colourPalette = renderParameters.getDataColourPalette();
         if (dataIndex >= 0 &&
             dataIndex < Entity.N_DATA_VALUES &&
             colourPalette.size() > 0 &&
-            minValue < maxValue)
+            minDataValues[dataIndex] < maxDataValues[dataIndex])
         {
+            double minValue = minDataValues[dataIndex];
+            double maxValue = maxDataValues[dataIndex];
             int nSteps = colourPalette.size();
-            float span = maxValue - minValue;
-            float step = span / nSteps;
+            double span = maxValue - minValue;
+            double step = span / nSteps;
             if (colourPalette.size() > 1 && step > MINIMUM_STEP) {
                 segments.forEach(segment -> {
                     //System.out.println("Data[" + Integer.toString(dataIndex) + "] = " + Float.toString(segment.getDataValue(dataIndex)));
-                    float index = (segment.getDataValue(dataIndex) - minValue) / step;
+                    double index = (segment.getDataValue(dataIndex) - minValue) / step;
                     Vector3f segmentColour;
                     if (index < 1.0)
                         segmentColour = colourPalette.get(0);

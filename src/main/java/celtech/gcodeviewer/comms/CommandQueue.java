@@ -6,54 +6,65 @@
 package celtech.gcodeviewer.comms;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import libertysystems.stenographer.Stenographer;
+import libertysystems.stenographer.StenographerFactory;
 
 /**
  *
  * @author Tony
  */
-public class CommandQueue extends Thread
-{
-    private final List<String> commandList;
+public class CommandQueue extends Thread {
+    private final static Stenographer STENO = StenographerFactory.getStenographer(CommandQueue.class.getName());
+    private final BlockingQueue<String> pendingCommands;
 
+    private boolean running = false;
+    
     public CommandQueue()
     {
         this.setDaemon(true);
         this.setName("CommandQueue");
         this.setPriority(Thread.MAX_PRIORITY);
         
-        commandList = new ArrayList<>();
+        pendingCommands = new ArrayBlockingQueue<>(10);
     }
 
-    public synchronized boolean commandAvailable()
+    public boolean commandAvailable()
     {
-        return !commandList.isEmpty();
+        return !pendingCommands.isEmpty();
     }
 
-    public synchronized String getNextCommandFromQueue()
+    public String getNextCommandFromQueue()
     {
         String command = "";
-        if (! commandList.isEmpty()) {
-            command = commandList.get(0);
-            commandList.remove(0);
+        try {
+            command = pendingCommands.take();
+        } catch(InterruptedException e) {
+            //e.printStackTrace();
         }
         
+        STENO.debug("next command = \"" + command + "\"");
         return command;
     }
 
-    public synchronized void addCommandToQueue(String command)
+    public void addCommandToQueue(String command)
     {
-        //System.out.println("Add command " + command);
-        commandList.add(command);
+        STENO.debug("Add command = \"" + command + "\"");
+        try {
+            pendingCommands.put(command);
+        } catch(InterruptedException e) {
+            //e.printStackTrace();
+        }
     }
-    
+
     @Override
     public void run()
     {
-        //System.out.println("Reading commands from StdIn ...");
+        STENO.debug("Command Queue running ...");
         Scanner scanner = new Scanner(System.in);
-        boolean running = true;
+        running = true;
         while (running) {
             String inputString = scanner.nextLine();
             if (inputString.equalsIgnoreCase("q")) {
@@ -61,5 +72,13 @@ public class CommandQueue extends Thread
             }
             addCommandToQueue(inputString);
         }
+        STENO.debug("Command Queue finished");
+    }
+    
+    public void stopRunning() {
+        running = false;
+        // Clearing the pendingCommands queue should release the run thread, if it is blocked,
+        // which should then terminate
+        pendingCommands.clear();
     }
 }

@@ -79,8 +79,7 @@ public class GCodeViewer {
         glfwDefaultWindowHints(); // optional, the current window hints are already the default
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
-//        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
-        // Create the window
+        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
         windowId = glfwCreateWindow(windowWidth, windowHeight, "GCodeViewer", NULL, NULL);
         if ( windowId == NULL ) {
             throw new RuntimeException("Failed to create the GLFW window");
@@ -152,14 +151,10 @@ public class GCodeViewer {
     }
     
     private void loop() {
-        commandHandler = new CommandHandler();
-        commandHandler.start();
-        
         RenderingEngine renderingEngine = new RenderingEngine(windowId,
                                                               windowWidth,
                                                               windowHeight,
-                                                              configuration,
-                                                              commandHandler);
+                                                              configuration);
         renderingEngine.start();
     }
     

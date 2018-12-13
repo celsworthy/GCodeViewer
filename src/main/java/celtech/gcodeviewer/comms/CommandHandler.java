@@ -23,34 +23,25 @@ public class CommandHandler {
     private final CommandQueue commandQueue;
     private RenderParameters renderParameters;
     private RenderingEngine renderingEngine;
-    private final float minDataValues[];
-    private final float maxDataValues[];
 
     public CommandHandler() {
         this.commandQueue = new CommandQueue();
         this.renderParameters = null;
         this.renderingEngine = null;
-
-        this.minDataValues = new float[Entity.N_DATA_VALUES];
-        this.minDataValues[0] = -30.0f;
-        this.minDataValues[1] = 0.0f;
-        this.minDataValues[2] = -1.0f;
-        this.minDataValues[3] = -1.0f;
-        this.minDataValues[4] = 0.0f;
-
-        this.maxDataValues = new float[Entity.N_DATA_VALUES];
-        this.maxDataValues[0] = 30.0f;
-        this.maxDataValues[1] = 1.0f;
-        this.maxDataValues[2] = 1.0f;
-        this.maxDataValues[3] = 1.0f;
-        this.maxDataValues[4] = 5000.0f;
-
     }
     
     public void start() {
+        // Command handler is not a thread because most of it's actions are fast and affect the rendering engine directly,
+        // which can only be changed safely on the main thread. Any actions that do take a long time (e.g. loading a GCode file)
+        // should be done on a separate thread
+        STENO.debug("Starting command handler.");
         commandQueue.start(); 
     }
      
+    public void stop() {
+        commandQueue.stopRunning();
+    }
+    
     public void setRenderParameters(RenderParameters renderParameters) {
        this.renderParameters = renderParameters; 
     }
@@ -74,31 +65,31 @@ public class CommandHandler {
                         String commandWord = commandScanner.next().toLowerCase();
                         switch (commandWord) {
                             case "load":
-                                renderingEngine.loadGCodeFile(commandScanner.nextLine().trim());
+                                renderingEngine.startLoadingGCodeFile(commandScanner.nextLine().trim());
                                 break;
 
                             case "l1":
-                                renderingEngine.loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\snake.gcode");
+                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\snake.gcode");
                                 break;
 
                             case "l2":
-                                renderingEngine.loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\gear-box.gcode");
+                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\gear-box.gcode");
                                 break;
 
                             case "l3":
-                                renderingEngine.loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\spiral-65-0p5.gcode");
+                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\spiral-65-0p5.gcode");
                                 break;
 
                             case "l4":
-                                renderingEngine.loadGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\cones_robox.gcode");
+                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\cones_robox.gcode");
                                 break;
 
                             case "l5":
-                                renderingEngine.loadGCodeFile("D:\\CEL\\Dev\\ImpactWire\\step\\test_part_spline_combined.gcode");
+                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\ImpactWire\\step\\test_part_spline_combined.gcode");
                                 break;
 
                             case "l6":
-                                renderingEngine.loadGCodeFile("D:\\Documents\\Cel Robox\\Projects\\rbx_twisted_cone\\Draft\\Draft_robox.gcode");
+                                renderingEngine.startLoadingGCodeFile("D:\\Documents\\Cel Robox\\Projects\\rbx_twisted_cone\\Draft\\Draft_robox.gcode");
                                 break;
                                 
                             case "show":
@@ -221,13 +212,22 @@ public class CommandHandler {
                                                 case "f":
                                                     dataIndex = 4;
                                                     break;
+                                                case "x":
+                                                    dataIndex = 5;
+                                                    break;
+                                                case "y":
+                                                    dataIndex = 6;
+                                                    break;
+                                                case "z":
+                                                    dataIndex = 7;
+                                                    break;
                                                 default:
                                                     break;
                                             }
                                         }
                                         if (dataIndex >= 0)
                                         {
-                                            renderingEngine.colourSegmentsFromData(dataIndex, minDataValues[dataIndex], maxDataValues[dataIndex]);
+                                            renderingEngine.colourSegmentsFromData(dataIndex);
                                             renderingEngine.reloadSegmentColours();
                                             renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
                                         }

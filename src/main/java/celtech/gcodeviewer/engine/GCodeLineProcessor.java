@@ -45,23 +45,8 @@ public class GCodeLineProcessor implements GCodeConsumer
     private double currentE = 0.0;
     private double currentF = 0.0;
 
-    private double minX = 0.0;
-    private double minY = 0.0;
-    private double minZ = 0.0;
-    private double minA = 0.0;
-    private double minB = 0.0;
-    private double minD = 0.0;
-    private double minE = 0.0;
-    private double minF = 0.0;
-
-    private double maxX = 0.0;
-    private double maxY = 0.0;
-    private double maxZ = 0.0;
-    private double maxA = 0.0;
-    private double maxB = 0.0;
-    private double maxD = 0.0;
-    private double maxE = 0.0;
-    private double maxF = 0.0;
+    private double minDataValues[] = new double[Entity.N_DATA_VALUES];
+    private double maxDataValues[] = new double[Entity.N_DATA_VALUES];
 
     private int currentTool = 0;
     private Set<Integer> toolSet = new HashSet<>();
@@ -89,6 +74,12 @@ public class GCodeLineProcessor implements GCodeConsumer
         this.configuration = configuration;
         this.renderParameters = renderParameters;
         this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
+        
+        for (int dataIndex = 0; dataIndex < Entity.N_DATA_VALUES; ++dataIndex)
+        {
+            minDataValues[dataIndex] = 0.0;
+            maxDataValues[dataIndex] = 0.0;
+        }
     }
 
     public int getCurrentLayer()
@@ -126,6 +117,33 @@ public class GCodeLineProcessor implements GCodeConsumer
     {
         return typeSet;
     }
+    
+    private void updateDataRange(int dataIndex, double value)
+    {
+        if (dataIndex >= 0 && dataIndex < Entity.N_DATA_VALUES)
+        {
+            if (minDataValues[dataIndex] > value)
+                minDataValues[dataIndex] = value;
+            if (maxDataValues[dataIndex] < value)
+                maxDataValues[dataIndex] = value;
+        }
+    }
+    
+    public double getMinDataValue(int dataIndex)
+    {
+        double minValue = Double.POSITIVE_INFINITY;
+        if (dataIndex >= 0 && dataIndex < Entity.N_DATA_VALUES)
+            minValue = minDataValues[dataIndex];
+        return minValue;
+    }
+
+    public double getMaxDataValue(int dataIndex)
+    {
+        double maxValue = Double.NEGATIVE_INFINITY;
+        if (dataIndex >= 0 && dataIndex < Entity.N_DATA_VALUES)
+            maxValue = maxDataValues[dataIndex];
+        return maxValue;
+    }
 
     @Override
     public void reset()
@@ -147,6 +165,12 @@ public class GCodeLineProcessor implements GCodeConsumer
         currentD = 0.0;
         currentE = 0.0;
         currentF = 0.0;
+        
+        for (int dataIndex = 0; dataIndex < Entity.N_DATA_VALUES; ++dataIndex)
+        {
+            minDataValues[dataIndex] = Double.POSITIVE_INFINITY;
+            maxDataValues[dataIndex] = Double.NEGATIVE_INFINITY;
+        }
 
         currentTool = 0;
         toolSet.clear();
@@ -440,22 +464,14 @@ public class GCodeLineProcessor implements GCodeConsumer
             previousD = currentD;
             previousE = currentE;
         }
-        minX = min(currentX, minX);
-        minY = min(currentY, minX);
-        minZ = min(currentZ, minX);
-        minA = min(currentA, minX);
-        minB = min(currentB, minX);
-        minD = min(currentD, minX);
-        minE = min(currentE, minX);
-        minF = min(currentF, minX);
-
-        maxX = max(currentX, maxX);
-        maxY = max(currentY, maxX);
-        maxZ = max(currentZ, maxX);
-        maxA = max(currentA, maxX);
-        maxB = max(currentB, maxX);
-        maxD = max(currentD, maxX);
-        maxE = max(currentE, maxX);
-        maxF = max(currentF, maxX);
+        
+        updateDataRange(0, currentA);
+        updateDataRange(1, currentB);
+        updateDataRange(2, currentD);
+        updateDataRange(3, currentE);
+        updateDataRange(4, currentF);
+        updateDataRange(5, currentX);
+        updateDataRange(6, currentY);
+        updateDataRange(7, currentZ);
     }
 }
