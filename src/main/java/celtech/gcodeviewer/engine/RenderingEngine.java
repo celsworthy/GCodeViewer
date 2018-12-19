@@ -108,7 +108,7 @@ public class RenderingEngine {
         }
     }
     
-    public void start() {      
+    public void start(String gCodeFile) {      
         STENO.debug("Starting RenderingEngine.");
 
         createWindowResizeCallback();
@@ -138,7 +138,10 @@ public class RenderingEngine {
         masterRenderer.processFloor(floor);
         masterRenderer.processCentrePoint(centerPoint);
         printVolume.getLineEntities().forEach(masterRenderer::processLine);
-
+        
+        if (gCodeFile != null)
+            startLoadingGCodeFile(gCodeFile);
+        
         commandHandler.start();
 
         STENO.debug("Running rendering loop.");

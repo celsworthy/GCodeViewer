@@ -163,7 +163,7 @@ public class GCVGCodePanel {
 
                             if (mouseIsDown) {
                                 if (!mouseWasDown) {
-                                    if (nk_input_is_key_down(ctx.input(), NK_KEY_CTRL) &&
+                                    if (nk_input_is_key_down(ctx.input(), NK_KEY_SHIFT) &&
                                         renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
                                         // Extend existing selection.
                                         if (index < renderParameters.getFirstSelectedLine())

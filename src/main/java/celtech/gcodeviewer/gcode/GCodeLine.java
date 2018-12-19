@@ -13,7 +13,7 @@ public class GCodeLine {
     public int commandNumber = -1;
     public int lineNumber = -9999;
     public int layerNumber = -9999;
-    public double height = -Double.MAX_VALUE;
+    public double layerHeight = -Double.MAX_VALUE;
     public String type = "";
     public String comment = "";
     public Map<Character, Double> valueMap = new HashMap<>();
@@ -24,7 +24,7 @@ public class GCodeLine {
         commandNumber = -1;
         lineNumber = -9999;
         layerNumber = -9999;
-        height = -Double.MAX_VALUE;
+        layerHeight = -Double.MAX_VALUE;
         comment = "";
         valueMap.clear();
     }

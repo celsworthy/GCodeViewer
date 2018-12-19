@@ -15,6 +15,7 @@ in vec3 colour;
 in vec4 attributes; // x = 0, y = layer, z = line, w = tool
 
 out vec4 vDirection;
+out vec4 vDimension;
 out vec4 vNormal;
 out vec4 vColour;
 
@@ -25,7 +26,7 @@ void main(void) {
 	
 	int tool = int(attributes.w + 0.5);
 
-
+	vDimension = vec4(vDirection.w, vNormal.w, attributes.x, 0.0);
 	int toolFlag = 1 << tool;
 		
 	if (((showTools & toolFlag) == toolFlag) &&

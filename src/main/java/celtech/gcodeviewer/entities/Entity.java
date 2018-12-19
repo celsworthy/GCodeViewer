@@ -15,6 +15,7 @@ public class Entity {
     private Vector3f normal;
     private float length;
     private float width;
+    private float thickness;
     private final float dataValues[];
     
     private Vector3f colour = new Vector3f(1, 1, 1);
@@ -26,7 +27,7 @@ public class Entity {
     private boolean isMoveFlag;
 
     public Entity(RawModel model, Vector3f position, Vector3f direction, Vector3f normal,
-            float length, float width,
+            float length, float width, float thickness,
             int layer, int lineNumber, int toolNumber, boolean isMoveFlag, float dataValues[]) {
         this.model = model;
         this.type = "";
@@ -35,6 +36,7 @@ public class Entity {
         this.normal = normal;
         this.length = length;
         this.width = width;
+        this.thickness = thickness;
         this.layer = layer;
         this.lineNumber = lineNumber;
         this.toolNumber = toolNumber;
@@ -94,6 +96,14 @@ public class Entity {
 
     public void setWidth(float width) {
         this.width = width;
+    }
+
+    public float getThickness() {
+        return thickness;
+    }
+
+    public void gsetThickness(float thickness) {
+        this.width = thickness;
     }
 
     public Vector3f getColour() {

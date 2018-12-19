@@ -1,7 +1,6 @@
 package celtech.gcodeviewer.engine;
 
 import celtech.gcodeviewer.comms.CommandHandler;
-import java.io.IOException;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.*;
@@ -29,10 +28,11 @@ public class GCodeViewer {
     private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewer.class.getName());
     
     private static final String PROGRAM_NAME = "G-Code Viewer";
-    
+
     private final int windowWidth = 1280;
     private final int windowHeight = 700;  
     private GCodeViewerConfiguration configuration = null;
+    private boolean floatingWindow = true;
 
     private long windowId;
     
@@ -41,15 +41,25 @@ public class GCodeViewer {
     /**
      * Run the program 
      */
-    public void run(String[] args) {
+    public void run(String[] argv) {
         System.out.println("Hello!");
         StenographerFactory.changeAllLogLevels(libertysystems.stenographer.LogLevel.INFO);
         STENO.debug("Running " + PROGRAM_NAME);
         
         configuration = GCodeViewerConfiguration.loadFromConfig();
 
+        String gCodeFile = null;
+        for (String arg : argv) {
+            if (arg.startsWith("-")) {
+                if (arg.equals("-t"))
+                    floatingWindow = false;
+            }
+            else
+                gCodeFile = arg;
+        }
+            
         init();
-        loop();
+        loop(gCodeFile);
 
         // Free the window callbacks and destroy the window
         glfwFreeCallbacks(windowId);
@@ -79,7 +89,8 @@ public class GCodeViewer {
         glfwDefaultWindowHints(); // optional, the current window hints are already the default
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
-        glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
+        if (floatingWindow)
+            glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
         windowId = glfwCreateWindow(windowWidth, windowHeight, "GCodeViewer", NULL, NULL);
         if ( windowId == NULL ) {
             throw new RuntimeException("Failed to create the GLFW window");
@@ -150,12 +161,12 @@ public class GCodeViewer {
         glfwShowWindow(windowId);
     }
     
-    private void loop() {
+    private void loop(String gCodeFile) {
         RenderingEngine renderingEngine = new RenderingEngine(windowId,
                                                               windowWidth,
                                                               windowHeight,
                                                               configuration);
-        renderingEngine.start();
+        renderingEngine.start(gCodeFile);
     }
     
     /**
@@ -163,7 +174,8 @@ public class GCodeViewer {
      * 
      * @param args 
      */
-    public static void main(String[] args) {
-        new GCodeViewer().run(args);
+    public static void main(String[] argv) {
+        GCodeViewer viewer = new GCodeViewer();
+        viewer.run(argv);
     }
 }

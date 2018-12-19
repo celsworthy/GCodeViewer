@@ -157,7 +157,7 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                         {
                             line.layerNumber = layerValue.get();
                             if (heightValue.isSet())
-                                line.height = heightValue.get();
+                                line.layerHeight = heightValue.get();
                             line.comment = match().trim();
                             return true;
                         }

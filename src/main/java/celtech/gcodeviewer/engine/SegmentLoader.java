@@ -18,6 +18,10 @@ import org.lwjgl.util.vector.Vector4f;
 public class SegmentLoader {
     
     private final List<RawEntity> segmentEntities = new ArrayList<>();
+    private double currentLayerHeight = 0.0;
+    private double layerThickness = 0.0;
+    private int currentLayer = 0;
+    private boolean firstSegment = true;
 
     public RawEntity loadToVAO(List<Entity> segments) {
         RawEntity segmentEntity = createVAO(segments.size());
@@ -34,13 +38,9 @@ public class SegmentLoader {
                 return n4;
             });
         storeVector3InAttributeList(segmentEntity, 3, segments, Entity::getColour);
-        storeInteger4InAttributeList(segmentEntity, 4, segments, (Entity s) -> {
-                Integer[] i4 = new Integer[4];
-                i4[0] = (s.isMove() ? 1 : 0);
-                i4[1] = s.getLayer();
-                i4[2] = s.getLineNumber();
-                i4[3] = s.getToolNumber();
-                return i4;
+        storeVector4InAttributeList(segmentEntity, 4, segments, (Entity s) -> {
+                Vector4f v = new Vector4f(s.getThickness(), s.getLayer(), s.getLineNumber(), s.getToolNumber());
+                return v;
             });
         unbindVAO();
         return segmentEntity;

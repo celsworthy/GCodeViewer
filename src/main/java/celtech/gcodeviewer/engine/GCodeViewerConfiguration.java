@@ -115,7 +115,7 @@ public class GCodeViewerConfiguration {
     @JsonIgnore
     private Vector3f lightPosition = new Vector3f(105.0f, 37.5f, 200.0f);
     @JsonIgnore
-    private double defaultFilamentFactor = 0.2;
+    private double defaultFilamentFactor = 1.0;
     @JsonIgnore
     private boolean relativeExtrusionAsDefault = true;
     

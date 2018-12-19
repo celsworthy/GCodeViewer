@@ -23,6 +23,7 @@ public class GCodeLineProcessor implements GCodeConsumer
     private final Stenographer steno = StenographerFactory.getStenographer(GCodeLineProcessor.class.getName());
     private final double MINIMUM_STEP = 0.1;
     private final double MINIMUM_EXTRUSION = 0.0001;
+    private final double MINIMUM_HEIGHT_DIFFERENCE = 0.0001;
     
     private final GCodeViewerConfiguration configuration;
     private final RenderParameters renderParameters;
@@ -56,7 +57,10 @@ public class GCodeLineProcessor implements GCodeConsumer
 
     private int currentLayer = Entity.NULL_LAYER;
     private int currentLine = 0;
-    private double currentHeight = 0;
+    private double currentLayerHeight = -Double.MAX_VALUE;
+    private double currentLayerThickness = -Double.MAX_VALUE;
+    private boolean layerHeightUpdateRequired = false;
+    
     private String currentType = "";
     private Set<String> typeSet = new HashSet<>();
 
@@ -87,11 +91,16 @@ public class GCodeLineProcessor implements GCodeConsumer
         return currentLayer;
     }
     
-    public double getCurrentHeight()
+    public double getCurrentLayerHeight()
     {
-        return currentHeight;
+        return currentLayerHeight;
     }
     
+    public double getCurrentLayerThickness()
+    {
+        return currentLayerThickness;
+    }
+
     public List<Entity> getSegments()
     {
         return segments;
@@ -179,7 +188,7 @@ public class GCodeLineProcessor implements GCodeConsumer
         relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
 
         currentLayer = Entity.NULL_LAYER;
-        currentHeight = 0;
+        currentLayerHeight = 0;
         currentType = "";
         typeSet.clear();
         
@@ -273,6 +282,16 @@ public class GCodeLineProcessor implements GCodeConsumer
             line.layerNumber != currentLayer)
         {
             currentLayer = line.layerNumber;
+            if (line.layerHeight > -Double.MAX_VALUE)
+            {
+                currentLayerThickness = line.layerHeight - currentLayerHeight;
+                currentLayerHeight = line.layerHeight;
+                layerHeightUpdateRequired = false;
+            }
+            else
+            {
+                layerHeightUpdateRequired = true;
+            }
         }
         if (!line.type.isEmpty() &&
             line.type != currentType)
@@ -312,6 +331,18 @@ public class GCodeLineProcessor implements GCodeConsumer
         currentA = line.getValue('A', currentA);
         currentB = line.getValue('B', currentB);
         currentF = line.getValue('F', currentF);
+        
+        if (layerHeightUpdateRequired && currentZ > currentLayerHeight + MINIMUM_HEIGHT_DIFFERENCE)
+        {
+            layerHeightUpdateRequired = false;
+            // First move since layer change without height parameter.
+            // Infer layer height from Z value. Wont work if layers are not horizontal!
+            if (currentLayerHeight > -Double.MAX_VALUE)
+                currentLayerThickness = currentZ - currentLayerHeight;
+            else
+                currentLayerThickness = currentZ;
+            currentLayerHeight = currentZ;
+        }
         
         generateEntity();
     }
@@ -408,22 +439,36 @@ public class GCodeLineProcessor implements GCodeConsumer
             normal.normalise();
 
             float width = 0.1F;
+            float thickness = (float)currentLayerThickness;
             if (isExtrusion)
             {
                 // Calculate volume of filament to extrude.
                 double v = renderParameters.getFilamentFactorForTool(currentTool) * (deltaD >= deltaE ? deltaD : deltaE);
-                
-                // Calculate width of triangular block with the length of this segment with the equivalent volume.
-                v *= 2.0 / length;
-                if (v > 0.0)
-                    width = (float)sqrt(v);
+
+                if (v > 0) {
+                    // Calculate cross sectional area of segment from volume.
+                    double a = v / length;
+                    
+                    // The segment extruded is drawn as a diamond <>. The width of the diamond is the distance between
+                    // the horizontal points. The thickness is the distance between the vertical points. The cross-sectional
+                    // area of a diamond is given by 0.5 * width * thickness.
+                    if (thickness > 0.0) {
+                        // Calculate width of diamond with given thickness and cross sectional area.
+                        width = (float)(2.0 * a / thickness);
+                    }
+                    else {
+                        // Calculate width of a square (i.e. diamond with width = thickness) with the given cross sectional area.
+                        width = (float)sqrt(2.0 * a);
+                        thickness = width;
+                    }
+                }
             }
 
             Vector3f toPosition = new Vector3f((float)(currentX), (float)(currentY), (float)(currentZ));
             Vector3f fromPosition = new Vector3f((float)(previousX), (float)(previousY), (float)(previousZ));
             Vector3f entityPosition = VectorUtils.calculateCenterBetweenVectors(fromPosition, toPosition);
             Entity entity = new Entity(lineModel, entityPosition, direction, normal,
-                                       length, width,
+                                       length, width, thickness,
                                        currentLayer, currentLine, currentTool, !isExtrusion, null);
             if (isExtrusion)
             {
