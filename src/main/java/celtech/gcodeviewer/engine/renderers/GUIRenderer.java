@@ -4,6 +4,7 @@ import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.gui.GCVControlPanel;
 import celtech.gcodeviewer.gui.GCVGCodePanel;
+import celtech.gcodeviewer.gui.GCVSliderPanel;
 import celtech.gcodeviewer.shaders.GUIShader;
 import static org.lwjgl.nuklear.Nuklear.nk_buffer_init_fixed;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -48,6 +49,8 @@ public class GUIRenderer {
     
     public static final int GUI_GCODE_PANEL_X = 20;
     public static final int GUI_GCODE_PANEL_Y = 20;
+    public static final int GUI_SLIDER_PANEL_X = 20;
+    public static final int GUI_SLIDER_PANEL_Y = 20;
     public static final int GUI_CONTROL_PANEL_X = 20;
     public static final int GUI_CONTROL_PANEL_Y = 20;
 
@@ -79,6 +82,7 @@ public class GUIRenderer {
     private final NkBuffer cmds = NkBuffer.create();
 
     private final GCVControlPanel controlPanel = new GCVControlPanel();
+    private final GCVSliderPanel sliderPanel = new GCVSliderPanel();
     private final GCVGCodePanel gCodePanel = new GCVGCodePanel();
 
     public GUIRenderer(NkContext nkContext,
@@ -121,7 +125,12 @@ public class GUIRenderer {
                           renderParameters.getWindowWidth() - gCodePanel.getWidth() - GUI_GCODE_PANEL_X,
                           GUI_GCODE_PANEL_Y,
                           renderParameters);
-
+       sliderPanel.layout(nkContext,
+                           GUI_SLIDER_PANEL_X,
+                           renderParameters.getWindowHeight() - sliderPanel.getHeight() - GUI_SLIDER_PANEL_Y,
+                           !gCodePanel.isPanelOpen(),
+                           renderParameters);
+ 
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -219,6 +228,10 @@ public class GUIRenderer {
                 (x >= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X - gCodePanel.getWidth() &&
                 x <= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X  &&
                 y >= GUI_GCODE_PANEL_Y &&
-                y <= GUI_GCODE_PANEL_Y + gCodePanel.getHeight()));
+                y <= GUI_GCODE_PANEL_Y + gCodePanel.getHeight()) ||
+                (x >= sliderPanel.getPositionX() &&
+                x <= sliderPanel.getPositionX() + sliderPanel.getWidth() &&
+                y >= sliderPanel.getPositionY() &&
+                y <= sliderPanel.getPositionY() + sliderPanel.getHeight()));
     }
 }

@@ -90,12 +90,10 @@ public class Camera {
             double ypos = yposdb.get();
             //System.out.println("mouse[" + Integer.toString(mouseButton) + " = (" + Double.toString(xpos) + ", " + Double.toString(ypos) + ")");
             //System.out.println("action = " + (action == GLFW_PRESS ? "GLFW_PRESS" : "GLFW_RELEASE"));
-            if (!dragging && guiManager.overGuiPanel((int)xpos, (int)ypos))
-            {
-                //System.out.println("calling guiManager.onMouseButton");
+            if (!dragging)
                 guiManager.onMouseButton(window, xpos, ypos, mouseButton, action, mods);
-            }
-            else
+            
+            if (!guiManager.overGuiPanel((int)xpos, (int)ypos))
             {
                 if((mouseButton == GLFW_MOUSE_BUTTON_1 ||
                     mouseButton == GLFW_MOUSE_BUTTON_2) &&

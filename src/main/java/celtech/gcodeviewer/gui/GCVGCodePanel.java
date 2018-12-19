@@ -93,7 +93,7 @@ public class GCVGCodePanel {
         
         try (MemoryStack stack = stackPush()) {
             NkRect rect = NkRect.mallocStack(stack);
-            panelHeight = renderParameters.getWindowHeight() - GUI_GCODE_PANEL_VERTICAL_BORDER;
+            panelHeight = renderParameters.getWindowHeight() - 2 * y;
             if (panelHeight < GUI_GCODE_PANEL_CLOSED_HEIGHT)
                 panelHeight = GUI_GCODE_PANEL_CLOSED_HEIGHT;
                 

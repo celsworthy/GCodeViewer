@@ -35,6 +35,8 @@ import org.lwjgl.nuklear.NkAllocator;
 import org.lwjgl.nuklear.NkColor;
 import org.lwjgl.nuklear.NkContext;
 import org.lwjgl.nuklear.NkMouse;
+import org.lwjgl.nuklear.NkStyleButton;
+import org.lwjgl.nuklear.NkStyleEdit;
 import org.lwjgl.nuklear.NkStyleItem;
 import org.lwjgl.nuklear.NkStyleItemData;
 import org.lwjgl.nuklear.NkStyleProperty;
@@ -263,19 +265,30 @@ public class GUIManager {
             NkColor activeFGColour = NkColor.mallocStack(stack);
             activeFGColour.r((byte)192).g((byte)192).b((byte)192).a((byte)255);
 
+            NkColor translucentLightGrey = NkColor.mallocStack(stack);
+            translucentLightGrey.r((byte)96).g((byte)96).b((byte)96).a((byte)160);
+            NkColor translucentMidGrey1 = NkColor.mallocStack(stack);
+            translucentMidGrey1.r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            NkColor translucentMidGrey2 = NkColor.mallocStack(stack);
+            translucentMidGrey2.r((byte)64).g((byte)64).b((byte)64).a((byte)64);
+            NkColor solidMidGrey = NkColor.mallocStack(stack);
+            solidMidGrey.r((byte)64).g((byte)64).b((byte)64).a((byte)255);
+            NkColor solidDarkGrey = NkColor.mallocStack(stack);
+            solidDarkGrey.r((byte)32).g((byte)32).b((byte)32).a((byte)255);
+    
             NkStyleWindow windowStyle = nkContext.style().window();
-            windowStyle.fixed_background().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)64);
+            windowStyle.fixed_background().data().color().set(translucentMidGrey2);
             
             NkStyleWindowHeader headerStyle = windowStyle.header();
             headerStyle.active().type(NK_STYLE_ITEM_COLOR);
-            headerStyle.active().data().color().r((byte)96).g((byte)96).b((byte)96).a((byte)160);
+            headerStyle.active().data().color().set(translucentLightGrey);
             headerStyle.label_active().set(normalFGColour);
             headerStyle.minimize_button().normal().type(NK_STYLE_ITEM_COLOR);
-            headerStyle.minimize_button().normal().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            headerStyle.minimize_button().normal().data().color().set(translucentMidGrey1);
             headerStyle.minimize_button().active().type(NK_STYLE_ITEM_COLOR);
-            headerStyle.minimize_button().active().data().color().r((byte)32).g((byte)32).b((byte)32).a((byte)255);
+            headerStyle.minimize_button().active().data().color().set(solidDarkGrey);
             headerStyle.minimize_button().hover().type(NK_STYLE_ITEM_COLOR);
-            headerStyle.minimize_button().hover().data().color().r((byte)32).g((byte)32).b((byte)32).a((byte)255);
+            headerStyle.minimize_button().hover().data().color().set(solidDarkGrey);
 
             NkStyleProperty propertyStyle = nkContext.style().property();
             propertyStyle.label_normal().set(normalFGColour);
@@ -285,11 +298,11 @@ public class GUIManager {
             propertyStyle.edit().text_hover().set(hoverFGColour);
             propertyStyle.edit().text_active().set(activeFGColour);
             propertyStyle.edit().active().type(NK_STYLE_ITEM_COLOR);
-            propertyStyle.edit().active().data().color(normalFGColour);
+            propertyStyle.edit().active().data().color().set(normalFGColour);
             propertyStyle.edit().hover().type(NK_STYLE_ITEM_COLOR);
-            propertyStyle.edit().hover().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            propertyStyle.edit().hover().data().color().set(translucentMidGrey1);
             propertyStyle.edit().normal().type(NK_STYLE_ITEM_COLOR);
-            propertyStyle.edit().normal().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            propertyStyle.edit().normal().data().color().set(solidMidGrey);
             propertyStyle.sym_left(NK_SYMBOL_MINUS);
             propertyStyle.sym_right(NK_SYMBOL_PLUS);
             propertyStyle.dec_button().normal().type(NK_STYLE_ITEM_COLOR);
@@ -307,16 +320,38 @@ public class GUIManager {
             propertyStyle.active().type(NK_STYLE_ITEM_COLOR);
             propertyStyle.active().data().color(normalFGColour);
             propertyStyle.hover().type(NK_STYLE_ITEM_COLOR);
-            propertyStyle.hover().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            propertyStyle.hover().data().color().set(translucentMidGrey1);
             propertyStyle.normal().type(NK_STYLE_ITEM_COLOR);
-            propertyStyle.normal().data().color().r((byte)64).g((byte)64).b((byte)64).a((byte)160);
+            propertyStyle.normal().data().color().set(translucentMidGrey1);
+
+            NkStyleButton buttonStyle = nkContext.style().button();
+            buttonStyle.active().type(NK_STYLE_ITEM_COLOR);
+            buttonStyle.active().data().color(normalFGColour);
+            buttonStyle.hover().type(NK_STYLE_ITEM_COLOR);
+            buttonStyle.hover().data().color(translucentMidGrey1);
+            buttonStyle.normal().type(NK_STYLE_ITEM_COLOR);
+            buttonStyle.normal().data().color(translucentMidGrey1);
+            buttonStyle.text_active().set(activeFGColour);
+            buttonStyle.text_hover().set(hoverFGColour);
+            buttonStyle.text_normal().set(normalFGColour);
 
             NkStyleToggle checkboxStyle = nkContext.style().checkbox();
             checkboxStyle.border(1.0f);
-            checkboxStyle.border_color(normalFGColour);
-            checkboxStyle.text_active(activeFGColour);
-            checkboxStyle.text_normal(normalFGColour);
-            checkboxStyle.text_hover(hoverFGColour);
+            checkboxStyle.border_color().set(normalFGColour);
+            checkboxStyle.text_active().set(activeFGColour);
+            checkboxStyle.text_hover().set(hoverFGColour);
+            checkboxStyle.text_normal().set(normalFGColour);
+
+            NkStyleEdit editStyle = nkContext.style().edit();
+            editStyle.text_normal().set(normalFGColour);
+            editStyle.text_hover().set(hoverFGColour);
+            editStyle.text_active().set(activeFGColour);
+            editStyle.active().type(NK_STYLE_ITEM_COLOR);
+            editStyle.active().data().color().set(normalFGColour);
+            editStyle.hover().type(NK_STYLE_ITEM_COLOR);
+            editStyle.hover().data().color().set(translucentMidGrey1);
+            editStyle.normal().type(NK_STYLE_ITEM_COLOR);
+            editStyle.normal().data().color().set(solidMidGrey);
         }
     }
     
