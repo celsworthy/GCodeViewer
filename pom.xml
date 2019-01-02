@@ -14,7 +14,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <lwjgl.version>3.1.7-SNAPSHOT</lwjgl.version>
+        <lwjgl.version>3.2.1</lwjgl.version>
     </properties>
 
     <profiles>
@@ -241,6 +241,12 @@
             <artifactId>lwjgl-stb</artifactId>
             <version>${lwjgl.version}</version>
             <classifier>${lwjgl.natives}</classifier>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.joml/joml -->
+        <dependency>
+            <groupId>org.joml</groupId>
+            <artifactId>joml</artifactId>
+            <version>1.9.12</version>
         </dependency>
         <dependency>
             <groupId>org.lwjgl.lwjgl</groupId>

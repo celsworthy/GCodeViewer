@@ -5,11 +5,11 @@ import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.shaders.MoveShader;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
 
 public class MoveRenderer {
    

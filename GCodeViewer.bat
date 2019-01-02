@@ -1,0 +1,2 @@
+if NOT DEFINED CEL_HOME set CEL_HOME=C:\Program Files\CEL
+"%CEL_HOME%\AutoMaker\java\bin\java.exe" -DlibertySystems.configFile="%CEL_HOME%\Common\GCodeViewer\GCodeViewer.configFile.xml" -jar "%CEL_HOME%\Common\GCodeViewer\GCodeViewer.jar" %*

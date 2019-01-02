@@ -4,8 +4,8 @@ import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.Light;
 import static celtech.gcodeviewer.shaders.ShaderProgram.SHADER_DIRECTORY;
 import celtech.gcodeviewer.utils.MatrixUtils;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 /**
  *
@@ -58,22 +58,24 @@ public class MoveShader  extends ShaderProgram {
     }
     
     public void loadCompositeMatrix() {
-        Matrix4f t = new Matrix4f();
+        Matrix4f composite = new Matrix4f(projectionMatrix);
+        composite.mul(viewMatrix);
+        
         Matrix4f mx = new Matrix4f();
-        Matrix4f composite = new Matrix4f();
-        Matrix4f.mul(projectionMatrix, viewMatrix, t);        
+        mx.identity();
+
         // Mirror in X.
-        mx.m00 = -1.0f;
+        mx.m00(-1.0f);
         // Swap Y and Z
-        mx.m11 = 0.0f;
-        mx.m12 = 1.0f;
-        mx.m21 = 1.0f;
-        mx.m22 = 0.0f;
-        Matrix4f.mul(t, mx, composite);
+        mx.m11(0.0f);
+        mx.m12(1.0f);
+        mx.m21(1.0f);
+        mx.m22(0.0f);
+        composite.mul(mx);
         
         super.loadMatrix(location_compositeMatrix, composite);
     }
-    
+        
     public void loadLayerLimits(int topVisibleLayer, int bottomVisibleLayer) {
         super.loadInt(location_topVisibleLayer, topVisibleLayer);
         super.loadInt(location_bottomVisibleLayer, bottomVisibleLayer);

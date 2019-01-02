@@ -9,11 +9,11 @@ import celtech.gcodeviewer.shaders.SegmentShader;
 import celtech.gcodeviewer.utils.MatrixUtils;
 import java.util.List;
 import java.util.Map;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
 
 public class SegmentRenderer {
    

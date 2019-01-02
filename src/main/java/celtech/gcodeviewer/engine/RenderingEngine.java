@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Scanner;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
+import org.joml.Vector3f;
 import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
@@ -29,7 +30,6 @@ import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 import static org.lwjgl.system.MemoryStack.stackPush;
-import org.lwjgl.util.vector.Vector3f;
 
 /**
  *
@@ -82,9 +82,9 @@ public class RenderingEngine {
         this.windowId = windowId;
         this.configuration = configuration;
         Vector3f printVolume = configuration.getPrintVolume();
-        this.printVolumeWidth = (float)printVolume.getX();
-        this.printVolumeHeight = (float)printVolume.getZ();
-        this.printVolumeDepth = (float)printVolume.getY();
+        this.printVolumeWidth = (float)printVolume.x();
+        this.printVolumeHeight = (float)printVolume.z();
+        this.printVolumeDepth = (float)printVolume.y();
 
         renderParameters.setFromConfiguration(configuration);
         renderParameters.setWindowWidth(windowWidth);
@@ -113,9 +113,9 @@ public class RenderingEngine {
 
         createWindowResizeCallback();
         
-        Vector3f lightPos = new Vector3f(configuration.getLightPosition().getX(),
-                                         configuration.getLightPosition().getY(),
-                                         configuration.getLightPosition().getZ());
+        Vector3f lightPos = new Vector3f(configuration.getLightPosition().x(),
+                                         configuration.getLightPosition().y(),
+                                         configuration.getLightPosition().z());
         Light light = new Light(lightPos, configuration.getLightColour());
 
         model = modelLoader.loadToVAO(CubeConstants.VERTICES, CubeConstants.NORMALS, CubeConstants.INDICES);

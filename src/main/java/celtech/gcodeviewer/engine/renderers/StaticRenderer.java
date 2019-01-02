@@ -8,11 +8,11 @@ import celtech.gcodeviewer.utils.MatrixUtils;
 import celtech.gcodeviewer.utils.VectorUtils;
 import java.util.List;
 import java.util.Map;
+import org.joml.Matrix4f;
+import org.joml.Vector3f;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector3f;
 
 public class StaticRenderer {
    
@@ -75,9 +75,9 @@ public class StaticRenderer {
     
     public void prepareInstance(Entity entity) {
         Vector3f halfDelta = new Vector3f(entity.getDirection());
-        halfDelta.scale(0.5f * entity.getLength());
-        Vector3f toPosition = Vector3f.add(entity.getPosition(), halfDelta, null);
-        Vector3f fromPosition = Vector3f.sub(entity.getPosition(), halfDelta, null);
+        halfDelta.mul(0.5f * entity.getLength());
+        Vector3f toPosition = new Vector3f(entity.getPosition()).add(halfDelta);
+        Vector3f fromPosition = new Vector3f(entity.getPosition()).sub(halfDelta);
         float angleAroundX = 0.0F;
         float angleAroundY = VectorUtils.calculateRotationAroundYOfVectors(fromPosition, toPosition);
         float angleAroundZ = VectorUtils.calculateRotationAroundZOfVectors(fromPosition, toPosition);

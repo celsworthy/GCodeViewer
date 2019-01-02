@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 /**
  *
@@ -425,18 +425,18 @@ public class GCodeLineProcessor implements GCodeConsumer
         float length = direction.length();
         if (length > MINIMUM_STEP)
         {
-            direction.normalise();
-            Vector3f normal = Vector3f.cross(direction, new Vector3f(0.0F, 0.0F, 1.0F), null);
+            direction.normalize();
+            Vector3f normal = new Vector3f(direction).cross(0.0F, 0.0F, 1.0F);
             if (normal.length() < 0.1) // Close to vertical.
             {
-                Vector3f nx = Vector3f.cross(direction, new Vector3f(1.0F, 0.0F, 0.0F), null);
-                Vector3f ny = Vector3f.cross(direction, new Vector3f(0.0F, 1.0F, 0.0F), null);
+                Vector3f nx = new Vector3f(direction).cross(1.0F, 0.0F, 0.0F);
+                Vector3f ny =  new Vector3f(direction).cross(0.0F, 1.0F, 0.0F);
                 if (nx.length() >= ny.length())
                     normal = nx;
                 else
                     normal = ny;
             }
-            normal.normalise();
+            normal.normalize();
 
             float width = 0.1F;
             float thickness = (float)currentLayerThickness;

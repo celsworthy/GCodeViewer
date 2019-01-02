@@ -11,9 +11,9 @@ import java.io.InputStreamReader;
 import java.nio.FloatBuffer;
 import java.util.List;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Matrix4f;
-import org.lwjgl.util.vector.Vector4f;
+import org.joml.Vector3f;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
 
 public abstract class ShaderProgram {
     
@@ -114,9 +114,9 @@ public abstract class ShaderProgram {
             if (i < vl.size())
             {
                 Vector3f v4 = vl.get(i);
-                UNIFORM_VECTOR_BUFFER.put(v4.getX());
-                UNIFORM_VECTOR_BUFFER.put(v4.getY());
-                UNIFORM_VECTOR_BUFFER.put(v4.getZ());
+                UNIFORM_VECTOR_BUFFER.put(v4.x());
+                UNIFORM_VECTOR_BUFFER.put(v4.y());
+                UNIFORM_VECTOR_BUFFER.put(v4.z());
                 UNIFORM_VECTOR_BUFFER.put(1.0f);
             }
             else
@@ -140,7 +140,23 @@ public abstract class ShaderProgram {
     }
     
     protected void loadMatrix(int location, Matrix4f matrix) {
-        matrix.store(MATRIX_BUFFER);
+        MATRIX_BUFFER.clear();
+        MATRIX_BUFFER.put(matrix.m00());
+        MATRIX_BUFFER.put(matrix.m01());
+        MATRIX_BUFFER.put(matrix.m02());
+        MATRIX_BUFFER.put(matrix.m03());
+        MATRIX_BUFFER.put(matrix.m10());
+        MATRIX_BUFFER.put(matrix.m11());
+        MATRIX_BUFFER.put(matrix.m12());
+        MATRIX_BUFFER.put(matrix.m13());
+        MATRIX_BUFFER.put(matrix.m20());
+        MATRIX_BUFFER.put(matrix.m21());
+        MATRIX_BUFFER.put(matrix.m22());
+        MATRIX_BUFFER.put(matrix.m23());
+        MATRIX_BUFFER.put(matrix.m30());
+        MATRIX_BUFFER.put(matrix.m31());
+        MATRIX_BUFFER.put(matrix.m32());
+        MATRIX_BUFFER.put(matrix.m33());
         MATRIX_BUFFER.flip();
         glUniformMatrix4fv(location, false, MATRIX_BUFFER);
     }

@@ -11,7 +11,7 @@ import celtech.gcodeviewer.entities.Entity;
 import java.util.Scanner;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 /**
  *

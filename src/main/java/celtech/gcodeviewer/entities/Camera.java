@@ -5,7 +5,7 @@ import celtech.gcodeviewer.gui.GUIManager;
 import java.nio.DoubleBuffer;
 import org.lwjgl.BufferUtils;
 import static org.lwjgl.glfw.GLFW.*;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 /**
  * 
@@ -132,11 +132,10 @@ public class Camera {
                 if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE) {
                    Vector3f viewVector = calculateNormalisedViewVector();
                    Vector3f leftRightVect = new Vector3f(viewVector.z, 0, -viewVector.x);
-                   Vector3f upDownVect = new Vector3f();
-                   Vector3f.cross(leftRightVect, viewVector, upDownVect);
+                   Vector3f upDownVect = new Vector3f(leftRightVect).cross(viewVector);
 
-                   leftRightVect.normalise();
-                   upDownVect.normalise();
+                   leftRightVect.normalize();
+                   upDownVect.normalize();
 
                    // Deal with left right pan
                    centerPoint.getPosition().x += (leftRightVect.x * xPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
@@ -155,9 +154,8 @@ public class Camera {
     }
     
     private Vector3f calculateNormalisedViewVector() {
-        Vector3f viewVector = new Vector3f();
-        Vector3f.sub(position, centerPoint.getPosition(), viewVector);
-        viewVector.normalise();
+        Vector3f viewVector = new Vector3f(position).sub(centerPoint.getPosition());
+        viewVector.normalize();
         return viewVector;
     }
     

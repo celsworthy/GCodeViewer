@@ -2,7 +2,7 @@ package celtech.gcodeviewer.entities;
 
 import celtech.gcodeviewer.engine.RawModel;
 import celtech.gcodeviewer.utils.VectorUtils;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 /**
  *

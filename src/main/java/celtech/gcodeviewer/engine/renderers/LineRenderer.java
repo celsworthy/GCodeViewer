@@ -6,10 +6,10 @@ import celtech.gcodeviewer.entities.LineEntity;
 import celtech.gcodeviewer.shaders.LineShader;
 import celtech.gcodeviewer.utils.MatrixUtils;
 import java.util.List;
+import org.joml.Matrix4f;
 import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
 import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
 import static org.lwjgl.opengl.GL30.glBindVertexArray;
-import org.lwjgl.util.vector.Matrix4f;
 
 /**
  *

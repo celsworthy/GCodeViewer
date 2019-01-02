@@ -1,6 +1,5 @@
 package celtech.gcodeviewer.engine;
 
-import celtech.gcodeviewer.engine.renderers.MasterRenderer;
 import celtech.gcodeviewer.entities.Entity;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL15.*;
@@ -8,13 +7,11 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
 
 public class MoveLoader {
     
@@ -52,16 +49,16 @@ public class MoveLoader {
         moves.forEach(move -> {
                 Vector3f p = move.getPosition();
                 Vector3f d = move.getDirection();
-                d.scale(0.5f * move.getLength());
+                d.mul(0.5f * move.getLength());
                 float halfLength = 0.5f * move.getLength();
-                Vector3f p1 = Vector3f.sub(p, d, null);
-                Vector3f p2 = Vector3f.add(p, d, null);
-                floatBuffer.put(p1.getX());
-                floatBuffer.put(p1.getY());
-                floatBuffer.put(p1.getZ());
-                floatBuffer.put(p2.getX());
-                floatBuffer.put(p2.getY());
-                floatBuffer.put(p2.getZ());
+                Vector3f p1 = new Vector3f(p).sub(d);
+                Vector3f p2 = new Vector3f(p).add(d);
+                floatBuffer.put(p1.x());
+                floatBuffer.put(p1.y());
+                floatBuffer.put(p1.z());
+                floatBuffer.put(p2.x());
+                floatBuffer.put(p2.y());
+                floatBuffer.put(p2.z());
             });
         floatBuffer.flip();
         glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STATIC_DRAW);

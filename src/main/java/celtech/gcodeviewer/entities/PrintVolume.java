@@ -3,7 +3,7 @@ package celtech.gcodeviewer.entities;
 import celtech.gcodeviewer.engine.RawModel;
 import java.util.ArrayList;
 import java.util.List;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 /**
  *

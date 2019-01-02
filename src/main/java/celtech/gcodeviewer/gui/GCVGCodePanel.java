@@ -27,7 +27,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetInputMode;
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.system.MemoryStack.*;
 import static org.lwjgl.system.MemoryUtil.*;
-import org.lwjgl.util.vector.Vector3f;
+import org.joml.Vector3f;
 
 public class GCVGCodePanel {
 
@@ -128,7 +128,7 @@ public class GCVGCodePanel {
                     textColour.set((byte)255, (byte)255, (byte)255, (byte)255);
                     NkColor selectedTextColour = NkColor.mallocStack(stack);
                     Vector3f selectedColour = renderParameters.getSelectColour();
-                    selectedTextColour.set((byte)(255 * selectedColour.getX()), (byte)(255 * selectedColour.getY()), (byte)(255 * selectedColour.getZ()), (byte)255);
+                    selectedTextColour.set((byte)(255 * selectedColour.x()), (byte)(255 * selectedColour.y()), (byte)(255 * selectedColour.z()), (byte)255);
 
                     NkColor originalTextColour = ctx.style().text().color();
                     int scrollShowingButtons = ctx.style().scrollv().show_buttons();

@@ -3,7 +3,7 @@ package celtech.gcodeviewer.shaders;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.utils.MatrixUtils;
-import org.lwjgl.util.vector.Matrix4f;
+import org.joml.Matrix4f;
 
 /**
  *

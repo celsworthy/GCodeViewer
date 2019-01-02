@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.util.vector.Vector3f;
-import org.lwjgl.util.vector.Vector4f;
+import org.joml.Vector3f;
+import org.joml.Vector4f;
 
 public class SegmentLoader {
     
@@ -29,12 +29,12 @@ public class SegmentLoader {
         storeVector3InAttributeList(segmentEntity, 0, segments, Entity::getPosition);
         storeVector4InAttributeList(segmentEntity, 1, segments, (Entity s) -> {
                 Vector3f d = s.getDirection();
-                Vector4f d4 = new Vector4f(d.getX(), d.getY(), d.getZ(), s.getLength());
+                Vector4f d4 = new Vector4f(d.x(), d.y(), d.z(), s.getLength());
                 return d4;
             });
         storeVector4InAttributeList(segmentEntity, 2, segments, (Entity s) -> {
                 Vector3f n = s.getNormal();
-                Vector4f n4 = new Vector4f(n.getX(), n.getY(), n.getZ(), s.getWidth());
+                Vector4f n4 = new Vector4f(n.x(), n.y(), n.z(), s.getWidth());
                 return n4;
             });
         storeVector3InAttributeList(segmentEntity, 3, segments, Entity::getColour);
@@ -50,9 +50,9 @@ public class SegmentLoader {
         FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(3 * segments.size());
         segments.forEach(segment -> {
                 Vector3f v = segment.getColour();
-                floatBuffer.put(v.getX());
-                floatBuffer.put(v.getY());
-                floatBuffer.put(v.getZ());
+                floatBuffer.put(v.x());
+                floatBuffer.put(v.y());
+                floatBuffer.put(v.z());
             });
         floatBuffer.flip();
         glBindVertexArray(segmentEntity.getVaoId());
@@ -82,9 +82,9 @@ public class SegmentLoader {
         FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(3 * segments.size());
         segments.forEach(segment -> {
                 Vector3f v = getVector3.apply(segment);
-                floatBuffer.put(v.getX());
-                floatBuffer.put(v.getY());
-                floatBuffer.put(v.getZ());
+                floatBuffer.put(v.x());
+                floatBuffer.put(v.y());
+                floatBuffer.put(v.z());
             });
         floatBuffer.flip();
         glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STATIC_DRAW);
@@ -99,10 +99,10 @@ public class SegmentLoader {
         FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(4 * segments.size());
         segments.forEach(segment -> {
                 Vector4f v = getVector4.apply(segment);
-                floatBuffer.put(v.getX());
-                floatBuffer.put(v.getY());
-                floatBuffer.put(v.getZ());
-                floatBuffer.put(v.getW());
+                floatBuffer.put(v.x());
+                floatBuffer.put(v.y());
+                floatBuffer.put(v.z());
+                floatBuffer.put(v.w());
             });
         floatBuffer.flip();
         glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STATIC_DRAW);
