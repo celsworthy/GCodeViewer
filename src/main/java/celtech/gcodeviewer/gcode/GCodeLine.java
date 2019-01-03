@@ -9,10 +9,11 @@ import java.util.Map;
  * @author micro
  */
 public class GCodeLine {
+    public static int NULL_NUMBER = -9999;
     public char commandLetter = '!';
     public int commandNumber = -1;
-    public int lineNumber = -9999;
-    public int layerNumber = -9999;
+    public int lineNumber = NULL_NUMBER;
+    public int layerNumber = NULL_NUMBER;
     public double layerHeight = -Double.MAX_VALUE;
     public String type = "";
     public String comment = "";
@@ -22,8 +23,8 @@ public class GCodeLine {
     {
         commandLetter = '!';
         commandNumber = -1;
-        lineNumber = -9999;
-        layerNumber = -9999;
+        lineNumber = NULL_NUMBER;
+        layerNumber = NULL_NUMBER;
         layerHeight = -Double.MAX_VALUE;
         comment = "";
         valueMap.clear();

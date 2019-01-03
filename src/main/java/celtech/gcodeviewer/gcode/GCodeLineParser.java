@@ -108,7 +108,8 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                     OneOrMore(
                         FirstOf(
                             CharRange('a', 'z'),
-                            CharRange('A', 'Z')
+                            CharRange('A', 'Z'),
+                            '-'
                         )
                     ),
                     new Action()
