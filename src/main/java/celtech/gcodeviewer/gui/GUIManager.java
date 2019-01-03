@@ -275,9 +275,15 @@ public class GUIManager {
             solidMidGrey.r((byte)64).g((byte)64).b((byte)64).a((byte)255);
             NkColor solidDarkGrey = NkColor.mallocStack(stack);
             solidDarkGrey.r((byte)32).g((byte)32).b((byte)32).a((byte)255);
+            
+            nkContext.style().text().color().set(normalFGColour);
     
             NkStyleWindow windowStyle = nkContext.style().window();
             windowStyle.fixed_background().data().color().set(translucentMidGrey2);
+            windowStyle.padding().x(1.0f);
+            windowStyle.padding().y(1.0f);
+            windowStyle.group_padding().x(1.0f);
+            windowStyle.group_padding().y(1.0f);
             
             NkStyleWindowHeader headerStyle = windowStyle.header();
             headerStyle.active().type(NK_STYLE_ITEM_COLOR);

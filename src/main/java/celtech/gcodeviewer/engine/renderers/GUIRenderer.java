@@ -2,9 +2,9 @@ package celtech.gcodeviewer.engine.renderers;
 
 import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.entities.Camera;
-import celtech.gcodeviewer.gui.GCVControlPanel;
-import celtech.gcodeviewer.gui.GCVGCodePanel;
-import celtech.gcodeviewer.gui.GCVSliderPanel;
+import celtech.gcodeviewer.gui.GCVControlPanel2;
+import celtech.gcodeviewer.gui.GCVGCodePanel2;
+import celtech.gcodeviewer.gui.GCVSliderPanel2;
 import celtech.gcodeviewer.shaders.GUIShader;
 import static org.lwjgl.nuklear.Nuklear.nk_buffer_init_fixed;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -47,12 +47,12 @@ import static org.lwjgl.system.MemoryUtil.nmemFree;
  */
 public class GUIRenderer {
     
-    public static final int GUI_GCODE_PANEL_X = 20;
-    public static final int GUI_GCODE_PANEL_Y = 20;
-    public static final int GUI_SLIDER_PANEL_X = 20;
-    public static final int GUI_SLIDER_PANEL_Y = 20;
-    public static final int GUI_CONTROL_PANEL_X = 20;
-    public static final int GUI_CONTROL_PANEL_Y = 20;
+    public static final int GUI_GCODE_PANEL_X = 5;
+    public static final int GUI_GCODE_PANEL_Y = 5;
+    public static final int GUI_SLIDER_PANEL_X = 5;
+    public static final int GUI_SLIDER_PANEL_Y = 5;
+    public static final int GUI_CONTROL_PANEL_X = 5;
+    public static final int GUI_CONTROL_PANEL_Y = 5;
 
     private static final int MAX_VERTEX_BUFFER  = 512 * 1024;
     private static final int MAX_ELEMENT_BUFFER = 128 * 1024;
@@ -81,9 +81,9 @@ public class GUIRenderer {
     
     private final NkBuffer cmds = NkBuffer.create();
 
-    private final GCVControlPanel controlPanel = new GCVControlPanel();
-    private final GCVSliderPanel sliderPanel = new GCVSliderPanel();
-    private final GCVGCodePanel gCodePanel = new GCVGCodePanel();
+    private final GCVControlPanel2 controlPanel = new GCVControlPanel2();
+    private final GCVSliderPanel2 sliderPanel = new GCVSliderPanel2();
+    private final GCVGCodePanel2 gCodePanel = new GCVGCodePanel2();
 
     public GUIRenderer(NkContext nkContext,
                        GUIShader guiShader,
@@ -121,15 +121,8 @@ public class GUIRenderer {
 
     public void render() {
         controlPanel.layout(nkContext, GUI_CONTROL_PANEL_X, GUI_CONTROL_PANEL_Y, renderParameters);
-        gCodePanel.layout(nkContext,
-                          renderParameters.getWindowWidth() - gCodePanel.getWidth() - GUI_GCODE_PANEL_X,
-                          GUI_GCODE_PANEL_Y,
-                          renderParameters);
-       sliderPanel.layout(nkContext,
-                           GUI_SLIDER_PANEL_X,
-                           renderParameters.getWindowHeight() - sliderPanel.getHeight() - GUI_SLIDER_PANEL_Y,
-                           !gCodePanel.isPanelOpen(),
-                           renderParameters);
+        gCodePanel.layout(nkContext, GUI_GCODE_PANEL_X, GUI_GCODE_PANEL_Y, renderParameters);
+        sliderPanel.layout(nkContext, GUI_SLIDER_PANEL_X, GUI_SLIDER_PANEL_Y, !gCodePanel.isPanelExpanded(), renderParameters);
  
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
@@ -138,10 +131,7 @@ public class GUIRenderer {
         glDisable(GL_CULL_FACE);
 
         glDisable(GL_DEPTH_TEST);
-        // If this is enabled, the panel disappears when the window is made larger.
-        // Don't know why.
         glEnable(GL_SCISSOR_TEST);
-        //glDisable(GL_SCISSOR_TEST);
         glActiveTexture(GL_TEXTURE0);
         
         // convert from command queue into draw list and draw to screen
@@ -222,16 +212,16 @@ public class GUIRenderer {
     
     public boolean pointOverGuiPanel(int x, int y) {
         return ((x >= GUI_CONTROL_PANEL_X &&
-                x <= GUI_CONTROL_PANEL_X + controlPanel.getWidth() &&
+                x <= GUI_CONTROL_PANEL_X + controlPanel.getPanelWidth() &&
                 y >= GUI_CONTROL_PANEL_Y &&
-                y <= GUI_CONTROL_PANEL_Y + controlPanel.getHeight()) ||
-                (x >= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X - gCodePanel.getWidth() &&
+                y <= GUI_CONTROL_PANEL_Y + controlPanel.getPanelHeight()) ||
+                (x >= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X - gCodePanel.getPanelWidth() &&
                 x <= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X  &&
                 y >= GUI_GCODE_PANEL_Y &&
-                y <= GUI_GCODE_PANEL_Y + gCodePanel.getHeight()) ||
-                (x >= sliderPanel.getPositionX() &&
-                x <= sliderPanel.getPositionX() + sliderPanel.getWidth() &&
-                y >= sliderPanel.getPositionY() &&
-                y <= sliderPanel.getPositionY() + sliderPanel.getHeight()));
+                y <= GUI_GCODE_PANEL_Y + gCodePanel.getPanelHeight()) ||
+                (x >= sliderPanel.getPanelX() &&
+                x <= sliderPanel.getPanelX() + sliderPanel.getPanelWidth() &&
+                y >= sliderPanel.getPanelY() &&
+                y <= sliderPanel.getPanelY() + sliderPanel.getPanelHeight()));
     }
 }

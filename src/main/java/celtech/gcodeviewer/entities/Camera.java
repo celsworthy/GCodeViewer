@@ -1,6 +1,5 @@
 package celtech.gcodeviewer.entities;
 
-import celtech.gcodeviewer.gui.GCVControlPanel;
 import celtech.gcodeviewer.gui.GUIManager;
 import java.nio.DoubleBuffer;
 import org.lwjgl.BufferUtils;

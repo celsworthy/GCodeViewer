@@ -5,7 +5,6 @@
 package celtech.gcodeviewer.gui;
 
 import celtech.gcodeviewer.engine.RenderParameters;
-import static celtech.gcodeviewer.gui.GCVControlPanel.GUI_CONTROL_PANEL_ROW_HEIGHT;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
