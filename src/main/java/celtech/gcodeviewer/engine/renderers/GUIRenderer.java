@@ -1,10 +1,11 @@
 package celtech.gcodeviewer.engine.renderers;
 
+import celtech.gcodeviewer.engine.LayerDetails;
 import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.entities.Camera;
-import celtech.gcodeviewer.gui.GCVControlPanel2;
-import celtech.gcodeviewer.gui.GCVGCodePanel2;
-import celtech.gcodeviewer.gui.GCVSliderPanel2;
+import celtech.gcodeviewer.gui.GCVControlPanel;
+import celtech.gcodeviewer.gui.GCVGCodePanel;
+import celtech.gcodeviewer.gui.GCVSliderPanel;
 import celtech.gcodeviewer.shaders.GUIShader;
 import static org.lwjgl.nuklear.Nuklear.nk_buffer_init_fixed;
 import static org.lwjgl.system.MemoryStack.stackPush;
@@ -14,6 +15,7 @@ import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import org.lwjgl.nuklear.NkAllocator;
@@ -81,9 +83,9 @@ public class GUIRenderer {
     
     private final NkBuffer cmds = NkBuffer.create();
 
-    private final GCVControlPanel2 controlPanel = new GCVControlPanel2();
-    private final GCVSliderPanel2 sliderPanel = new GCVSliderPanel2();
-    private final GCVGCodePanel2 gCodePanel = new GCVGCodePanel2();
+    private final GCVControlPanel controlPanel = new GCVControlPanel();
+    private final GCVSliderPanel sliderPanel = new GCVSliderPanel();
+    private final GCVGCodePanel gCodePanel = new GCVGCodePanel();
 
     public GUIRenderer(NkContext nkContext,
                        GUIShader guiShader,
@@ -113,6 +115,10 @@ public class GUIRenderer {
 
     public void setLines(List<String> lines) {
         gCodePanel.setLines(lines);
+    }
+
+    public void setLayerMap(Map<Integer, LayerDetails> layerMap) {
+        gCodePanel.setLayerMap(layerMap);
     }
 
     public RenderParameters getRenderParameters() {

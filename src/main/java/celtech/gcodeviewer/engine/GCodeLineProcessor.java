@@ -7,8 +7,10 @@ import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
@@ -60,7 +62,9 @@ public class GCodeLineProcessor implements GCodeConsumer
     private double currentLayerHeight = -Double.MAX_VALUE;
     private double currentLayerThickness = -Double.MAX_VALUE;
     private boolean layerHeightUpdateRequired = false;
-    
+
+    private Map<Integer, LayerDetails> layerMap = new HashMap<>();
+
     private String currentType = "";
     private Set<String> typeSet = new HashSet<>();
 
@@ -101,6 +105,11 @@ public class GCodeLineProcessor implements GCodeConsumer
         return currentLayerThickness;
     }
 
+    public Map<Integer, LayerDetails> getLayerMap()
+    {
+        return layerMap;
+    }
+    
     public List<Entity> getSegments()
     {
         return segments;
@@ -189,6 +198,7 @@ public class GCodeLineProcessor implements GCodeConsumer
 
         currentLayer = Entity.NULL_LAYER;
         currentLayerHeight = 0;
+        layerMap.clear();
         currentType = "";
         typeSet.clear();
         
@@ -281,6 +291,8 @@ public class GCodeLineProcessor implements GCodeConsumer
         if (line.layerNumber > Entity.NULL_LAYER &&
             line.layerNumber != currentLayer)
         {
+            completeLayerDetails();
+                
             currentLayer = line.layerNumber;
             if (line.layerHeight > -Double.MAX_VALUE)
             {
@@ -292,6 +304,8 @@ public class GCodeLineProcessor implements GCodeConsumer
             {
                 layerHeightUpdateRequired = true;
             }
+            layerMap.put(currentLayer, new LayerDetails(currentLayer, currentLine, currentLine + 1,
+                                                        currentLayerHeight, currentLayerThickness));
         }
         if (!line.type.isEmpty() &&
             line.type != currentType)
@@ -342,6 +356,9 @@ public class GCodeLineProcessor implements GCodeConsumer
             else
                 currentLayerThickness = currentZ;
             currentLayerHeight = currentZ;
+            LayerDetails details = layerMap.get(currentLayer);
+            details.setLayerThickness(currentLayerThickness);
+            details.setLayerHeight(currentLayerHeight);
         }
         
         generateEntity();
@@ -518,5 +535,19 @@ public class GCodeLineProcessor implements GCodeConsumer
         updateDataRange(5, currentX);
         updateDataRange(6, currentY);
         updateDataRange(7, currentZ);
+    }
+    
+    private void completeLayerDetails() {
+            if (currentLayer != Entity.NULL_LAYER) {
+                LayerDetails details = layerMap.get(currentLayer);
+                details.setEndLine(currentLine);
+                details.calcNumberOfLines();
+            }        
+    }
+
+    @Override
+    public void complete() {
+        ++currentLine; // Step to one beyond the last line.
+        completeLayerDetails();
     }
 }

@@ -13,11 +13,9 @@ import celtech.gcodeviewer.gui.GUIManager;
 import celtech.gcodeviewer.utils.CubeConstants;
 import java.nio.IntBuffer;
 import java.util.List;
-import java.util.Scanner;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.joml.Vector3f;
-import org.lwjgl.glfw.GLFW;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
@@ -50,7 +48,6 @@ public class RenderingEngine {
     private RenderParameters renderParameters = new RenderParameters();
     private List<Entity> segments = null;
     private List<Entity> moves = null;
-    private List<String> lines = null;
         
     private final MasterRenderer masterRenderer;
     private final GUIManager guiManager;
@@ -231,6 +228,7 @@ public class RenderingEngine {
                     renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
                     guiManager.setToolSet(lineProcessor.getToolSet());
                     guiManager.setLines(processor.getLines());
+                    guiManager.setLayerMap(lineProcessor.getLayerMap());
                 }
             }
             catch (RuntimeException ex)

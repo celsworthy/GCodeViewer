@@ -14,4 +14,5 @@ import celtech.gcodeviewer.gcode.GCodeLine;
 public interface GCodeConsumer {
     public void reset();
     public void processLine(GCodeLine line);
+    public void complete();
 }

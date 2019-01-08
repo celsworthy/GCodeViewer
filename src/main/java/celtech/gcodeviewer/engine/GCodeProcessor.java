@@ -76,6 +76,7 @@ public class GCodeProcessor {
                     }
                 }
             }
+            consumer.complete();
             STENO.info("Parsed " + Integer.toString(lineNumber) + " lines.");
             success = true;
         } catch (IOException ex) {

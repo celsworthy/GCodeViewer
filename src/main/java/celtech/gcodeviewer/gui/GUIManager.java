@@ -1,5 +1,6 @@
 package celtech.gcodeviewer.gui;
 
+import celtech.gcodeviewer.engine.LayerDetails;
 import celtech.gcodeviewer.engine.RenderParameters;
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -28,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.lwjgl.BufferUtils;
@@ -367,6 +369,10 @@ public class GUIManager {
 
     public void setLines(List<String> lines) {
         guiRenderer.setLines(lines);
+    }
+
+    public void setLayerMap(Map<Integer, LayerDetails> layerMap) {
+        guiRenderer.setLayerMap(layerMap);
     }
 
     public void render() {
