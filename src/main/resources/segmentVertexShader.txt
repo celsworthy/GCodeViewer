@@ -9,30 +9,25 @@ uniform vec4 toolColours[8];
 uniform vec3 selectColour;
 
 in vec3 position;
-in vec4 direction;
 in vec4 normal;
 in vec3 colour;
-in vec4 attributes; // x = 0, y = layer, z = line, w = tool
+in vec3 attributes; // x = layer, y = line, z = tool
 
-out vec4 vDirection;
-out vec4 vDimension;
 out vec4 vNormal;
 out vec4 vColour;
 
 void main(void) {
     gl_Position = vec4(position, 1.0);
-	vDirection = direction;
 	vNormal = normal;
 	
-	int tool = int(attributes.w + 0.5);
+	int tool = int(attributes.z + 0.5);
 
-	vDimension = vec4(vDirection.w, vNormal.w, attributes.x, 0.0);
 	int toolFlag = 1 << tool;
 		
 	if (((showTools & toolFlag) == toolFlag) &&
-		(attributes.y >= bottomVisibleLayer && attributes.y <= topVisibleLayer)) {
+		(attributes.x >= bottomVisibleLayer && attributes.x <= topVisibleLayer)) {
 		
-     	if (attributes.z >= firstSelectedLine && attributes.z < lastSelectedLine)
+     	if (attributes.y >= firstSelectedLine && attributes.y < lastSelectedLine)
 			vColour = vec4(selectColour, 1.0);
 		else if ((showFlags & 4) == 4) // Show only selected.
 			vColour = vec4(0.0, 0.0, 0.0, 0.0);

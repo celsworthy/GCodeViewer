@@ -49,7 +49,7 @@ public class MoveRenderer {
             MasterRenderer.checkErrors();
             bindRawModel(rawEntity);
             MasterRenderer.checkErrors();
-            glDrawArrays(GL_LINES, 0, rawEntity.getVertexCount());
+            glDrawArrays(GL_LINES, 0, rawEntity.getElementCount());
             MasterRenderer.checkErrors();
             unbindRawModel();
             MasterRenderer.checkErrors();

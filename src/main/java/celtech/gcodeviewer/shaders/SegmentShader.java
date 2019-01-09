@@ -41,10 +41,9 @@ public class SegmentShader  extends ShaderProgram {
     @Override
     protected void bindAttributes() {
         super.bindAttribute(0, "position");
-        super.bindAttribute(1, "direction");
-        super.bindAttribute(2, "normal");
-        super.bindAttribute(3, "colour");
-        super.bindAttribute(4, "attributes");
+        super.bindAttribute(1, "normal");
+        super.bindAttribute(2, "colour");
+        super.bindAttribute(3, "attributes");
     }
 
     @Override
