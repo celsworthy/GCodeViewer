@@ -62,6 +62,7 @@ import org.lwjgl.system.MemoryStack;
 public class GUIManager {
     
     private static final NkAllocator ALLOCATOR;
+    private static final double FPS_UPDATE_INTERVAL = 1.0;
     
     static {
         ALLOCATOR = NkAllocator.create()
@@ -76,6 +77,11 @@ public class GUIManager {
     
     private NkContext nkContext = NkContext.create();
     private NkUserFont default_font = NkUserFont.create();
+    private double previousTime = 0.0;
+    private double updateDueTime = 0.0;
+    private double averageFrameTime = 0.0;
+    private double frameTimeAccumulator = 0.0;
+    private int nFrames = 0;
     
     public GUIManager(long windowId, RenderParameters renderParameters) {
         try {
@@ -85,6 +91,7 @@ public class GUIManager {
         }
         setup(windowId);
         guiRenderer = new GUIRenderer(nkContext, guiShader, renderParameters);
+        guiRenderer.loadMessages();
         setupFont();
         setupStyle();
     }
@@ -141,6 +148,9 @@ public class GUIManager {
                     nnk_textedit_paste(edit, text, nnk_strlen(text));
                 }
             }));
+        
+        previousTime = glfwGetTime();
+        updateDueTime = previousTime + FPS_UPDATE_INTERVAL;
 
         return nkContext;
     }
@@ -367,6 +377,10 @@ public class GUIManager {
         guiRenderer.setToolSet(toolSet);
     }
 
+    public void setTypeSet(Set<String> typeSet) {
+        guiRenderer.setTypeSet(typeSet);
+    }
+
     public void setLines(List<String> lines) {
         guiRenderer.setLines(lines);
     }
@@ -376,9 +390,20 @@ public class GUIManager {
     }
 
     public void render() {
+        double currentTime = glfwGetTime();
+        frameTimeAccumulator += currentTime - previousTime;
+        ++nFrames;
+        if (currentTime > updateDueTime) {
+            averageFrameTime = frameTimeAccumulator / nFrames;
+            frameTimeAccumulator = 0.0;
+            nFrames = 0;
+            updateDueTime = currentTime + FPS_UPDATE_INTERVAL;
+        }
+        
         guiShader.start();
-        guiRenderer.render();
+        guiRenderer.render(averageFrameTime);
         guiShader.stop();
+        previousTime = currentTime;
     }
     
     public void cleanUp() {
@@ -423,11 +448,9 @@ public class GUIManager {
             case GLFW_KEY_DOWN:
                 if (action == GLFW_PRESS || action == GLFW_REPEAT) {
                     RenderParameters renderParameters = guiRenderer.getRenderParameters();
-                    int step = 4;
-                    if (mods == GLFW_MOD_SHIFT)
-                        step = 1;
-                    else if (mods == GLFW_MOD_CONTROL)
-                        step = 2;
+                    int step = 1;
+                    if ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
+                        step = 5;
                     if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || 
                         glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
                         if (key == GLFW_KEY_UP)

@@ -14,10 +14,13 @@ import static org.lwjgl.opengl.GL15.*;
 import static org.lwjgl.opengl.GL30.*;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.lwjgl.nuklear.NkAllocator;
 import org.lwjgl.nuklear.NkBuffer;
 import org.lwjgl.nuklear.NkContext;
@@ -53,6 +56,8 @@ public class GUIRenderer {
     public static final int GUI_GCODE_PANEL_Y = 5;
     public static final int GUI_SLIDER_PANEL_X = 5;
     public static final int GUI_SLIDER_PANEL_Y = 5;
+    public static final int GUI_KEY_PANEL_X = 5;
+    public static final int GUI_KEY_PANEL_Y = 0;
     public static final int GUI_CONTROL_PANEL_X = 5;
     public static final int GUI_CONTROL_PANEL_Y = 5;
 
@@ -80,6 +85,8 @@ public class GUIRenderer {
     private final NkContext nkContext;
     private final GUIShader guiShader;
     private final RenderParameters renderParameters;
+    List<Integer> toolList = new ArrayList<>();
+    List<String> typeList = new ArrayList<>();
     
     private final NkBuffer cmds = NkBuffer.create();
 
@@ -110,7 +117,18 @@ public class GUIRenderer {
     }
     
     public void setToolSet(Set<Integer> toolSet) {
-        controlPanel.setToolSet(toolSet);
+        toolList = toolSet.stream()
+                 .filter(ts -> (ts >= 0 && ts < 8))
+                 .collect(Collectors.toList());
+        Collections.sort(toolList);
+        controlPanel.setToolList(toolList);
+    }
+
+    public void setTypeSet(Set<String> typeSet) {
+        typeList = typeSet.stream()
+                          .collect(Collectors.toList());
+        Collections.sort(typeList);
+        controlPanel.setTypeList(typeList);
     }
 
     public void setLines(List<String> lines) {
@@ -125,8 +143,14 @@ public class GUIRenderer {
         return renderParameters;
     }
 
-    public void render() {
-        controlPanel.layout(nkContext, GUI_CONTROL_PANEL_X, GUI_CONTROL_PANEL_Y, renderParameters);
+    public void loadMessages() {
+        controlPanel.loadMessages();
+        gCodePanel.loadMessages();
+        sliderPanel.loadMessages();
+    }
+
+    public void render(double frameTime) {
+        controlPanel.layout(nkContext, GUI_CONTROL_PANEL_X, GUI_CONTROL_PANEL_Y, renderParameters, frameTime);
         gCodePanel.layout(nkContext, GUI_GCODE_PANEL_X, GUI_GCODE_PANEL_Y, renderParameters);
         sliderPanel.layout(nkContext, GUI_SLIDER_PANEL_X, GUI_SLIDER_PANEL_Y, !gCodePanel.isPanelExpanded(), renderParameters);
  
@@ -217,14 +241,14 @@ public class GUIRenderer {
     }
     
     public boolean pointOverGuiPanel(int x, int y) {
-        return ((x >= GUI_CONTROL_PANEL_X &&
-                x <= GUI_CONTROL_PANEL_X + controlPanel.getPanelWidth() &&
-                y >= GUI_CONTROL_PANEL_Y &&
-                y <= GUI_CONTROL_PANEL_Y + controlPanel.getPanelHeight()) ||
-                (x >= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X - gCodePanel.getPanelWidth() &&
-                x <= renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_X  &&
-                y >= GUI_GCODE_PANEL_Y &&
-                y <= GUI_GCODE_PANEL_Y + gCodePanel.getPanelHeight()) ||
+        return ((x >= controlPanel.getPanelX() &&
+                x <= controlPanel.getPanelX() + controlPanel.getPanelWidth() &&
+                y >= controlPanel.getPanelY() &&
+                y <= controlPanel.getPanelY() + controlPanel.getPanelHeight()) ||
+                (x >= gCodePanel.getPanelX() &&
+                x <= gCodePanel.getPanelX() + gCodePanel.getPanelWidth() &&
+                y >= gCodePanel.getPanelY() &&
+                y <= gCodePanel.getPanelY() + gCodePanel.getPanelHeight()) ||
                 (x >= sliderPanel.getPanelX() &&
                 x <= sliderPanel.getPanelX() + sliderPanel.getPanelWidth() &&
                 y >= sliderPanel.getPanelY() &&

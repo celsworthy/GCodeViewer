@@ -10,7 +10,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-DlibertySystems.configFile="D:\CEL\Dev\GCodeViewer\GCodeViewer.configFile.xml" -classpath %classpath celtech.gcodeviewer.engine.GCodeViewer -t snake.gcode</exec.args>
+                <exec.args>-DlibertySystems.configFile="D:\CEL\Dev\GCodeViewer\GCodeViewer.configFile.xml" -classpath %classpath celtech.gcodeviewer.engine.GCodeViewer -len -t snake.gcode</exec.args>
                 <exec.executable>java</exec.executable>
                 <exec.workingdir>D:\CEL\Dev\GCodeViewer</exec.workingdir>
             </properties>
@@ -25,7 +25,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -DlibertySystems.configFile="D:\CEL\Dev\GCodeViewer\GCodeViewer.configFile.xml" -classpath %classpath celtech.gcodeviewer.engine.GCodeViewer -t snake.gcode</exec.args>
+                <exec.args>-agentlib:jdwp=transport=dt_socket,server=n,address=${jpda.address} -DlibertySystems.configFile="D:\CEL\Dev\GCodeViewer\GCodeViewer.configFile.xml" -classpath %classpath celtech.gcodeviewer.engine.GCodeViewer -len -t snake.gcode</exec.args>
                 <exec.executable>java</exec.executable>
                 <jpda.listen>true</jpda.listen>
                 <exec.workingdir>D:\CEL\Dev\GCodeViewer</exec.workingdir>
@@ -41,7 +41,7 @@
                 <goal>org.codehaus.mojo:exec-maven-plugin:1.2.1:exec</goal>
             </goals>
             <properties>
-                <exec.args>-DlibertySystems.configFile="D:\CEL\Dev\GCodeViewer\GCodeViewer.configFile.xml" -classpath %classpath celtech.gcodeviewer.engine.GCodeViewer -t snake.gcode</exec.args>
+                <exec.args>-DlibertySystems.configFile="D:\CEL\Dev\GCodeViewer\GCodeViewer.configFile.xml" -classpath %classpath celtech.gcodeviewer.engine.GCodeViewer -len -t snake.gcode</exec.args>
                 <exec.executable>java</exec.executable>
                 <exec.workingdir>D:\CEL\Dev\GCodeViewer</exec.workingdir>
             </properties>

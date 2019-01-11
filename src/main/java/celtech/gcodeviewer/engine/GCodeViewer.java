@@ -1,5 +1,7 @@
 package celtech.gcodeviewer.engine;
 
+import celtech.gcodeviewer.i18n.MessageLookup;
+import celtech.gcodeviewer.i18n.languagedata.LanguageData;
 import celtech.gcodeviewer.comms.CommandHandler;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
@@ -11,6 +13,8 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
+import java.util.Locale;
+import libertysystems.stenographer.LogLevel;
 
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
@@ -49,14 +53,23 @@ public class GCodeViewer {
         configuration = GCodeViewerConfiguration.loadFromConfig();
 
         String gCodeFile = null;
+        String languageTag = null;
         for (String arg : argv) {
             if (arg.startsWith("-")) {
-                if (arg.equals("-t"))
+                if (arg.startsWith("-l")) {
+                    if (arg.length() > 2)
+                        languageTag = arg.substring(2);
+                }
+                else if (arg.equals("-t")) {
                     floatingWindow = false;
+                }
             }
             else
                 gCodeFile = arg;
         }
+        
+        MessageLookup.loadMessages(configuration.getApplicationInstallDirectory(),
+                                   MessageLookup.getDefaultApplicationLocale(languageTag));
             
         init();
         loop(gCodeFile);
@@ -76,6 +89,7 @@ public class GCodeViewer {
      * associated window.
      */
     private void init() {
+        
         // Setup an error callback. The default implementation
         // will print the error message in System.err.
         GLFWErrorCallback.createPrint(System.err).set();

@@ -67,13 +67,14 @@ public class SegmentLoader {
             triangleBuffer.put(offset + 0); // p1
 
             // Side 1 triangles.
+
             triangleBuffer.put(offset + 0); // p1
             triangleBuffer.put(offset + 4); // p5
             triangleBuffer.put(offset + 5); // p6
             
-            triangleBuffer.put(offset + 1); // p1
-            triangleBuffer.put(offset + 6); // p6
-            triangleBuffer.put(offset + 2); // p2
+            triangleBuffer.put(offset + 0); // p1
+            triangleBuffer.put(offset + 5); // p6
+            triangleBuffer.put(offset + 1); // p2
 
             // Side 2 triangles.
             triangleBuffer.put(offset + 1); // p2
@@ -86,8 +87,8 @@ public class SegmentLoader {
 
             // Side 3 triangles.
             triangleBuffer.put(offset + 2); // p3
-            triangleBuffer.put(offset + 7); // p8
             triangleBuffer.put(offset + 6); // p7
+            triangleBuffer.put(offset + 7); // p8
             
             triangleBuffer.put(offset + 2); // p3
             triangleBuffer.put(offset + 7); // p8

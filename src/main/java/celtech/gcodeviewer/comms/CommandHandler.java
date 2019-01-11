@@ -305,8 +305,5 @@ public class CommandHandler {
         else {
             System.out.println("Unrecognised option in command " + command);
         }
-        
     }
-
-   
 }
