@@ -65,7 +65,11 @@ public class CommandHandler {
                         String commandWord = commandScanner.next().toLowerCase();
                         switch (commandWord) {
                             case "load":
-                                renderingEngine.startLoadingGCodeFile(commandScanner.nextLine().trim());
+                            case "ld":
+                                if (commandScanner.hasNext())
+                                    renderingEngine.startLoadingGCodeFile(commandScanner.nextLine().trim());
+                                else
+                                    renderingEngine.startLoadingGCodeFile(renderingEngine.getCurrentFilePath());
                                 break;
 
                             case "l1":

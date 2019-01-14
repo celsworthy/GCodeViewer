@@ -145,7 +145,10 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                     ZeroOrMore(' '),
                     Optional(
                         Sequence(
-                            "height:",
+                            "height",
+                            ZeroOrMore(' '),
+                            Optional(':'),
+                            ZeroOrMore(' '),
                             PositiveFloatingPointNumber(),
                             heightValue.set(Double.valueOf(match()))
                         )

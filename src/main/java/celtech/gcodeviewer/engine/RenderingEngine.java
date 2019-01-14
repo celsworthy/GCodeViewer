@@ -67,6 +67,8 @@ public class RenderingEngine {
     PrintVolume printVolume = null;
     
     GCodeLoader fileLoader = null;
+    String currentFilePath = null;
+    
     private final double minDataValues[];
     private final double maxDataValues[];
 
@@ -188,8 +190,10 @@ public class RenderingEngine {
     }
 
     public void startLoadingGCodeFile(String gCodeFile) {
-        fileLoader = new GCodeLoader(gCodeFile, model, renderParameters, configuration);
-        fileLoader.start();
+        if (gCodeFile != null && !gCodeFile.isEmpty()) {
+            fileLoader = new GCodeLoader(gCodeFile, model, renderParameters, configuration);
+            fileLoader.start();
+        }
     }
 
     public void completeLoadingGCodeFile() {
@@ -228,6 +232,7 @@ public class RenderingEngine {
                     guiManager.setTypeSet(lineProcessor.getTypeSet());
                     guiManager.setLines(processor.getLines());
                     guiManager.setLayerMap(lineProcessor.getLayerMap());
+                    currentFilePath = fileLoader.getFilePath();
                 }
             }
             catch (RuntimeException ex)
@@ -250,6 +255,10 @@ public class RenderingEngine {
             masterRenderer.processFloor(floor);
             printVolume.getLineEntities().forEach(masterRenderer::processLine);
         }
+    }
+    
+    public String getCurrentFilePath() {
+            return currentFilePath;
     }
 
     public void clearGCode() {

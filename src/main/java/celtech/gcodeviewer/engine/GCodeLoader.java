@@ -49,4 +49,8 @@ public class GCodeLoader extends Thread {
     public boolean loadFinished() {
         return loadDone;
     }
+
+    public String getFilePath() {
+        return gCodeFile;
+    }
 }
