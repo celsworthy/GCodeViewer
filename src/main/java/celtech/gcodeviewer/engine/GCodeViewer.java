@@ -50,7 +50,7 @@ public class GCodeViewer {
         StenographerFactory.changeAllLogLevels(libertysystems.stenographer.LogLevel.INFO);
         STENO.debug("Running " + PROGRAM_NAME);
         
-        configuration = GCodeViewerConfiguration.loadFromConfig();
+        configuration = GCodeViewerConfiguration.loadFromJSON();
 
         String gCodeFile = null;
         String languageTag = null;
@@ -105,7 +105,7 @@ public class GCodeViewer {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
         if (floatingWindow)
             glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
-        windowId = glfwCreateWindow(windowWidth, windowHeight, "GCodeViewer", NULL, NULL);
+        windowId = glfwCreateWindow(windowWidth, windowHeight, MessageLookup.i18n("window.title"), NULL, NULL);
         if ( windowId == NULL ) {
             throw new RuntimeException("Failed to create the GLFW window");
         }

@@ -123,13 +123,13 @@ public class GCodeViewerConfiguration {
     }
 
     @JsonIgnore
-    public static GCodeViewerConfiguration loadFromConfig() {
+    public static GCodeViewerConfiguration loadFromJSON() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         SimpleModule module = new SimpleModule("Vector3fDeserializer", new Version(1, 0, 0, null, null, null));
         module.addDeserializer(Vector3f.class, new Vector3fDeserializer());
         objectMapper.registerModule(module);
-        String configPath = getApplicationInstallDirectory() + "GCodeViewer.config";
+        String configPath = getApplicationInstallDirectory() + "GCodeViewer.json";
             
         GCodeViewerConfiguration configuration = null;
         try {

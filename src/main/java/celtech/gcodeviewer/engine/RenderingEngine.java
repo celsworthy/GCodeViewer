@@ -5,12 +5,13 @@ import celtech.gcodeviewer.engine.renderers.MasterRenderer;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.CenterPoint;
 import celtech.gcodeviewer.entities.Entity;
-import static celtech.gcodeviewer.entities.Entity.N_DATA_VALUES;
 import celtech.gcodeviewer.entities.Floor;
 import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.entities.PrintVolume;
 import celtech.gcodeviewer.gui.GUIManager;
+import celtech.gcodeviewer.i18n.MessageLookup;
 import celtech.gcodeviewer.utils.CubeConstants;
+import java.io.File;
 import java.nio.IntBuffer;
 import java.util.List;
 import libertysystems.stenographer.Stenographer;
@@ -21,6 +22,7 @@ import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
 import org.lwjgl.opengl.GL11;
@@ -233,6 +235,10 @@ public class RenderingEngine {
                     guiManager.setLines(processor.getLines());
                     guiManager.setLayerMap(lineProcessor.getLayerMap());
                     currentFilePath = fileLoader.getFilePath();
+                    
+                    // Update the window title with the file name.
+                    File f = new File(currentFilePath);
+                    glfwSetWindowTitle(windowId, MessageLookup.i18n("window.titleWithFileName").replaceAll("#1", f.getName()));
                 }
             }
             catch (RuntimeException ex)
