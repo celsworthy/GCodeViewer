@@ -6,6 +6,7 @@ package celtech.gcodeviewer.gui;
 
 import celtech.gcodeviewer.engine.LayerDetails;
 import celtech.gcodeviewer.engine.RenderParameters;
+import celtech.gcodeviewer.i18n.MessageLookup;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
@@ -46,6 +47,12 @@ public class GCVGCodePanel {
     public static final int GUI_GCODE_PANEL_SCROLL_PADDING = 10;
     public static final int GUI_GCODE_PANEL_FIDDLE_FACTOR = 10;
 
+    private String firstSelectedMsg = "gcodePanel.firstSelected";
+    private String lastSelectedMsg = "gcodePanel.lastSelected";
+    private String goToLineMsg = "gcodePanel.goToLine";
+    private String goToFirstSelectedMsg = "gcodePanel.goToFirstSelected";
+    private String goToLastSelectedMsg = "gcodePanel.goToLastSelected";
+
     private boolean panelExpanded = false;
     private float panelX = 0.0f;
     private float panelY = 0.0f;
@@ -77,6 +84,14 @@ public class GCVGCodePanel {
         hOffset[0] = 0;
         vOffset[0] = 0;
         numberFilter = NkPluginFilter.create(Nuklear::nnk_filter_float);
+    }
+    
+    public void loadMessages() {
+        firstSelectedMsg = MessageLookup.i18n(firstSelectedMsg);
+        lastSelectedMsg = MessageLookup.i18n(lastSelectedMsg);
+        goToLineMsg = MessageLookup.i18n(goToLineMsg);
+        goToFirstSelectedMsg = MessageLookup.i18n(goToFirstSelectedMsg);
+        goToLastSelectedMsg = MessageLookup.i18n(goToLastSelectedMsg);
     }
     
     public void setLines(List<String> lines) {
@@ -243,7 +258,7 @@ public class GCVGCodePanel {
                 step = 1000;
             float pWidth = (width - GUI_GCODE_PANEL_BUTTON_WIDTH - 2.0f * ctx.style().window().group_padding().x()) / 2;
             layoutProperty(ctx,
-                           "First",
+                           firstSelectedMsg,
                            pWidth,
                            0,
                            renderParameters.getLastSelectedLine(),
@@ -252,7 +267,7 @@ public class GCVGCodePanel {
                            renderParameters.getFirstSelectedLine(),
                            renderParameters::setFirstSelectedLine);
             layoutProperty(ctx,
-                           "Last",
+                           lastSelectedMsg,
                            pWidth,
                            renderParameters.getFirstSelectedLine(),
                            renderParameters.getNumberOfLines(),
@@ -286,16 +301,16 @@ public class GCVGCodePanel {
             }
             float bWidth = (width - GUI_GCODE_PANEL_EDIT_WIDTH - 5.0f * ctx.style().window().group_padding().x()) / 3.0f;
             nk_layout_row_push(ctx, bWidth);
-            if(nk_button_label(ctx, "G") && !goToLineBlank && lines != null) {
+            if(nk_button_label(ctx, goToLineMsg) && !goToLineBlank && lines != null) {
                 vOffset[0] = lineToOffset(goToLine, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
             }
             nk_layout_row_push(ctx, bWidth);
-            if(nk_button_label(ctx, "F") &&
+            if(nk_button_label(ctx, goToFirstSelectedMsg) &&
                renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
                 vOffset[0] = lineToOffset(renderParameters.getFirstSelectedLine(), true) * GUI_GCODE_PANEL_LINE_HEIGHT;
             }
             nk_layout_row_push(ctx, bWidth);
-            if(nk_button_label(ctx, "L") &&
+            if(nk_button_label(ctx, goToLastSelectedMsg) &&
                renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
                 vOffset[0] = lineToOffset(renderParameters.getLastSelectedLine() - 1, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
             }
@@ -362,7 +377,10 @@ public class GCVGCodePanel {
                 int previousVOffset = vOffset[0];
                 vOffset[0] = 0;
                 if (nk_group_scrolled_offset_begin(ctx, hOffset, vOffset, "GCode", 0)) {
-                    
+                    // This test is required to stop mouse clicks on the scroll bar being registered as
+                    // clicks on a GCode line.
+                    boolean mouseInArea = (ctx.input().mouse().pos().x() >= panelX &&
+                                           ctx.input().mouse().pos().x() <= panelX + panelWidth - 15);
                     // Find the layer in which the view begins.
                     LayerDetails currentDetails = null;
                     int currentLayerIndex = 0;
@@ -403,8 +421,9 @@ public class GCVGCodePanel {
                         {
                             // Draw a tree entry
                             nk_layout_row_push(ctx, labelSpace);
-                            if (nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
+                            if (mouseInArea && nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
                                 if (!currentDetails.getMouseWasDown()) {
+                                    //System.out.println("Mouse clicked inside tree line number");
                                     currentDetails.setLayerOpen(!currentDetails.getLayerOpen());
                                     calculateLayerOffsets(false);
                                     currentDetails.setMouseWasDown(true);
@@ -425,8 +444,8 @@ public class GCVGCodePanel {
                                 prefix = ">";
                             nk_label(ctx, prefix + " " + Integer.toString(lineIndex) + ": ", NK_TEXT_LEFT);
                             nk_layout_row_push(ctx, GUI_GCODE_PANEL_LINE_WIDTH - labelSpace);
-                            if (nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
-                                //System.out.println("Mouse click inside line label");
+                            if (mouseInArea && nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
+                                //System.out.println("Mouse down inside tree line label");
                                 mouseIsDown = true;
                             }
                             nk_label(ctx, lines.get(lineIndex), NK_TEXT_LEFT);
@@ -440,8 +459,8 @@ public class GCVGCodePanel {
                             else
                                 lineIndex = currentDetails.getStartLine() + index - currentDetails.getStartOffset();
                             nk_layout_row_push(ctx, labelSpace);
-                            if (nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
-                                //System.out.println("Mouse click inside line number label");
+                            if (mouseInArea && nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
+                                //System.out.println("Mouse down inside line number");
                                 mouseIsDown = true;
                             }
                             if (lineIndex >= renderParameters.getFirstSelectedLine() && lineIndex < renderParameters.getLastSelectedLine())
@@ -450,8 +469,8 @@ public class GCVGCodePanel {
                                 ctx.style().text().color(textColour);
                             nk_label(ctx, "  " + Integer.toString(lineIndex) + ":", NK_TEXT_LEFT);
                             nk_layout_row_push(ctx, GUI_GCODE_PANEL_LINE_WIDTH - labelSpace);
-                            if (nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
-                                //System.out.println("Mouse click inside line label");
+                            if (mouseInArea & nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
+                                //System.out.println("Mouse down inside line label");
                                 mouseIsDown = true;
                             }
                             nk_label(ctx, lines.get(lineIndex), NK_TEXT_LEFT);

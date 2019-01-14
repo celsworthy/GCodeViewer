@@ -143,7 +143,7 @@ public class GCodeViewerConfiguration {
     }
     
     @JsonIgnore
-    private static String getApplicationInstallDirectory() {
+    public static String getApplicationInstallDirectory() {
         String installDirectory = "." + File.separator;
         
         try
