@@ -292,7 +292,6 @@ public class GCodeLineProcessor implements GCodeConsumer
             line.layerNumber != currentLayer)
         {
             completeLayerDetails();
-                
             currentLayer = line.layerNumber;
             if (line.layerHeight > -Double.MAX_VALUE)
             {

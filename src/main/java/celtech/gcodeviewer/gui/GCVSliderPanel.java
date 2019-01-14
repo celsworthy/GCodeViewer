@@ -8,6 +8,7 @@ import celtech.gcodeviewer.engine.RenderParameters;
 import static celtech.gcodeviewer.engine.renderers.GUIRenderer.GUI_GCODE_PANEL_X;
 import static celtech.gcodeviewer.engine.renderers.GUIRenderer.GUI_SLIDER_PANEL_Y;
 import static celtech.gcodeviewer.gui.GCVGCodePanel.GUI_GCODE_PANEL_WIDTH;
+import celtech.gcodeviewer.i18n.MessageLookup;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
@@ -40,6 +41,8 @@ public class GCVSliderPanel {
     public static final int GUI_SLIDER_PANEL_SIDE_WIDTH = 10;
     public static final int GUI_SLIDER_PANEL_FIDDLE_FACTOR = 10;
     
+    private String topLayerMsg = "sliderPanel.topLayer";
+    private String bottomLayerMsg = "sliderPanel.bottomLayer";
     
     private float panelX = 0.0f;
     private float panelY = 0.0f;
@@ -50,6 +53,10 @@ public class GCVSliderPanel {
     public GCVSliderPanel() {
     }
 
+    public void loadMessages() {
+        topLayerMsg = MessageLookup.i18n(topLayerMsg);
+        bottomLayerMsg = MessageLookup.i18n(bottomLayerMsg);
+    }
     public int getPanelX() {
         return (int)panelX;
     }
@@ -99,15 +106,10 @@ public class GCVSliderPanel {
                     nk_layout_row_begin(ctx, NK_STATIC, rect.h() - 2.0f * windowPaddingY, 2);
                     nk_layout_row_push(ctx, w);
                     if (nk_group_begin(ctx, "SliderGroup", NK_WINDOW_NO_SCROLLBAR)) {
-                        layoutSliderLabelsRow(ctx,
-                                              w,
-                                              renderParameters.getIndexOfBottomLayer(),
-                                              renderParameters.getIndexOfTopLayer(),
-                                              renderParameters.getBottomLayerToRender(),
-                                              renderParameters.getTopLayerToRender());
+                        layoutSliderTopRow(ctx, w, renderParameters);
                         layoutSliderRow(ctx,
                                         w,
-                                        "Top",
+                                        topLayerMsg,
                                         renderParameters.getIndexOfBottomLayer(),
                                         renderParameters.getIndexOfTopLayer(),
                                         1,
@@ -120,7 +122,7 @@ public class GCVSliderPanel {
                                         });
                         layoutSliderRow(ctx,
                                         w,
-                                        "Bottom",
+                                        bottomLayerMsg,
                                         renderParameters.getIndexOfBottomLayer(),
                                         renderParameters.getIndexOfTopLayer(),
                                         1,
@@ -150,21 +152,21 @@ public class GCVSliderPanel {
         }
     }
 
-    private void layoutSliderLabelsRow(NkContext ctx,
-                                       float width,
-                                       int minValue,
-                                       int maxValue,
-                                       int currentMinValue,
-                                       int currentMaxValue) {
+    private void layoutSliderTopRow(NkContext ctx,
+                                    float width,
+                                    RenderParameters renderParameters) {
         nk_layout_row_begin(ctx, NK_STATIC, GUI_SLIDER_PANEL_ANNOTATION_HEIGHT, 4);
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_TITLE_WIDTH);
-        nk_label(ctx, "Layer", NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE);
+        if(nk_button_label(ctx, "*")) {
+            renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
+            renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
+        }
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_SLIDER_LABEL_WIDTH);
-        nk_label(ctx, Integer.toString(minValue), NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE);
+        nk_label(ctx, Integer.toString(renderParameters.getIndexOfBottomLayer()), NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE);
         nk_layout_row_push(ctx, width - 2.0f * GUI_SLIDER_PANEL_SLIDER_LABEL_WIDTH - GUI_SLIDER_PANEL_TITLE_WIDTH - 6.0f * ctx.style().window().group_padding().x() - GUI_SLIDER_PANEL_FIDDLE_FACTOR);
-        nk_label(ctx, "[" + Integer.toString(currentMinValue) + " - " + Integer.toString(currentMaxValue) + "]", NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE);
+        nk_label(ctx, "[" + Integer.toString(renderParameters.getBottomLayerToRender()) + " - " + Integer.toString(renderParameters.getTopLayerToRender()) + "]", NK_TEXT_ALIGN_CENTERED | NK_TEXT_ALIGN_MIDDLE);
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_SLIDER_LABEL_WIDTH);
-        nk_label(ctx, Integer.toString(maxValue), NK_TEXT_ALIGN_RIGHT | NK_TEXT_ALIGN_MIDDLE);
+        nk_label(ctx, Integer.toString(renderParameters.getIndexOfTopLayer()), NK_TEXT_ALIGN_RIGHT | NK_TEXT_ALIGN_MIDDLE);
         nk_layout_row_end(ctx);
     }
 

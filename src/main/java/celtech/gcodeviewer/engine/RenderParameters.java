@@ -7,7 +7,9 @@ package celtech.gcodeviewer.engine;
 
 import celtech.gcodeviewer.entities.Entity;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.joml.Vector3f;
 
 /**
@@ -38,6 +40,8 @@ public class RenderParameters {
     private Vector3f selectColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private List<Vector3f> toolColours = new ArrayList<>();
     private List<Vector3f> dataColourPalette = new ArrayList<>();
+    private List<Vector3f> typeColours = new ArrayList<>();
+    private Map<String, Vector3f> typeColourMap = new HashMap<>();
     private Vector3f defaultColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private List<Double> toolFilamentFactors = new ArrayList<>();
     private double defaultFilamentFactor = 0.0;
@@ -53,6 +57,7 @@ public class RenderParameters {
         moveColour = configuration.getMoveColour();
         selectColour = configuration.getSelectColour();
         toolColours = configuration.getToolColours();
+        typeColourMap = configuration.getTypeColourMap();
         dataColourPalette = configuration.getDataColourPalette();
         defaultColour = configuration.getDefaultColour();
         toolFilamentFactors = configuration.getToolFilamentFactors();
@@ -91,7 +96,10 @@ public class RenderParameters {
     }
 
     public void setTopLayerToRender(int topLayerToRender) {
-        this.topLayerToRender = topLayerToRender;
+        if (topLayerToRender > this.bottomLayerToRender)
+            this.topLayerToRender = topLayerToRender;
+        else
+            this.topLayerToRender = this.bottomLayerToRender;
     }
 
     public int getBottomLayerToRender() {
@@ -99,7 +107,10 @@ public class RenderParameters {
     }
 
     public void setBottomLayerToRender(int bottomLayerToRender) {
-        this.bottomLayerToRender = bottomLayerToRender;
+        if (bottomLayerToRender < this.topLayerToRender)
+            this.bottomLayerToRender = bottomLayerToRender;
+        else
+            this.bottomLayerToRender = this.topLayerToRender;
     }
 
     public int getNumberOfLines() {
@@ -184,6 +195,22 @@ public class RenderParameters {
     public void setColourForTool(int toolNumber, Vector3f c) {
         if (toolNumber >= 0 && toolNumber < toolColours.size())
             toolColours.set(toolNumber, c);
+    }
+
+    public Map<String, Vector3f> getTypeColourMap() {
+        return typeColourMap;
+    }
+
+    public void setTypeColourMap(Map<String, Vector3f> typeColourMap) {
+        this.typeColourMap = typeColourMap;
+    }
+    
+    public Vector3f getColourForType(String type) {
+        return typeColourMap.getOrDefault(type, defaultColour);
+    }
+
+    public void setColourForType(String type, Vector3f c) {
+        typeColourMap.put(type, c);
     }
 
     public List<Double> getToolFilamentFactors() {

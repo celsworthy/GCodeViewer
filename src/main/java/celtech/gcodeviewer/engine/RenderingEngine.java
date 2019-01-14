@@ -17,10 +17,8 @@ import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
-import static org.lwjgl.glfw.GLFW.glfwPollEvents;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
-import static org.lwjgl.glfw.GLFW.glfwSetScrollCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
@@ -69,6 +67,8 @@ public class RenderingEngine {
     PrintVolume printVolume = null;
     
     GCodeLoader fileLoader = null;
+    String currentFilePath = null;
+    
     private final double minDataValues[];
     private final double maxDataValues[];
 
@@ -190,8 +190,10 @@ public class RenderingEngine {
     }
 
     public void startLoadingGCodeFile(String gCodeFile) {
-        fileLoader = new GCodeLoader(gCodeFile, model, renderParameters, configuration);
-        fileLoader.start();
+        if (gCodeFile != null && !gCodeFile.isEmpty()) {
+            fileLoader = new GCodeLoader(gCodeFile, model, renderParameters, configuration);
+            fileLoader.start();
+        }
     }
 
     public void completeLoadingGCodeFile() {
@@ -227,8 +229,10 @@ public class RenderingEngine {
                     renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
                     renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
                     guiManager.setToolSet(lineProcessor.getToolSet());
+                    guiManager.setTypeSet(lineProcessor.getTypeSet());
                     guiManager.setLines(processor.getLines());
                     guiManager.setLayerMap(lineProcessor.getLayerMap());
+                    currentFilePath = fileLoader.getFilePath();
                 }
             }
             catch (RuntimeException ex)
@@ -251,6 +255,10 @@ public class RenderingEngine {
             masterRenderer.processFloor(floor);
             printVolume.getLineEntities().forEach(masterRenderer::processLine);
         }
+    }
+    
+    public String getCurrentFilePath() {
+            return currentFilePath;
     }
 
     public void clearGCode() {
