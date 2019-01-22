@@ -18,12 +18,14 @@ import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
+import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
+import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
@@ -34,6 +36,9 @@ import static org.lwjgl.system.MemoryStack.stackPush;
  * @author George Salter
  */
 public class RenderingEngine {
+    
+    private static final double MINIMUM_ITERATION_TIME = 0.01; // (100 frames per second)
+    private static final double FPS_UPDATE_INTERVAL = 1.0; // 1 update per second.
     
     private final static float MINIMUM_STEP = 0.0005f;
     private final static Stenographer STENO = StenographerFactory.getStenographer(
@@ -73,6 +78,12 @@ public class RenderingEngine {
     
     private final double minDataValues[];
     private final double maxDataValues[];
+    
+    private double previousTime = 0.0;
+    private double updateDueTime = 0.0;
+    private double averageFrameTime = 0.0;
+    private double frameTimeAccumulator = 0.0;
+    private int nFrames = 0;
 
     public RenderingEngine(long windowId,
                            int windowWidth,
@@ -144,7 +155,11 @@ public class RenderingEngine {
         commandHandler.start();
 
         STENO.debug("Running rendering loop.");
+        double previousTime = glfwGetTime();
+        boolean  frameRendered = false;
         while (!glfwWindowShouldClose(windowId)) {
+            frameRendered = false;
+            
             GL11.glViewport(0, 0, renderParameters.getWindowWidth(), renderParameters.getWindowHeight());
             try (MemoryStack stack = stackPush()) {
                 IntBuffer w = stack.mallocInt(1);
@@ -158,11 +173,17 @@ public class RenderingEngine {
             camera.move();
             renderParameters.checkLimits();
 
-            masterRenderer.render(camera, light);
-            
-            guiManager.render();
-            
-            glfwSwapBuffers(windowId); // swap the color buffers
+            if (renderParameters.getRenderRequired())
+            {
+                frameRendered = true;
+                masterRenderer.render(camera, light);
+
+                guiManager.render();
+
+                glfwSwapInterval(1);
+                glfwSwapBuffers(windowId); // swap the color buffers
+                renderParameters.clearRenderRequired();
+            }
             
             guiManager.pollEvents(windowId);
 
@@ -171,6 +192,36 @@ public class RenderingEngine {
             
             if (fileLoader != null && fileLoader.loadFinished())
                 completeLoadingGCodeFile();
+
+            // Update the frame timer.
+            double currentTime = glfwGetTime();
+            double iterationTime = currentTime - previousTime;
+            previousTime = currentTime;
+            if (frameRendered) {
+                frameTimeAccumulator += iterationTime;
+                ++nFrames;
+                if (currentTime > updateDueTime) {
+                    renderParameters.setFrameTime(frameTimeAccumulator / nFrames);
+                    frameTimeAccumulator = 0.0;
+                    nFrames = 0;
+                    updateDueTime = currentTime + FPS_UPDATE_INTERVAL;
+                }
+            }
+            
+            // Not sure if this is strictly necessary.
+            // However, if nothing is changing, this loop becomes effectively a busy wait.
+            // To prevent this, make the system wait at least the MINIMUM_ITERATION_TIME before
+            // starting the next iteration. Currently this would give a maximum of 100 frames per second, which
+            // should be enough.
+            double remainingLoopTime = MINIMUM_ITERATION_TIME - iterationTime;
+            if (remainingLoopTime > 0.001) {
+                try {
+                    Thread.sleep((long)(1000.0 * remainingLoopTime)); // convert seconds to milliseconds.
+                }
+                catch (InterruptedException ex) {
+                    // Carry on!
+                }
+            }
         }
         
         commandHandler.stop();

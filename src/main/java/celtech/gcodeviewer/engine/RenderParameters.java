@@ -49,6 +49,12 @@ public class RenderParameters {
     private int displayHeight = 0;
     private int windowWidth = 0;
     private int windowHeight = 0;
+    private double frameTime = 0.0;
+
+    // Nuklear GUI requires 2 renders to update properly - the first updates the state
+    // the second updates the GUI. Easy way to do this is it always set the render flag
+    // to 2, and decrement by one when cleared.
+    private int renderRequired = 2;
 
     RenderParameters(){
     }
@@ -73,6 +79,8 @@ public class RenderParameters {
         indexOfBottomLayer = 0;
         topLayerToRender = 0;
         bottomLayerToRender = 0;
+        frameTime = 0.0;
+        renderRequired = 2;
     }
 
     public int getIndexOfTopLayer() {
@@ -81,6 +89,7 @@ public class RenderParameters {
 
     public void setIndexOfTopLayer(int indexOfTopLayer) {
         this.indexOfTopLayer = indexOfTopLayer;
+        renderRequired = 2;
     }
 
     public int getIndexOfBottomLayer() {
@@ -89,6 +98,7 @@ public class RenderParameters {
 
     public void setIndexOfBottomLayer(int indexOfBottomLayer) {
         this.indexOfBottomLayer = indexOfBottomLayer;
+        renderRequired = 2;
     }
 
     public int getTopLayerToRender() {
@@ -96,10 +106,13 @@ public class RenderParameters {
     }
 
     public void setTopLayerToRender(int topLayerToRender) {
-        if (topLayerToRender > this.bottomLayerToRender)
-            this.topLayerToRender = topLayerToRender;
-        else
-            this.topLayerToRender = this.bottomLayerToRender;
+        if (this.topLayerToRender != topLayerToRender) {
+            if (topLayerToRender > this.bottomLayerToRender)
+                this.topLayerToRender = topLayerToRender;
+            else
+                this.topLayerToRender = this.bottomLayerToRender;
+            renderRequired = 2;
+        }
     }
 
     public int getBottomLayerToRender() {
@@ -107,10 +120,13 @@ public class RenderParameters {
     }
 
     public void setBottomLayerToRender(int bottomLayerToRender) {
-        if (bottomLayerToRender < this.topLayerToRender)
-            this.bottomLayerToRender = bottomLayerToRender;
-        else
-            this.bottomLayerToRender = this.topLayerToRender;
+        if (this.bottomLayerToRender != bottomLayerToRender) {
+            if (bottomLayerToRender < this.topLayerToRender)
+                this.bottomLayerToRender = bottomLayerToRender;
+            else
+                this.bottomLayerToRender = this.topLayerToRender;
+            renderRequired = 2;
+        }
     }
 
     public int getNumberOfLines() {
@@ -119,6 +135,7 @@ public class RenderParameters {
 
     public void setNumberOfLines(int numberOfLines) {
         this.numberOfLines = numberOfLines;
+        renderRequired = 2;
     }
 
     public int getFirstSelectedLine() {
@@ -126,7 +143,10 @@ public class RenderParameters {
     }
 
     public void setFirstSelectedLine(int firstSelectedLine) {
-        this.firstSelectedLine = firstSelectedLine;
+        if (this.firstSelectedLine != firstSelectedLine) {
+            this.firstSelectedLine = firstSelectedLine;
+            renderRequired = 2;
+        }
     }
 
     public int getLastSelectedLine() {
@@ -134,7 +154,10 @@ public class RenderParameters {
     }
 
     public void setLastSelectedLine(int lastSelectedLine) {
-        this.lastSelectedLine = lastSelectedLine;
+        if (this.lastSelectedLine != lastSelectedLine) {
+            this.lastSelectedLine = lastSelectedLine;
+            renderRequired = 2;
+        }
     }
 
     public boolean getShowMoves() {
@@ -142,7 +165,10 @@ public class RenderParameters {
     }
 
     public void setShowMoves(boolean showMoves) {
-        this.showMoves = showMoves;
+        if (this.showMoves != showMoves) {
+            this.showMoves = showMoves;
+            renderRequired = 2;
+        }
     }
 
     public boolean getShowOnlySelected() {
@@ -150,7 +176,10 @@ public class RenderParameters {
     }
 
     public void setShowOnlySelected(boolean showOnlySelected) {
-        this.showOnlySelected = showOnlySelected;
+        if (this.showOnlySelected != showOnlySelected) {
+            this.showOnlySelected = showOnlySelected;
+            renderRequired = 2;
+        }
     }
 
     public ColourMode getColourMode() {
@@ -158,7 +187,10 @@ public class RenderParameters {
     }
 
     public void setColourMode(ColourMode colourMode) {
-        this.colourMode = colourMode;
+        if (this.colourMode != colourMode) {
+            this.colourMode = colourMode;
+            renderRequired = 2;
+        }
     }
     
     public Vector3f getMoveColour() {
@@ -167,6 +199,7 @@ public class RenderParameters {
 
     public void setMoveColour(Vector3f moveColour) {
         this.moveColour = moveColour;
+        renderRequired = 2;
     }
     
     public Vector3f getSelectColour() {
@@ -175,6 +208,7 @@ public class RenderParameters {
 
     public void getSelectColour(Vector3f selectColour) {
         this.selectColour = selectColour;
+        renderRequired = 2;
     }
     
     public List<Vector3f> getToolColours() {
@@ -183,6 +217,7 @@ public class RenderParameters {
 
     public void setToolColours(List<Vector3f> toolColours) {
         this.toolColours = toolColours;
+        renderRequired = 2;
     }
     
     public Vector3f getColourForTool(int toolNumber) {
@@ -195,6 +230,7 @@ public class RenderParameters {
     public void setColourForTool(int toolNumber, Vector3f c) {
         if (toolNumber >= 0 && toolNumber < toolColours.size())
             toolColours.set(toolNumber, c);
+        renderRequired = 2;
     }
 
     public Map<String, Vector3f> getTypeColourMap() {
@@ -203,6 +239,7 @@ public class RenderParameters {
 
     public void setTypeColourMap(Map<String, Vector3f> typeColourMap) {
         this.typeColourMap = typeColourMap;
+        renderRequired = 2;
     }
     
     public Vector3f getColourForType(String type) {
@@ -211,6 +248,7 @@ public class RenderParameters {
 
     public void setColourForType(String type, Vector3f c) {
         typeColourMap.put(type, c);
+        renderRequired = 2;
     }
 
     public List<Double> getToolFilamentFactors() {
@@ -219,6 +257,7 @@ public class RenderParameters {
 
     public void setToolFilamentFactors(List<Double> toolFilamentFactors) {
         this.toolFilamentFactors = toolFilamentFactors;
+        renderRequired = 2;
     }
     
     public double getFilamentFactorForTool(int toolNumber) {
@@ -231,6 +270,7 @@ public class RenderParameters {
     public void setFilamentFactorForTool(int toolNumber, double filamentFactor) {
         if (toolNumber >= 0 && toolNumber < toolColours.size())
             toolFilamentFactors.set(toolNumber, filamentFactor);
+        renderRequired = 2;
     }
 
     public List<Vector3f> getDataColourPalette() {
@@ -239,6 +279,7 @@ public class RenderParameters {
 
     public void setDataColourPalette(List<Vector3f> dataColourPalette) {
         this.dataColourPalette = dataColourPalette;
+        renderRequired = 2;
     }
 
     public Vector3f getDefaultColour() {
@@ -247,6 +288,7 @@ public class RenderParameters {
 
     public void setDefaultColour(Vector3f defaultColour) {
         this.defaultColour = defaultColour;
+        renderRequired = 2;
     }
     
     public int getShowFlags() {
@@ -263,7 +305,10 @@ public class RenderParameters {
     }
 
     public void setShowTools(int showTools) {
-        this.showTools = showTools;
+        if (this.showTools != showTools) {
+            this.showTools = showTools;
+            renderRequired = 2;
+        }
     }
 
     public boolean getShowFlagForTool(int toolIndex) {
@@ -280,27 +325,43 @@ public class RenderParameters {
         if (toolIndex >= 0 && toolIndex < 16)
         {
             int toolFlag = 1 << toolIndex;
-            if (showFlag)
-                showTools |= toolFlag;
-            else
-                showTools &= ~toolFlag;
+            if (showFlag != ((showTools & toolFlag) == toolFlag)) {
+                if (showFlag)
+                    showTools |= toolFlag;
+                else
+                    showTools &= ~toolFlag;
+                renderRequired = 2;
+            }
         }
     }
 
     public void checkLimits() {
-        if (bottomLayerToRender < indexOfBottomLayer)
+        if (bottomLayerToRender < indexOfBottomLayer) {
             bottomLayerToRender = indexOfBottomLayer;
-        if (topLayerToRender > indexOfTopLayer)
-            topLayerToRender = indexOfTopLayer;
-        if (topLayerToRender < bottomLayerToRender)
-            topLayerToRender = bottomLayerToRender;
+            renderRequired = 2;
+        }
 
-        if (firstSelectedLine < 0)
+        if (topLayerToRender > indexOfTopLayer) {
+            topLayerToRender = indexOfTopLayer;
+            renderRequired = 2;
+        }
+        if (topLayerToRender < bottomLayerToRender) {
+            topLayerToRender = bottomLayerToRender;
+            renderRequired = 2;
+        }
+
+        if (firstSelectedLine < 0) {
             firstSelectedLine = 0;
-        if (lastSelectedLine > numberOfLines)
+            renderRequired = 2;
+        }
+        if (lastSelectedLine > numberOfLines) {
             lastSelectedLine = numberOfLines;
-        if (lastSelectedLine < firstSelectedLine)
+            renderRequired = 2;
+        }
+        if (lastSelectedLine < firstSelectedLine) {
             lastSelectedLine = firstSelectedLine;
+            renderRequired = 2;
+        }
     }
 
     public int getDisplayWidth() {
@@ -308,7 +369,10 @@ public class RenderParameters {
     }
 
     public void setDisplayWidth(int displayWidth) {
-        this.displayWidth = displayWidth;
+        if (this.displayWidth != displayWidth) {
+            this.displayWidth = displayWidth;
+            renderRequired = 2;
+        }
     }
 
     public int getDisplayHeight() {
@@ -317,6 +381,10 @@ public class RenderParameters {
 
     public void setDisplayHeight(int displayHeight) {
         this.displayHeight = displayHeight;
+        if (this.displayHeight != displayHeight) {
+            this.displayHeight = displayHeight;
+            renderRequired = 2;
+        }
     }
 
     public int getWindowWidth() {
@@ -324,7 +392,11 @@ public class RenderParameters {
     }
 
     public void setWindowWidth(int windowWidth) {
-        this.windowWidth = windowWidth;
+        
+        if (this.windowWidth != windowWidth) {
+            this.windowWidth = windowWidth;
+            renderRequired = 2;
+        }
     }
 
     public int getWindowHeight() {
@@ -332,6 +404,33 @@ public class RenderParameters {
     }
 
     public void setWindowHeight(int windowHeight) {
-        this.windowHeight = windowHeight;
+        if (this.windowHeight != windowHeight) {
+            this.windowHeight = windowHeight;
+            renderRequired = 2;
+        }
+    }
+    
+    public double getFrameTime() {
+        return frameTime;
+    }
+
+    public void setFrameTime(double frameTime) {
+        if (this.frameTime != frameTime) {
+            this.frameTime = frameTime;
+            renderRequired = 2;
+        }
+    }
+
+    public void setRenderRequired() {
+        renderRequired = 2;
+    }
+
+    public void clearRenderRequired() {
+        if (renderRequired > 0)
+            --renderRequired;
+    }
+
+    public boolean getRenderRequired() {
+        return renderRequired > 0;
     }
 }

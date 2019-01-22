@@ -149,8 +149,8 @@ public class GUIRenderer {
         sliderPanel.loadMessages();
     }
 
-    public void render(double frameTime) {
-        controlPanel.layout(nkContext, GUI_CONTROL_PANEL_X, GUI_CONTROL_PANEL_Y, renderParameters, frameTime);
+    public void render() {
+        controlPanel.layout(nkContext, GUI_CONTROL_PANEL_X, GUI_CONTROL_PANEL_Y, renderParameters);
         gCodePanel.layout(nkContext, GUI_GCODE_PANEL_X, GUI_GCODE_PANEL_Y, renderParameters);
         sliderPanel.layout(nkContext, GUI_SLIDER_PANEL_X, GUI_SLIDER_PANEL_Y, !gCodePanel.isPanelExpanded(), renderParameters);
  

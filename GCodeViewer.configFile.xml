@@ -2,12 +2,10 @@
 <root>
 	<ApplicationConfiguration>
 	<AppFolderName>CEL Robox</AppFolderName>
-        <ApplicationName>CEL Robox</ApplicationName>
+        <ApplicationName>GCodeViewer</ApplicationName>
         <ApplicationShortName>GCodeViewer</ApplicationShortName>
         <ApplicationDataStorageDirectory>D:\CEL\Dev\GCodeViewer\</ApplicationDataStorageDirectory>
         <UserDataStorageDirectory>$USER_HOME$/</UserDataStorageDirectory>
-        <requiredFirmwareVersion>765</requiredFirmwareVersion>
-        <DefaultMode>Normal</DefaultMode>
         <DefaultLocaleLanguageTag>en-GB</DefaultLocaleLanguageTag>
 		<FakeInstallDirectory>D:\CEL\Dev\GCodeViewer\</FakeInstallDirectory>
     </ApplicationConfiguration>
