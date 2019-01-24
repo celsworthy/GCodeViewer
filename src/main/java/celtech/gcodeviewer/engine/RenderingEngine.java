@@ -46,18 +46,23 @@ public class RenderingEngine {
     
     private final long windowId;
     
-    private final float printVolumeWidth;
-    private final float printVolumeHeight;
-    private final float printVolumeDepth;
+    private float printVolumeWidth;
+    private float printVolumeHeight;
+    private float printVolumeDepth;
+    private float printVolumeOffsetX;
+    private float printVolumeOffsetY;
+    private float printVolumeOffsetZ;
     
     private RenderParameters renderParameters = new RenderParameters();
     private List<Entity> segments = null;
     private List<Entity> moves = null;
-        
+    private Camera camera = null;
+    
     private final MasterRenderer masterRenderer;
     private final GUIManager guiManager;
     
     private final ModelLoader modelLoader = new ModelLoader();
+    private final ModelLoader floorLoader = new ModelLoader();
 
     private final SegmentLoader segmentLoader = new SegmentLoader();
     private final MoveLoader moveLoader = new MoveLoader();
@@ -71,6 +76,7 @@ public class RenderingEngine {
 
     private CenterPoint centerPoint = null;
     Floor floor = null;
+    String printerType;
     PrintVolume printVolume = null;
     
     GCodeLoader fileLoader = null;
@@ -88,14 +94,11 @@ public class RenderingEngine {
     public RenderingEngine(long windowId,
                            int windowWidth,
                            int windowHeight,
+                           String printerType,
                            GCodeViewerConfiguration configuration) {
         this.windowId = windowId;
         this.configuration = configuration;
-        Vector3f printVolume = configuration.getPrintVolume();
-        this.printVolumeWidth = (float)printVolume.x();
-        this.printVolumeHeight = (float)printVolume.z();
-        this.printVolumeDepth = (float)printVolume.y();
-
+        this.printerType = printerType;
         renderParameters.setFromConfiguration(configuration);
         renderParameters.setWindowWidth(windowWidth);
         renderParameters.setWindowHeight(windowHeight);
@@ -131,11 +134,7 @@ public class RenderingEngine {
         model = modelLoader.loadToVAO(CubeConstants.VERTICES, CubeConstants.NORMALS, CubeConstants.INDICES);
         lineModel = modelLoader.loadToVAO(new float[]{-0.5f, 0, 0, 0.5f, 0, 0});
         
-        Vector3f centerPointStartPos = new Vector3f(-printVolumeWidth / 2, printVolumeHeight / 2, printVolumeDepth / 2);
-        centerPoint = new CenterPoint(centerPointStartPos, lineModel);
-        Camera camera = new Camera(windowId, centerPoint, guiManager);
-        floor = new Floor(printVolumeWidth, printVolumeDepth, modelLoader);
-        printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeHeight, printVolumeDepth);
+        setPrinterType(printerType);
         
         glfwSetCharCallback(windowId, (window, codepoint) -> {
             guiManager.onChar(window, codepoint);
@@ -145,10 +144,6 @@ public class RenderingEngine {
             guiManager.onKey(window, key, scancode, action, mods);
         });
 
-        masterRenderer.processFloor(floor);
-        masterRenderer.processCentrePoint(centerPoint);
-        printVolume.getLineEntities().forEach(masterRenderer::processLine);
-        
         if (gCodeFile != null)
             startLoadingGCodeFile(gCodeFile);
         
@@ -227,6 +222,7 @@ public class RenderingEngine {
         commandHandler.stop();
         masterRenderer.cleanUp();
         guiManager.cleanUp();
+        floorLoader.cleanUp();
         modelLoader.cleanUp();
         segmentLoader.cleanUp();
         moveLoader.cleanUp();
@@ -308,9 +304,6 @@ public class RenderingEngine {
             if (moves != null && moves.size() > 0) {
                 masterRenderer.processMoveEntity(moveLoader.loadToVAO(moves));           
             }
-            masterRenderer.processCentrePoint(centerPoint);
-            masterRenderer.processFloor(floor);
-            printVolume.getLineEntities().forEach(masterRenderer::processLine);
         }
     }
     
@@ -323,9 +316,6 @@ public class RenderingEngine {
         masterRenderer.clearEntities();
         segmentLoader.cleanUp();
         moveLoader.cleanUp();
-        masterRenderer.processCentrePoint(centerPoint);
-        masterRenderer.processFloor(floor);
-        printVolume.getLineEntities().forEach(masterRenderer::processLine);
     }
 
     public void reloadSegments() {
@@ -392,5 +382,29 @@ public class RenderingEngine {
                segment.setColour(defaultColour);
             });
         }
+    }
+    
+    public void setPrinterType(String printerType) {
+        this.printerType = printerType;
+        GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+        this.printVolumeWidth = (float)printVolumeDetails.getDimensions().x();
+        this.printVolumeHeight = (float)printVolumeDetails.getDimensions().z();
+        this.printVolumeDepth = (float)printVolumeDetails.getDimensions().y();
+        this.printVolumeOffsetX = (float)printVolumeDetails.getOffset().x();
+        this.printVolumeOffsetY = (float)printVolumeDetails.getOffset().z(); // In OpenGL, Y is height.
+        this.printVolumeOffsetZ = (float)printVolumeDetails.getOffset().y();
+        
+        Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX - 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeHeight, printVolumeOffsetZ + 0.5f * printVolumeDepth);
+        centerPoint = new CenterPoint(centerPointStartPos, lineModel);
+        camera = new Camera(windowId, centerPoint, 3.0f * printVolumeDepth, guiManager);
+        floorLoader.cleanUp();
+        floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetZ, floorLoader);
+        printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeHeight, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
+
+        masterRenderer.processFloor(floor);
+        masterRenderer.processCentrePoint(centerPoint);
+        masterRenderer.processPrintVolume(printVolume);
+
+        renderParameters.setRenderRequired();
     }
 }

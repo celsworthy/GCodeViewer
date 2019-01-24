@@ -35,9 +35,10 @@ public class Camera {
     
     private GUIManager guiManager;
     
-    public Camera(long window, CenterPoint centerPoint, GUIManager guiManager) {
+    public Camera(long window, CenterPoint centerPoint, float distanceFromCenter, GUIManager guiManager) {
         this.window = window;
         this.centerPoint = centerPoint;
+        this.distanceFromCenter = distanceFromCenter;
         this.guiManager = guiManager;
         setUpMovementCallbacks();
     }

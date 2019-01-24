@@ -261,6 +261,12 @@ public class CommandHandler {
                                 renderingEngine.clearGCode();
                                 break;
                                 
+                            case "printer":
+                            case "p":
+                                String printerType = commandScanner.next().toUpperCase();
+                                renderingEngine.setPrinterType(printerType);
+                                break;
+
                             default:
                                 STENO.error("Ignoring command " + command);
                                 break;

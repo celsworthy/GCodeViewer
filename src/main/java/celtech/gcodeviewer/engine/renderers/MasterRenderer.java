@@ -10,6 +10,7 @@ import celtech.gcodeviewer.entities.Entity;
 import celtech.gcodeviewer.entities.Floor;
 import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.entities.LineEntity;
+import celtech.gcodeviewer.entities.PrintVolume;
 import celtech.gcodeviewer.gcode.GCodeLine;
 import celtech.gcodeviewer.shaders.SegmentShader;
 import celtech.gcodeviewer.shaders.FloorShader;
@@ -28,7 +29,7 @@ public class MasterRenderer {
 
     private static final float FOV = 70f;
     private static final float NEAR_PLANE = 0.1f;
-    private static final float FAR_PLANE = 500f;
+    private static final float FAR_PLANE = 1000.0f;
     
 //    private final StaticShader staticShader = new StaticShader();
 //    private final StaticRenderer staticEntityRenderer;
@@ -51,6 +52,7 @@ public class MasterRenderer {
     private final List<LineEntity> lineEntities = new ArrayList<>();
     private Floor floor;
     private CenterPoint centrePoint;
+    private PrintVolume printVolume;
     
     private Matrix4f projectionMatrix;
 
@@ -85,11 +87,16 @@ public class MasterRenderer {
 //        staticEntityRenderer.render(entities, showMovesFlag, topLayerToShow, bottomLayerToShow, firstLineToShow, lastLineToShow);
 //        staticShader.stop();
         
-        if (!lineEntities.isEmpty() || centrePoint != null &&  centrePoint.isRendered()) {
+        if (!lineEntities.isEmpty() ||
+            printVolume != null ||
+            (centrePoint != null &&  centrePoint.isRendered())) {
             lineShader.start();
             lineShader.loadViewMatrix(camera);
             if(!lineEntities.isEmpty()) {
                 lineRenderer.render(lineEntities);
+            }
+            if (printVolume != null) {
+                lineRenderer.render(printVolume.getLineEntities());
             }
             if (centrePoint != null && centrePoint.isRendered()) {
                 lineRenderer.render(centrePoint.getLineEntities());
@@ -156,6 +163,10 @@ public class MasterRenderer {
         this.centrePoint = centrePoint;
     }
     
+    public void processPrintVolume(PrintVolume printVolume) {
+        this.printVolume = printVolume;
+    }
+
     public void processLine(LineEntity lineEntity) {
         lineEntities.add(lineEntity);
     }
