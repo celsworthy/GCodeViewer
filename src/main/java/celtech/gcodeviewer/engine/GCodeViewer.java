@@ -37,6 +37,7 @@ public class GCodeViewer {
     private final int windowHeight = 700;  
     private GCodeViewerConfiguration configuration = null;
     private boolean floatingWindow = true;
+    private String printerType = "RBX01";
 
     private long windowId;
     
@@ -62,6 +63,10 @@ public class GCodeViewer {
                 }
                 else if (arg.equals("-t")) {
                     floatingWindow = false;
+                }
+                else if (arg.startsWith("-p")) {
+                    if (arg.length() > 2)
+                        printerType = arg.substring(2).toUpperCase();
                 }
             }
             else
@@ -179,6 +184,7 @@ public class GCodeViewer {
         RenderingEngine renderingEngine = new RenderingEngine(windowId,
                                                               windowWidth,
                                                               windowHeight,
+                                                              printerType,
                                                               configuration);
         renderingEngine.start(gCodeFile);
     }

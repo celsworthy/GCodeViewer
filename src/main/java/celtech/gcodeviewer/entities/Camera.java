@@ -35,9 +35,10 @@ public class Camera {
     
     private GUIManager guiManager;
     
-    public Camera(long window, CenterPoint centerPoint, GUIManager guiManager) {
+    public Camera(long window, CenterPoint centerPoint, float distanceFromCenter, GUIManager guiManager) {
         this.window = window;
         this.centerPoint = centerPoint;
+        this.distanceFromCenter = distanceFromCenter;
         this.guiManager = guiManager;
         setUpMovementCallbacks();
     }
@@ -79,6 +80,7 @@ public class Camera {
                 guiManager.onScroll(window, xoffset, yoffset);
             else
                 distanceFromCenter += -yoffset * MOUSE_ZOOM_SENSITIVITY;
+            guiManager.setRenderRequired();
         });
         
         glfwSetMouseButtonCallback(window, (window, mouseButton, action, mods) -> {
@@ -101,12 +103,14 @@ public class Camera {
                     previousXPosition = xpos;
                     previousYPosition = ypos;
                     centerPoint.setRendered(true);
+                    guiManager.setRenderRequired();
                 }
                 if((mouseButton == GLFW_MOUSE_BUTTON_1 ||
                     mouseButton == GLFW_MOUSE_BUTTON_2) &&
                     action == GLFW_RELEASE) {
                     dragging = false;
                     centerPoint.setRendered(false);
+                    guiManager.setRenderRequired();
                 }
             }
         });
@@ -148,6 +152,7 @@ public class Camera {
 
                 previousXPosition = xpos;
                 previousYPosition = ypos;
+                guiManager.setRenderRequired();
             }
         });
     }

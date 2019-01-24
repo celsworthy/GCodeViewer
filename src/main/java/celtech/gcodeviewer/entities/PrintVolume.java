@@ -18,31 +18,63 @@ public class PrintVolume {
     private final float printVolumeWidth;
     private final float printVolumeHeight;
     private final float printVolumeDepth;
+    private final float xOffset;
+    private final float yOffset;
+    private final float zOffset;
     
     public PrintVolume(RawModel lineModel, float printVolumeWidth, 
-            float printVolumeHeight, float printVolumeDepth) {
+            float printVolumeHeight, float printVolumeDepth,
+            float xOffset, float yOffset, float zOffset) {
         this.lineModel = lineModel;
         this.printVolumeWidth = printVolumeWidth;
         this.printVolumeHeight = printVolumeHeight;
         this.printVolumeDepth = printVolumeDepth;
+        this.xOffset = xOffset;
+        this.yOffset = yOffset;
+        this.zOffset = zOffset;
+
         createPrintVolumeLines();
     }
     
     private void createPrintVolumeLines() {
-        LineEntity frontBottom = new LineEntity(lineModel, new Vector3f(0, 0, 0), new Vector3f(-printVolumeWidth, 0, 0));
-        LineEntity backBottom = new LineEntity(lineModel, new Vector3f(0, 0, printVolumeDepth), new Vector3f(-printVolumeWidth, 0, printVolumeDepth));
-        LineEntity leftBottom = new LineEntity(lineModel, new Vector3f(0, 0, 0), new Vector3f(0, 0, printVolumeDepth));
-        LineEntity rightBottom = new LineEntity(lineModel, new Vector3f(-printVolumeWidth, 0, 0), new Vector3f(-printVolumeWidth, 0, printVolumeDepth));
+        LineEntity frontBottom = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset, zOffset),
+                new Vector3f(xOffset - printVolumeWidth, yOffset, zOffset));
+        LineEntity backBottom = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset, zOffset + printVolumeDepth),
+                new Vector3f(xOffset - printVolumeWidth, yOffset, zOffset + printVolumeDepth));
+        LineEntity leftBottom = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset, zOffset),
+                new Vector3f(xOffset, yOffset, zOffset + printVolumeDepth));
+        LineEntity rightBottom = new LineEntity(lineModel,
+                new Vector3f(xOffset - printVolumeWidth, yOffset, zOffset),
+                new Vector3f(xOffset - printVolumeWidth, yOffset, zOffset + printVolumeDepth));
         
-        LineEntity frontTop = new LineEntity(lineModel, new Vector3f(0, printVolumeHeight, 0), new Vector3f(-printVolumeWidth, printVolumeHeight, 0));
-        LineEntity backTop = new LineEntity(lineModel, new Vector3f(0, printVolumeHeight, printVolumeDepth), new Vector3f(-printVolumeWidth, printVolumeHeight, printVolumeDepth));
-        LineEntity leftTop = new LineEntity(lineModel, new Vector3f(0, printVolumeHeight, 0), new Vector3f(0, printVolumeHeight, printVolumeDepth));
-        LineEntity rightTop = new LineEntity(lineModel, new Vector3f(-printVolumeWidth, printVolumeHeight, 0), new Vector3f(-printVolumeWidth, printVolumeHeight, printVolumeDepth));
+        LineEntity frontTop = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset + printVolumeHeight, zOffset),
+                new Vector3f(xOffset - printVolumeWidth, yOffset + printVolumeHeight, zOffset));
+        LineEntity backTop = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset + printVolumeHeight, zOffset + printVolumeDepth),
+                new Vector3f(xOffset - printVolumeWidth, yOffset + printVolumeHeight, zOffset + printVolumeDepth));
+        LineEntity leftTop = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset + printVolumeHeight, zOffset),
+                new Vector3f(xOffset, yOffset + printVolumeHeight, zOffset + printVolumeDepth));
+        LineEntity rightTop = new LineEntity(lineModel,
+                new Vector3f(xOffset - printVolumeWidth, yOffset + printVolumeHeight, zOffset),
+                new Vector3f(xOffset - printVolumeWidth, yOffset + printVolumeHeight, zOffset + printVolumeDepth));
         
-        LineEntity frontLeft = new LineEntity(lineModel, new Vector3f(0, 0, 0), new Vector3f(0, printVolumeHeight, 0));
-        LineEntity backLeft = new LineEntity(lineModel, new Vector3f(0, 0, printVolumeDepth), new Vector3f(0, printVolumeHeight, printVolumeDepth));
-        LineEntity frontRight = new LineEntity(lineModel, new Vector3f(-printVolumeWidth, 0, 0), new Vector3f(-printVolumeWidth, printVolumeHeight, 0));
-        LineEntity backRight = new LineEntity(lineModel, new Vector3f(-printVolumeWidth, 0, printVolumeDepth), new Vector3f(-printVolumeWidth, printVolumeHeight, printVolumeDepth));
+        LineEntity frontLeft = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset, zOffset),
+                new Vector3f(xOffset, yOffset + printVolumeHeight, zOffset));
+        LineEntity backLeft = new LineEntity(lineModel,
+                new Vector3f(xOffset, yOffset, zOffset + printVolumeDepth),
+                new Vector3f(xOffset, yOffset + printVolumeHeight, zOffset + printVolumeDepth));
+        LineEntity frontRight = new LineEntity(lineModel,
+                new Vector3f(xOffset - printVolumeWidth, yOffset, zOffset),
+                new Vector3f(xOffset - printVolumeWidth, yOffset + printVolumeHeight, zOffset));
+        LineEntity backRight = new LineEntity(lineModel,
+                new Vector3f(xOffset - printVolumeWidth, yOffset, zOffset + printVolumeDepth),
+                new Vector3f(xOffset - printVolumeWidth, yOffset + printVolumeHeight, zOffset + printVolumeDepth));
         
         lineEntities.add(frontBottom);
         lineEntities.add(backBottom);

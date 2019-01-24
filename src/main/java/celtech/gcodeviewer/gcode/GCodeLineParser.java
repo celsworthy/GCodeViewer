@@ -104,7 +104,7 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     {
         return Sequence(
                     ZeroOrMore(' '),
-                    ";TYPE:",
+                    IgnoreCase(";TYPE:"),
                     OneOrMore(
                         FirstOf(
                             CharRange('a', 'z'),
@@ -136,7 +136,7 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                     ZeroOrMore(' '),
                     ';',
                     ZeroOrMore(' '),
-                    "LAYER",
+                    IgnoreCase("LAYER"),
                     ZeroOrMore(' '),
                     Optional(':'),
                     ZeroOrMore(' '),
@@ -145,7 +145,7 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                     ZeroOrMore(' '),
                     Optional(
                         Sequence(
-                            "height",
+                            IgnoreCase("HEIGHT"),
                             ZeroOrMore(' '),
                             Optional(':'),
                             ZeroOrMore(' '),

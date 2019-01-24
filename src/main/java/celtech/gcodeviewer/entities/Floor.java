@@ -15,11 +15,12 @@ public class Floor {
     private final float sizeZ;
     
     private final float xPos;
-    private final float zPos = 0;
+    private final float zPos;
     private final RawModel model;
     
-    public Floor(float sizeX, float sizeZ, ModelLoader modelLoader) {
-        this.xPos = -sizeX;
+    public Floor(float sizeX, float sizeZ, float offsetX, float offsetZ, ModelLoader modelLoader) {
+        this.xPos = offsetX - sizeX;
+        this.zPos = offsetZ;
         this.sizeX = sizeX;
         this.sizeZ = sizeZ;
         this.model = generateFloor(modelLoader);

@@ -63,6 +63,7 @@ public class GCodeViewerConfiguration {
         }
     }
 
+    // Jackson deserializer for type colour map.
     public static class TypeColourMapDeserializer extends StdDeserializer<Map<String, Vector3f>> {
      
         public TypeColourMapDeserializer() {
@@ -91,6 +92,81 @@ public class GCodeViewerConfiguration {
         }
     }
     
+    public static class PrintVolumeDetails {
+        
+        @JsonIgnore
+        private Vector3f dimensions;
+        @JsonIgnore
+        private Vector3f offset;
+        
+        public PrintVolumeDetails() {
+            dimensions = null;
+            offset = null;
+        }
+    
+        public PrintVolumeDetails(Vector3f d, Vector3f o) {
+            dimensions = d;
+            offset = o;
+        }
+
+        @JsonProperty
+        public Vector3f getDimensions() {
+            return dimensions;
+        }
+                
+        @JsonProperty
+        public void setDimensions(Vector3f d) {
+            dimensions = d;
+        }
+        
+        @JsonProperty
+        public Vector3f getOffset() {
+            return offset;
+        }
+                
+        @JsonProperty
+        public void setOffset(Vector3f o) {
+            offset = o;
+        }
+    }
+    
+    // Jackson deserializer for PrintVolumeDetails map.
+    public static class PrintVolumeDetailsMapDeserializer extends StdDeserializer<Map<String, PrintVolumeDetails>> {
+     
+        public PrintVolumeDetailsMapDeserializer() {
+            this(null);
+        }
+
+        public PrintVolumeDetailsMapDeserializer(Class<?> vc) {
+            super(vc);
+        }
+
+        @Override
+        public Map<String, PrintVolumeDetails> deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JsonProcessingException
+        {
+            ObjectCodec codec = jp.getCodec();
+            JsonNode node = codec.readTree(jp);
+            Map<String, PrintVolumeDetails> pvdMap = new HashMap<>();
+            for (final JsonNode entryNode : node) {
+                JsonNode v3fArray;
+                String typeName = entryNode.get("type").asText();
+                v3fArray = entryNode.get("dimensions");
+                Vector3f dimensions = new Vector3f(v3fArray.get(0).floatValue(),
+                                                   v3fArray.get(1).floatValue(),
+                                                   v3fArray.get(2).floatValue());
+                v3fArray = entryNode.get("offset");
+                Vector3f offset = new Vector3f(v3fArray.get(0).floatValue(),
+                                               v3fArray.get(1).floatValue(),
+                                               v3fArray.get(2).floatValue());
+                PrintVolumeDetails pvd = new PrintVolumeDetails();
+                pvd.setDimensions(dimensions);
+                pvd.setOffset(offset);
+                pvdMap.put(typeName, pvd);                
+            }           
+            return pvdMap;
+        }
+    }
+    
     @JsonIgnore
     private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewerConfiguration.class.getName());
     
@@ -109,7 +185,10 @@ public class GCodeViewerConfiguration {
     @JsonIgnore
     private Vector3f defaultColour = new Vector3f(0.9882f, 0.3608f, 0.0471f);
     @JsonIgnore
-    private Vector3f printVolume = new Vector3f(210.0f, 150.0f, 100.0f);
+    private PrintVolumeDetails defaultPrintVolumeDetails = new PrintVolumeDetails(new Vector3f(210.0f, 150.0f, 100.0f),
+                                                                                  new Vector3f(0.0f, 0.0f, 0.0f));
+    @JsonIgnore
+    private Map<String, PrintVolumeDetails> printVolumeDetailsMap = new HashMap<>();
     @JsonIgnore
     private Vector3f lightColour = new Vector3f(1.0f, 1.0f, 1.0f);
     @JsonIgnore
@@ -126,9 +205,9 @@ public class GCodeViewerConfiguration {
     public static GCodeViewerConfiguration loadFromJSON() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        SimpleModule module = new SimpleModule("Vector3fDeserializer", new Version(1, 0, 0, null, null, null));
-        module.addDeserializer(Vector3f.class, new Vector3fDeserializer());
-        objectMapper.registerModule(module);
+        SimpleModule v3fModule = new SimpleModule("Vector3fDeserializer", new Version(1, 0, 0, null, null, null));
+        v3fModule.addDeserializer(Vector3f.class, new Vector3fDeserializer());
+        objectMapper.registerModule(v3fModule);
         String configPath = getApplicationInstallDirectory() + "GCodeViewer.json";
             
         GCodeViewerConfiguration configuration = null;
@@ -189,6 +268,11 @@ public class GCodeViewerConfiguration {
             return toolColours.get(toolNumber);
         else
             return defaultColour;
+    }
+
+    @JsonIgnore
+    public PrintVolumeDetails getPrintVolumeDetailsForType(String type) {
+        return printVolumeDetailsMap.getOrDefault(type, defaultPrintVolumeDetails);
     }
 
     @JsonProperty
@@ -262,13 +346,25 @@ public class GCodeViewerConfiguration {
     }
 
     @JsonProperty
-    public Vector3f getPrintVolume() {
-        return printVolume;
+    public PrintVolumeDetails getDefaultPrintVolumeDetails() {
+        return defaultPrintVolumeDetails;
     }
 
     @JsonProperty
-    public void setPrintVolume(Vector3f printVolume) {
-        this.printVolume = printVolume;
+    public void setDefaultPrintVolumeDetails(PrintVolumeDetails printVolumeDetails) {
+        this.defaultPrintVolumeDetails = printVolumeDetails;
+    }
+
+    @JsonProperty
+    public Map<String, PrintVolumeDetails> getPrintVolumeDetailsMap() {
+        return printVolumeDetailsMap;
+    }
+
+    @JsonProperty
+    @JsonDeserialize(using = PrintVolumeDetailsMapDeserializer.class,
+                     keyAs = String.class, contentAs = PrintVolumeDetails.class)
+    public void setPrintVolumeDetailsMap(Map<String, PrintVolumeDetails> printVolumeDetailsMap) {
+        this.printVolumeDetailsMap = printVolumeDetailsMap;
     }
 
     @JsonProperty

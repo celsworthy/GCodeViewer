@@ -62,7 +62,6 @@ import org.lwjgl.system.MemoryStack;
 public class GUIManager {
     
     private static final NkAllocator ALLOCATOR;
-    private static final double FPS_UPDATE_INTERVAL = 1.0;
     
     static {
         ALLOCATOR = NkAllocator.create()
@@ -77,11 +76,7 @@ public class GUIManager {
     
     private NkContext nkContext = NkContext.create();
     private NkUserFont default_font = NkUserFont.create();
-    private double previousTime = 0.0;
-    private double updateDueTime = 0.0;
-    private double averageFrameTime = 0.0;
-    private double frameTimeAccumulator = 0.0;
-    private int nFrames = 0;
+    RenderParameters renderParameters; 
     
     public GUIManager(long windowId, RenderParameters renderParameters) {
         try {
@@ -89,6 +84,7 @@ public class GUIManager {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        this.renderParameters = renderParameters;
         setup(windowId);
         guiRenderer = new GUIRenderer(nkContext, guiShader, renderParameters);
         guiRenderer.loadMessages();
@@ -123,6 +119,7 @@ public class GUIManager {
                 }
 
                 nk_input_button(nkContext, nkButton, x, y, action == GLFW_PRESS);
+                renderParameters.setRenderRequired();
             }
         });
 
@@ -140,18 +137,16 @@ public class GUIManager {
                     str.put(len, (byte)0);
 
                     glfwSetClipboardString(windowId, str);
+                    renderParameters.setRenderRequired();
                 }
             })
             .paste((handle, edit) -> {
                 long text = nglfwGetClipboardString(windowId);
                 if (text != NULL) {
                     nnk_textedit_paste(edit, text, nnk_strlen(text));
-                }
+                    renderParameters.setRenderRequired();
+            }
             }));
-        
-        previousTime = glfwGetTime();
-        updateDueTime = previousTime + FPS_UPDATE_INTERVAL;
-
         return nkContext;
     }
     
@@ -390,20 +385,9 @@ public class GUIManager {
     }
 
     public void render() {
-        double currentTime = glfwGetTime();
-        frameTimeAccumulator += currentTime - previousTime;
-        ++nFrames;
-        if (currentTime > updateDueTime) {
-            averageFrameTime = frameTimeAccumulator / nFrames;
-            frameTimeAccumulator = 0.0;
-            nFrames = 0;
-            updateDueTime = currentTime + FPS_UPDATE_INTERVAL;
-        }
-        
         guiShader.start();
-        guiRenderer.render(averageFrameTime);
+        guiRenderer.render();
         guiShader.stop();
-        previousTime = currentTime;
     }
     
     public void cleanUp() {
@@ -421,11 +405,13 @@ public class GUIManager {
                 .x((float)xoffset)
                 .y((float)yoffset);
             nk_input_scroll(nkContext, scroll);
+            renderParameters.setRenderRequired();
         }
     }
 
     public void onChar(long window, int codePoint) {
         nk_input_unicode(nkContext, codePoint);
+        renderParameters.setRenderRequired();
     }
 
     public void onKey(long window, int key, int scancode, int action, int mods) {
@@ -519,10 +505,12 @@ public class GUIManager {
 //                }
                 break;
         }
+        renderParameters.setRenderRequired();
     }
 
     public void onCursorPos(long window, double x, double y) {
         nk_input_motion(nkContext, (int)x, (int)y);
+        renderParameters.setRenderRequired();
     }
     
     public void onMouseButton(long window, double x, double y, int mouseButton, int action, int mods) {
@@ -539,6 +527,7 @@ public class GUIManager {
         }
 
         nk_input_button(nkContext, nkButton, (int)x, (int)y, action == GLFW_PRESS);
+        renderParameters.setRenderRequired();
     }
     
     public void pollEvents(long windowId) {
@@ -550,17 +539,24 @@ public class GUIManager {
         NkMouse mouse = nkContext.input().mouse();
         if (mouse.grab()) {
             glfwSetInputMode(windowId, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
-        } else if (mouse.grabbed()) {
+            renderParameters.setRenderRequired();
+       } else if (mouse.grabbed()) {
             float prevX = mouse.prev().x();
             float prevY = mouse.prev().y();
             glfwSetCursorPos(windowId, prevX, prevY);
             mouse.pos().x(prevX);
             mouse.pos().y(prevY);
-        } else if (mouse.ungrab()) {
+            renderParameters.setRenderRequired();
+       } else if (mouse.ungrab()) {
             glfwSetInputMode(windowId, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        }
+            renderParameters.setRenderRequired();
+      }
 
         nk_input_end(nkContext);
+    }
+    
+    public void setRenderRequired() {
+        renderParameters.setRenderRequired();
     }
     
     /**
