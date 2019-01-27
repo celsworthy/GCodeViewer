@@ -234,7 +234,7 @@ public class RenderingEngine {
             renderParameters.setWindowWidth(width);
             renderParameters.setWindowHeight(height);
             masterRenderer.createProjectionMatrix(width, height);
-            masterRenderer.reLoadProjectionMatrix();
+            masterRenderer.reloadProjectionMatrix();
         });
     }
 
@@ -388,18 +388,18 @@ public class RenderingEngine {
         this.printerType = printerType;
         GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
         this.printVolumeWidth = (float)printVolumeDetails.getDimensions().x();
-        this.printVolumeHeight = (float)printVolumeDetails.getDimensions().z();
         this.printVolumeDepth = (float)printVolumeDetails.getDimensions().y();
+        this.printVolumeHeight = (float)printVolumeDetails.getDimensions().z();
         this.printVolumeOffsetX = (float)printVolumeDetails.getOffset().x();
-        this.printVolumeOffsetY = (float)printVolumeDetails.getOffset().z(); // In OpenGL, Y is height.
-        this.printVolumeOffsetZ = (float)printVolumeDetails.getOffset().y();
+        this.printVolumeOffsetY = (float)printVolumeDetails.getOffset().y();
+        this.printVolumeOffsetZ = (float)printVolumeDetails.getOffset().z();
         
-        Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX - 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeHeight, printVolumeOffsetZ + 0.5f * printVolumeDepth);
+        Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
         centerPoint = new CenterPoint(centerPointStartPos, lineModel);
         camera = new Camera(windowId, centerPoint, 3.0f * printVolumeDepth, guiManager);
         floorLoader.cleanUp();
-        floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetZ, floorLoader);
-        printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeHeight, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
+        floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ, floorLoader);
+        printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeDepth, printVolumeHeight, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
 
         masterRenderer.processFloor(floor);
         masterRenderer.processCentrePoint(centerPoint);

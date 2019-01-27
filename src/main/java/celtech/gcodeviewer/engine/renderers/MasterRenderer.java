@@ -11,18 +11,21 @@ import celtech.gcodeviewer.entities.Floor;
 import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.entities.LineEntity;
 import celtech.gcodeviewer.entities.PrintVolume;
-import celtech.gcodeviewer.gcode.GCodeLine;
 import celtech.gcodeviewer.shaders.SegmentShader;
 import celtech.gcodeviewer.shaders.FloorShader;
 import celtech.gcodeviewer.shaders.LineShader;
 import celtech.gcodeviewer.shaders.MoveShader;
+import celtech.gcodeviewer.utils.MatrixUtils;
+import java.text.DecimalFormat;
 //import celtech.gcodeviewer.shaders.StaticShader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
+import org.joml.Vector4f;
 import static org.lwjgl.opengl.GL11.*;
 
 public class MasterRenderer {
@@ -119,6 +122,13 @@ public class MasterRenderer {
             floorRenderer.render(floor);
             floorShader.stop();
         }
+        //System.out.println("Camera distance from centre = " + Float.toString(camera.getDistanceFromCenter()));
+        //debugPV(new Vector4f(0.0f, 0.0f, 0.0f, 1.0f), camera);
+        //debugPV(new Vector4f(210.0f, 0.0f, 0.0f, 1.0f), camera);
+        //debugPV(new Vector4f(105.0f, 75.0f, 50.0f, 1.0f), camera);
+        //debugPV(new Vector4f(210.0f, 150.0f, 0.0f, 1.0f), camera);
+        //debugPV(new Vector4f(0.0f, 150.0f, 0.0f, 1.0f), camera);
+        //debugPV(new Vector4f(105.0f, 75.0f, 50.0f, 1.0f), camera);
         checkErrors();
     }
     
@@ -205,7 +215,7 @@ public class MasterRenderer {
         float y_scale = (float) ((1f / Math.tan(Math.toRadians(FOV / 2f))) * aspectRatio);
         float x_scale = y_scale / aspectRatio;
         float frustum_length = FAR_PLANE - NEAR_PLANE;
-        
+
         projectionMatrix = new Matrix4f().zero();
         projectionMatrix.m00(x_scale);
         projectionMatrix.m11(y_scale);
@@ -218,7 +228,7 @@ public class MasterRenderer {
     /**
      * Re-loads the projection matrix into the renderer's respective shaders.
      */
-    public final void reLoadProjectionMatrix() {
+    public final void reloadProjectionMatrix() {
 //        staticEntityRenderer.loadProjectionMatrix(projectionMatrix);
         lineRenderer.loadProjectionMatrix(projectionMatrix);
         segmentRenderer.setProjectionMatrix(projectionMatrix);
@@ -232,6 +242,46 @@ public class MasterRenderer {
 
     public final void prepareEntities() {
         entities.keySet().stream().forEach(model -> prepareModelEntities(model));
+    }
+    
+    private void debugPV( Vector4f c, Camera camera) {
+        DecimalFormat f = new DecimalFormat("0.00");
+        Matrix4f viewMatrix = MatrixUtils.createViewMatrix(camera);
+
+        Vector4f cv = new Vector4f(c);
+        cv.mul(viewMatrix);
+        Vector4f cvp = new Vector4f(cv);
+        cvp.mul(projectionMatrix);
+        Vector2f c2 = new Vector2f(cvp.x / cvp.w, cvp.y / cvp.w);
+        System.out.println("(" +
+                           f.format(c.x) +
+                           ", " +
+                           f.format(c.y) +
+                           ", " +
+                           f.format(c.z) +
+                           ", " +
+                           f.format(c.w) +
+                           ") -> (" +
+                           f.format(cv.x) +
+                           ", " +
+                           f.format(cv.y) +
+                           ", " +
+                           f.format(cv.z) +
+                           ", " +
+                           f.format(cv.w) +
+                           ") -> (" +
+                           f.format(cvp.x) +
+                           ", " +
+                           f.format(cvp.y) +
+                           ", " +
+                           f.format(cvp.z) +
+                           ", " +
+                           f.format(cvp.w) +
+                           ") -> (" +
+                           f.format(c2.x) +
+                           ", " +
+                           f.format(c2.y) +
+                           ")");
     }
 }
 

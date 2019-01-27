@@ -54,7 +54,7 @@ public class FloorRenderer {
     
     public void loadModelMatrix(Floor floor) {
         Matrix4f transformationMatrix = MatrixUtils.createTransformationMatrix(
-                new Vector3f(floor.getxPos(), 0, floor.getzPos()), 
+                new Vector3f(floor.getXPos(), floor.getYPos(), floor.getZPos()), 
                 0, 0, 0, 1);
         shader.loadTransformationMatrix(transformationMatrix);
     }

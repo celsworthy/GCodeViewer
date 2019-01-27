@@ -37,14 +37,25 @@ public class MatrixUtils {
     }
 
     public static Matrix4f createViewMatrix(Camera camera) {
-        Matrix4f viewMatrix = new Matrix4f().identity();
+        Matrix4f viewMatrix = new Matrix4f().identity(); 
         
         viewMatrix.rotate((float) Math.toRadians(camera.getPitch()), new Vector3f(1.0f, 0.0f, 0.0f));
-        viewMatrix.rotate((float) Math.toRadians(camera.getYaw()), new Vector3f(0.0f, 1.0f, 0.0f));
+        viewMatrix.rotate((float) Math.toRadians(camera.getYaw()), new Vector3f(0.0f, 0.0f, 1.0f));
         
         Vector3f negativeCameraPos = new Vector3f(camera.getPosition()).negate();
         viewMatrix.translate(negativeCameraPos);
 
-        return viewMatrix;
+        // Transform to OpenGL coordinates which are left-handed, with Y as the up direction.
+        Matrix4f mx = new Matrix4f().identity();
+       // Mirror in X.
+        mx.m00(-1.0f);
+        // Swap Y and Z
+        mx.m11(0.0f);
+        mx.m12(1.0f);
+        mx.m21(1.0f);
+        mx.m22(0.0f);
+        mx.mul(viewMatrix);
+        
+        return mx;
     }
 }
