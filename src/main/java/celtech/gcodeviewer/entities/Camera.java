@@ -22,10 +22,10 @@ public class Camera {
     private final CenterPoint centerPoint;
     
     private float distanceFromCenter = 300;
-    private float angleAroundCenter = 0;
+    private float angleAroundCenter = 180;
     
     private final Vector3f position = new Vector3f(0, 0, 0);
-    private float pitch = 20;
+    private float pitch = -20;
     private float yaw = 0;
     private float roll = 0;
     
@@ -47,7 +47,7 @@ public class Camera {
         float horizontalDistance = calculateHorizontalDifference();
         float verticalDistance = calculateVerticalDifference();
         calculateCameraPosition(horizontalDistance, verticalDistance);
-        this.yaw = 180 - (angleAroundCenter);
+        this.yaw = angleAroundCenter;
     }
     
     private float calculateHorizontalDifference() {
@@ -61,10 +61,32 @@ public class Camera {
     private void calculateCameraPosition(float horizontalDistance, float verticalDistance) {
         float theta = angleAroundCenter;
         float offsetX = (float) (horizontalDistance * Math.sin(Math.toRadians(theta)));
-        float offsetZ = (float) (horizontalDistance * Math.cos(Math.toRadians(theta)));
-        position.x = centerPoint.getPosition().x - offsetX;
-        position.z = centerPoint.getPosition().z - offsetZ;
-        position.y = centerPoint.getPosition().y + verticalDistance;
+        float offsetY = (float) (horizontalDistance * Math.cos(Math.toRadians(theta)));
+        position.x = centerPoint.getPosition().x + offsetX;
+        position.y = centerPoint.getPosition().y + offsetY;
+        position.z = centerPoint.getPosition().z - verticalDistance;
+//        position.x = centerPoint.getPosition().x - offsetX;
+//        position.y = centerPoint.getPosition().y - offsetY;
+//        position.z = centerPoint.getPosition().z + verticalDistance;
+    }
+
+    private float getSensitivityModifier() {
+        float s = 1.0f;
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || 
+            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
+            if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || 
+                glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
+                s = 10.0f;
+            }
+            else {
+                s = 2.0f;
+            }
+        }
+        else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || 
+                glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
+                s = 0.5f;                
+        } 
+        return s;
     }
 
     private void setUpMovementCallbacks() {
@@ -78,8 +100,9 @@ public class Camera {
             //System.out.println("action = " + (action == GLFW_PRESS ? "GLFW_PRESS" : "GLFW_RELEASE"));
             if (guiManager.overGuiPanel((int)xpos, (int)ypos))
                 guiManager.onScroll(window, xoffset, yoffset);
-            else
-                distanceFromCenter += -yoffset * MOUSE_ZOOM_SENSITIVITY;
+            else {
+                distanceFromCenter += -yoffset * getSensitivityModifier() * MOUSE_ZOOM_SENSITIVITY;
+            }
             guiManager.setRenderRequired();
         });
         
@@ -120,10 +143,11 @@ public class Camera {
             if (dragging) {
                 double xPositionDiff = previousXPosition - xpos;
                 double yPositionDiff = previousYPosition - ypos;
+                float sensitivity = MOUSE_CONTROL_SENSITIVITY / getSensitivityModifier();
 
                 if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_RELEASE) {
-                    angleAroundCenter += xPositionDiff / MOUSE_CONTROL_SENSITIVITY;
-                    pitch += -yPositionDiff / MOUSE_CONTROL_SENSITIVITY;
+                    angleAroundCenter -= xPositionDiff / sensitivity;
+                    pitch += yPositionDiff / sensitivity;
                     if(pitch >= MAXIMUM_CAMERA_PITCH) {
                         pitch = MAXIMUM_CAMERA_PITCH;
                     }
@@ -134,20 +158,20 @@ public class Camera {
 
                 if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE) {
                    Vector3f viewVector = calculateNormalisedViewVector();
-                   Vector3f leftRightVect = new Vector3f(viewVector.z, 0, -viewVector.x);
+                   Vector3f leftRightVect = new Vector3f(viewVector.y, -viewVector.x, 0);
                    Vector3f upDownVect = new Vector3f(leftRightVect).cross(viewVector);
 
                    leftRightVect.normalize();
                    upDownVect.normalize();
 
                    // Deal with left right pan
-                   centerPoint.getPosition().x += (leftRightVect.x * xPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
-                   centerPoint.getPosition().z += (leftRightVect.z * xPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+                   centerPoint.getPosition().x -= (leftRightVect.x * xPositionDiff) / sensitivity;
+                   centerPoint.getPosition().y -= (leftRightVect.y * xPositionDiff) / sensitivity;
 
                    // Deal with up down pan
-                   centerPoint.getPosition().x += (upDownVect.x * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
-                   centerPoint.getPosition().y += (upDownVect.y * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
-                   centerPoint.getPosition().z += (upDownVect.z * yPositionDiff) / MOUSE_CONTROL_SENSITIVITY;
+                   centerPoint.getPosition().x -= (upDownVect.x * yPositionDiff) / sensitivity;
+                   centerPoint.getPosition().y -= (upDownVect.y * yPositionDiff) / sensitivity;
+                   centerPoint.getPosition().z -= (upDownVect.z * yPositionDiff) / sensitivity;
                 }
 
                 previousXPosition = xpos;
@@ -163,6 +187,13 @@ public class Camera {
         return viewVector;
     }
     
+    public float getDistanceFromCenter() {
+        return distanceFromCenter;
+    }
+    
+    public Vector3f getCenterPosition() {
+        return centerPoint.getPosition();
+    }
     
     public Vector3f getPosition() {
         return position;
