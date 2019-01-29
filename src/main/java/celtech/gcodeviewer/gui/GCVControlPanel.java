@@ -12,11 +12,8 @@ import org.lwjgl.system.*;
 import java.nio.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import org.joml.Vector3f;
 
 import static org.lwjgl.nuklear.Nuklear.*;
@@ -59,6 +56,10 @@ public class GCVControlPanel {
         frameRateMsg = MessageLookup.i18n(frameRateMsg);
     }
     
+    public void setPanelExpanded(boolean panelExpanded) {
+        this.panelExpanded = panelExpanded;
+    }
+
     public boolean isPanelExpanded() {
         return panelExpanded;
     }

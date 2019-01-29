@@ -1,11 +1,11 @@
 package celtech.gcodeviewer.gui;
 
+import celtech.gcodeviewer.engine.GCodeViewerGUIConfiguration;
 import celtech.gcodeviewer.engine.LayerDetails;
 import celtech.gcodeviewer.engine.RenderParameters;
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL13.*;
-import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryStack.stackPush;
 import static org.lwjgl.system.MemoryUtil.*;
@@ -54,7 +54,6 @@ import org.lwjgl.stb.STBTTPackContext;
 import org.lwjgl.stb.STBTTPackedchar;
 import org.lwjgl.system.MemoryStack;
 
-
 /**
  *
  * @author George Salter
@@ -90,6 +89,14 @@ public class GUIManager {
         guiRenderer.loadMessages();
         setupFont();
         setupStyle();
+    }
+    
+    public void setFromGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
+        guiRenderer.setFromGUIConfiguration(guiConfiguration);
+    }
+    
+    public void saveToGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
+        guiRenderer.saveToGUIConfiguration(guiConfiguration);
     }
     
     public final NkContext setup(long windowId) {

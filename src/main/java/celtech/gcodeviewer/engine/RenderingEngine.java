@@ -21,6 +21,7 @@ import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
@@ -68,6 +69,7 @@ public class RenderingEngine {
     private final MoveLoader moveLoader = new MoveLoader();
     
     private final GCodeViewerConfiguration configuration;
+    private final GCodeViewerGUIConfiguration guiConfiguration;
 
     private final CommandHandler commandHandler;
 
@@ -81,7 +83,7 @@ public class RenderingEngine {
     
     GCodeLoader fileLoader = null;
     String currentFilePath = null;
-    
+
     private final double minDataValues[];
     private final double maxDataValues[];
     
@@ -94,14 +96,21 @@ public class RenderingEngine {
     public RenderingEngine(long windowId,
                            int windowWidth,
                            int windowHeight,
+                           int windowXPos,
+                           int windowYPos,
                            String printerType,
-                           GCodeViewerConfiguration configuration) {
+                           GCodeViewerConfiguration configuration,
+                           GCodeViewerGUIConfiguration guiConfiguration) {
         this.windowId = windowId;
         this.configuration = configuration;
+        this.guiConfiguration = guiConfiguration;
         this.printerType = printerType;
         renderParameters.setFromConfiguration(configuration);
+        renderParameters.setFromGUIConfiguration(guiConfiguration);
         renderParameters.setWindowWidth(windowWidth);
         renderParameters.setWindowHeight(windowHeight);
+        renderParameters.setWindowXPos(windowXPos);
+        renderParameters.setWindowYPos(windowYPos);
 
         this.commandHandler = new CommandHandler();
         commandHandler.setRenderParameters(renderParameters);
@@ -109,6 +118,7 @@ public class RenderingEngine {
  
         masterRenderer = new MasterRenderer(renderParameters);
         guiManager = new GUIManager(windowId, renderParameters);
+        guiManager.setFromGUIConfiguration(guiConfiguration);
         model = null;
         lineModel = null;
         
@@ -218,7 +228,8 @@ public class RenderingEngine {
                 }
             }
         }
-        
+        renderParameters.saveToGUIConfiguration(guiConfiguration);
+        guiManager.saveToGUIConfiguration(guiConfiguration);
         commandHandler.stop();
         masterRenderer.cleanUp();
         guiManager.cleanUp();
@@ -236,6 +247,11 @@ public class RenderingEngine {
             masterRenderer.createProjectionMatrix(width, height);
             masterRenderer.reloadProjectionMatrix();
         });
+        glfwSetWindowPosCallback(windowId, (window, xPos, yPos) -> {
+            renderParameters.setWindowXPos(xPos);
+            renderParameters.setWindowYPos(yPos);
+        });
+
     }
 
     public void startLoadingGCodeFile(String gCodeFile) {

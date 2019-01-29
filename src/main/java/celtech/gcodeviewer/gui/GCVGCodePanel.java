@@ -14,17 +14,10 @@ import java.nio.*;
 import java.text.*;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import org.lwjgl.BufferUtils;
-import static org.lwjgl.glfw.GLFW.GLFW_CURSOR;
-import static org.lwjgl.glfw.GLFW.GLFW_CURSOR_HIDDEN;
-import static org.lwjgl.glfw.GLFW.glfwSetInputMode;
 
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.system.MemoryStack.*;
@@ -166,6 +159,10 @@ public class GCVGCodePanel {
         }
         
         return offset;
+    }
+    
+    public void setPanelExpanded(boolean panelExpanded) {
+        this.panelExpanded = panelExpanded;
     }
 
     public boolean isPanelExpanded() {

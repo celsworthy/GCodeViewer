@@ -1,8 +1,8 @@
 package celtech.gcodeviewer.engine.renderers;
 
+import celtech.gcodeviewer.engine.GCodeViewerGUIConfiguration;
 import celtech.gcodeviewer.engine.LayerDetails;
 import celtech.gcodeviewer.engine.RenderParameters;
-import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.gui.GCVControlPanel;
 import celtech.gcodeviewer.gui.GCVGCodePanel;
 import celtech.gcodeviewer.gui.GCVSliderPanel;
@@ -102,6 +102,18 @@ public class GUIRenderer {
         this.renderParameters = renderParameters;
         this.guiShader.createVAOandVBO();
         nk_buffer_init(cmds, ALLOCATOR, BUFFER_INITIAL_SIZE);
+    }
+    
+    public void setFromGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
+        controlPanel.setPanelExpanded(guiConfiguration.getControlPanelExpanded());
+        sliderPanel.setPanelExpanded(guiConfiguration.getSliderPanelExpanded());
+        gCodePanel.setPanelExpanded(guiConfiguration.getGCodePanelExpanded());
+    }
+
+    public void saveToGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
+        guiConfiguration.setControlPanelExpanded(controlPanel.isPanelExpanded());
+        guiConfiguration.setSliderPanelExpanded(sliderPanel.isPanelExpanded());
+        guiConfiguration.setGCodePanelExpanded(gCodePanel.isPanelExpanded());
     }
     
     public void loadProjectionMatrix() {

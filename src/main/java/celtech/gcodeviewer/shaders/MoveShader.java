@@ -1,7 +1,6 @@
 package celtech.gcodeviewer.shaders;
 
 import celtech.gcodeviewer.entities.Camera;
-import celtech.gcodeviewer.entities.Light;
 import static celtech.gcodeviewer.shaders.ShaderProgram.SHADER_DIRECTORY;
 import celtech.gcodeviewer.utils.MatrixUtils;
 import org.joml.Matrix4f;
@@ -60,19 +59,6 @@ public class MoveShader  extends ShaderProgram {
     public void loadCompositeMatrix() {
         Matrix4f composite = new Matrix4f(projectionMatrix);
         composite.mul(viewMatrix);
-        
-        Matrix4f mx = new Matrix4f();
-        mx.identity();
-
-        // Mirror in X.
-        mx.m00(-1.0f);
-        // Swap Y and Z
-        mx.m11(0.0f);
-        mx.m12(1.0f);
-        mx.m21(1.0f);
-        mx.m22(0.0f);
-        composite.mul(mx);
-        
         super.loadMatrix(location_compositeMatrix, composite);
     }
         

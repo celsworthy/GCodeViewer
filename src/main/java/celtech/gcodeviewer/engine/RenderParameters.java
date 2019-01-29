@@ -5,7 +5,6 @@
  */
 package celtech.gcodeviewer.engine;
 
-import celtech.gcodeviewer.entities.Entity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +48,8 @@ public class RenderParameters {
     private int displayHeight = 0;
     private int windowWidth = 0;
     private int windowHeight = 0;
+    private int windowXPos = 0;
+    private int windowYPos = 0;
     private double frameTime = 0.0;
 
     // Nuklear GUI requires 2 renders to update properly - the first updates the state
@@ -70,6 +71,32 @@ public class RenderParameters {
         defaultFilamentFactor = configuration.getDefaultFilamentFactor();
     }
             
+    public void setFromGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
+        this.topLayerToRender = guiConfiguration.getTopLayerToRender();
+        this.bottomLayerToRender = guiConfiguration.getBottomLayerToRender();
+        this.firstSelectedLine = guiConfiguration.getFirstSelectedLine();
+        this.lastSelectedLine = guiConfiguration.getLastSelectedLine();
+        this.showMoves = guiConfiguration.getShowMoves();
+        this.showOnlySelected = guiConfiguration.getShowOnlySelected();
+        this.showTools = guiConfiguration.getShowTools(); 
+        this.colourMode = guiConfiguration.getColourMode();
+    }
+
+    public void saveToGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
+        guiConfiguration.setTopLayerToRender(this.topLayerToRender);
+        guiConfiguration.setBottomLayerToRender(this.bottomLayerToRender);
+        guiConfiguration.setFirstSelectedLine(this.firstSelectedLine);
+        guiConfiguration.setLastSelectedLine(this.lastSelectedLine);
+        guiConfiguration.setShowMoves(this.showMoves);
+        guiConfiguration.setShowOnlySelected(this.showOnlySelected);
+        guiConfiguration.setShowTools(this.showTools); 
+        guiConfiguration.setColourMode(this.colourMode);
+        guiConfiguration.setWindowWidth(this.windowWidth);
+        guiConfiguration.setWindowHeight(this.windowHeight);
+        guiConfiguration.setWindowXPos(this.windowXPos);
+        guiConfiguration.setWindowYPos(this.windowYPos);
+    }
+
     public void clearLinesAndLayer() {
         numberOfLines = 0;
         firstSelectedLine = 0;
@@ -410,6 +437,27 @@ public class RenderParameters {
         }
     }
     
+    public int getWindowXPos() {
+        return windowXPos;
+    }
+
+    public void setWindowXPos(int windowXPos) {
+        
+        if (this.windowXPos != windowXPos) {
+            this.windowXPos = windowXPos;
+        }
+    }
+
+    public int setWindowYPos() {
+        return windowYPos;
+    }
+
+    public void setWindowYPos(int windowYPos) {
+        if (this.windowYPos != windowYPos) {
+            this.windowYPos = windowYPos;
+        }
+    }
+
     public double getFrameTime() {
         return frameTime;
     }

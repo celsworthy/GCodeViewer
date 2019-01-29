@@ -6,27 +6,16 @@ package celtech.gcodeviewer.gui;
 
 import celtech.gcodeviewer.engine.RenderParameters;
 import static celtech.gcodeviewer.engine.renderers.GUIRenderer.GUI_GCODE_PANEL_X;
-import static celtech.gcodeviewer.engine.renderers.GUIRenderer.GUI_SLIDER_PANEL_Y;
 import static celtech.gcodeviewer.gui.GCVGCodePanel.GUI_GCODE_PANEL_WIDTH;
 import celtech.gcodeviewer.i18n.MessageLookup;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
-import java.text.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import org.lwjgl.BufferUtils;
 
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
 
 public class GCVSliderPanel {
 
@@ -57,6 +46,15 @@ public class GCVSliderPanel {
         topLayerMsg = MessageLookup.i18n(topLayerMsg);
         bottomLayerMsg = MessageLookup.i18n(bottomLayerMsg);
     }
+
+    public void setPanelExpanded(boolean panelExpanded) {
+        this.panelExpanded = panelExpanded;
+    }
+
+    public boolean isPanelExpanded() {
+        return panelExpanded;
+    }
+    
     public int getPanelX() {
         return (int)panelX;
     }
