@@ -190,6 +190,10 @@ public class GCodeViewerConfiguration {
     private double defaultFilamentFactor = 1.0;
     @JsonIgnore
     private boolean relativeExtrusionAsDefault = true;
+    @JsonIgnore
+    private boolean hasNozzleValves = false;
+    @JsonIgnore
+    private double nozzleEjectVolume = 0.01;
     
     GCodeViewerConfiguration() {
     }
@@ -390,6 +394,26 @@ public class GCodeViewerConfiguration {
         this.relativeExtrusionAsDefault = relativeExtrusionAsDefault;
     }
 
+    @JsonProperty
+    public boolean getHasNozzleValves() {
+        return hasNozzleValves;
+    }
+
+    @JsonProperty
+    public void setHasNozzleValves(boolean hasNozzleValves) {
+        this.hasNozzleValves = hasNozzleValves;
+    }
+
+    @JsonProperty
+    public double getNozzleEjectVolume() {
+        return nozzleEjectVolume;
+    }
+
+    @JsonProperty
+    public void setNozzleEjectVolume(double nozzleEjectVolume) {
+        this.nozzleEjectVolume = nozzleEjectVolume;
+    }
+    
     @JsonProperty
     public Vector3f getMoveColour() {
         return moveColour;

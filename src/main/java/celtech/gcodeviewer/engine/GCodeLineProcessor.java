@@ -23,9 +23,10 @@ import org.joml.Vector3f;
 public class GCodeLineProcessor implements GCodeConsumer
 {
     private final Stenographer steno = StenographerFactory.getStenographer(GCodeLineProcessor.class.getName());
-    private final double MINIMUM_STEP = 0.1;
+    private final double MINIMUM_STEP = 0.05;
     private final double MINIMUM_EXTRUSION = 0.0001;
     private final double MINIMUM_HEIGHT_DIFFERENCE = 0.0001;
+    private final String NOZZLE_MOVE_TYPE = "NOZZLE-MOVE";
     
     private final GCodeViewerConfiguration configuration;
     private final RenderParameters renderParameters;
@@ -56,7 +57,8 @@ public class GCodeLineProcessor implements GCodeConsumer
  
     boolean relativeMoves = false;
     private boolean relativeExtrusion = false;
-
+    private boolean hasNozzleValves = false;
+    private double nozzleEjectVolume = 0.0;
     private int currentLayer = Entity.NULL_LAYER;
     private int currentLine = 0;
     private double currentLayerHeight = -Double.MAX_VALUE;
@@ -82,6 +84,8 @@ public class GCodeLineProcessor implements GCodeConsumer
         this.configuration = configuration;
         this.renderParameters = renderParameters;
         this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
+        this.hasNozzleValves = configuration.getHasNozzleValves();
+        this.nozzleEjectVolume = configuration.getNozzleEjectVolume();
         
         for (int dataIndex = 0; dataIndex < Entity.N_DATA_VALUES; ++dataIndex)
         {
@@ -432,10 +436,16 @@ public class GCodeLineProcessor implements GCodeConsumer
     
     public void generateEntity()
     {
+        double deltaB = currentB - previousB;
         double deltaD = currentD - previousD;
         double deltaE = currentE - previousE;
-        boolean isExtrusion = (Math.abs(deltaD) > MINIMUM_EXTRUSION ||
-                              Math.abs(deltaE) > MINIMUM_EXTRUSION);
+        boolean isNozzleMove = (hasNozzleValves && Math.abs(deltaB) > 0);
+        boolean isFilamentMove = (Math.abs(deltaD) > MINIMUM_EXTRUSION ||
+                                  Math.abs(deltaE) > MINIMUM_EXTRUSION);
+        boolean isExtrusion = (isNozzleMove || isFilamentMove);
+        
+        if (isNozzleMove)
+            typeSet.add(NOZZLE_MOVE_TYPE);
 
         Vector3f direction = new Vector3f((float)(currentX - previousX), (float)(currentY - previousY), (float)(currentZ - previousZ));
         float length = direction.length();
@@ -460,6 +470,8 @@ public class GCodeLineProcessor implements GCodeConsumer
             {
                 // Calculate volume of filament to extrude.
                 double v = renderParameters.getFilamentFactorForTool(currentTool) * (deltaD >= deltaE ? deltaD : deltaE);
+                if (isNozzleMove)
+                    v -= nozzleEjectVolume * deltaB;
 
                 if (v > 0) {
                     // Calculate cross sectional area of segment from volume.
@@ -488,8 +500,9 @@ public class GCodeLineProcessor implements GCodeConsumer
                                        currentLayer, currentLine, currentTool, !isExtrusion, null);
             if (isExtrusion)
             {
-                entity.setType(currentType);
-                Vector3f typeColour = configuration.getColourForType(currentType);
+                String t = (isNozzleMove ? NOZZLE_MOVE_TYPE : currentType);
+                entity.setType(t);
+                Vector3f typeColour = configuration.getColourForType(t);
                 entity.setTypeColour(typeColour);
                 entity.setColour(typeColour);
                 entity.setDataValue(0, (float)currentA);
@@ -518,12 +531,15 @@ public class GCodeLineProcessor implements GCodeConsumer
         }
         else if (isExtrusion)
         {
-            // Probably a retraction. Ignore it for the moment.
+            // Probably a retraction. Update position but do not create an entity.
             previousX = currentX;
             previousY = currentY;
             previousZ = currentZ;
+            previousA = currentA;
+            previousB = currentB;
             previousD = currentD;
             previousE = currentE;
+            previousF = currentF;
         }
         
         updateDataRange(0, currentA);

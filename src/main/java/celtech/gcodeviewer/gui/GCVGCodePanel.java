@@ -26,7 +26,7 @@ import org.joml.Vector3f;
 
 public class GCVGCodePanel {
 
-    public static final int GUI_GCODE_PANEL_WIDTH = 450;
+    public static final int GUI_GCODE_PANEL_WIDTH = 550;
     public static final int GUI_GCODE_PANEL_SIDE_WIDTH = 10;
     public static final int GUI_GCODE_PANEL_ROW_HEIGHT = 35;
     public static final int GUI_GCODE_PANEL_BUTTON_WIDTH = 35;
