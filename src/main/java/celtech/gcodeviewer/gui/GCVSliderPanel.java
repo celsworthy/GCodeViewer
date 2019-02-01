@@ -137,6 +137,7 @@ public class GCVSliderPanel {
                     if(nk_button_label(ctx, "")) {
                         panelExpanded = !panelExpanded;
                     }
+                    nk_layout_row_end(ctx);
                 }
                 else {
                     nk_layout_row_begin(ctx, NK_STATIC, GUI_SLIDER_PANEL_CLOSED_HEIGHT - 2.0f * windowPaddingY, 1);
@@ -144,6 +145,7 @@ public class GCVSliderPanel {
                     if(nk_button_label(ctx, "")) {
                         panelExpanded = !panelExpanded;
                     }
+                    nk_layout_row_end(ctx);
                 }
             }
             nk_end(ctx);
@@ -156,8 +158,7 @@ public class GCVSliderPanel {
         nk_layout_row_begin(ctx, NK_STATIC, GUI_SLIDER_PANEL_ANNOTATION_HEIGHT, 4);
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_TITLE_WIDTH);
         if(nk_button_label(ctx, "*")) {
-            renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
-            renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
+            renderParameters.setAllLayersToRender();
         }
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_SLIDER_LABEL_WIDTH);
         nk_label(ctx, Integer.toString(renderParameters.getIndexOfBottomLayer()), NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE);
@@ -187,5 +188,6 @@ public class GCVSliderPanel {
             nk_slider_int(ctx, minValue, valueBuffer, maxValue, step);
             setValue.accept(valueBuffer.get(0));
         }
+        nk_layout_row_end(ctx);
     }
 }

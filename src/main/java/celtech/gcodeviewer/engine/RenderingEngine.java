@@ -174,7 +174,15 @@ public class RenderingEngine {
                 renderParameters.setDisplayHeight(h.get(0));
             }
 
+            if (renderParameters.getViewResetRequired())
+            {
+                GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+                Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
+                camera.reset(centerPointStartPos, printVolumeDetails.getDefaultCameraDistance());
+                renderParameters.clearViewResetRequired();
+            }
             camera.move();
+            
             renderParameters.checkLimits();
 
             if (renderParameters.getRenderRequired())

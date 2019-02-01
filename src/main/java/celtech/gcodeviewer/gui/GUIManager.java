@@ -425,6 +425,14 @@ public class GUIManager {
         boolean press = (action == GLFW_PRESS);
 
         switch (key) {
+            case GLFW_KEY_A:
+                if (action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
+                    renderParameters.setAllLayersToRender();
+                break;
+            case GLFW_KEY_R:
+                if (action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
+                    renderParameters.setViewResetRequired();
+                break;
             case GLFW_KEY_DELETE:
                 nk_input_key(nkContext, NK_KEY_DEL, press);
                 break;
@@ -440,22 +448,36 @@ public class GUIManager {
             case GLFW_KEY_UP:
             case GLFW_KEY_DOWN:
                 if (action == GLFW_PRESS || action == GLFW_REPEAT) {
-                    RenderParameters renderParameters = guiRenderer.getRenderParameters();
                     int step = 1;
                     if ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
                         step = 5;
-                    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || 
-                        glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-                        if (key == GLFW_KEY_UP)
-                            renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() + step);
-                        else
-                            renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() - step);
+                    if ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT) {
+                        if (key == GLFW_KEY_UP) {
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                                renderParameters.setBottomLayerToRender(renderParameters.getTopLayerToRender());
+                            else
+                                renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() + step);
+                        }
+                        else {
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                                renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
+                            else
+                                renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() - step);                            
+                        }
                     }
                     else {
-                        if (key == GLFW_KEY_UP)
-                            renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() + step);
-                        else
-                            renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() - step);
+                        if (key == GLFW_KEY_UP) {
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                                renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
+                            else
+                                renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() + step);
+                        }
+                        else {
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                                renderParameters.setTopLayerToRender(renderParameters.getBottomLayerToRender());
+                            else
+                                renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() - step);
+                        }
                     }
                 }
 //                nk_input_key(nkContext, NK_KEY_UP, press);

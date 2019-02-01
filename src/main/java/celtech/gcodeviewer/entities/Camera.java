@@ -50,6 +50,14 @@ public class Camera {
         this.yaw = angleAroundCenter;
     }
     
+    public void reset(Vector3f centerPosition, float distanceFromCenter) {
+        this.distanceFromCenter = distanceFromCenter;
+        this.angleAroundCenter = 180.0f;
+        this.pitch = -20.0f;
+        this.yaw = 0.0f;
+        centerPoint.getPosition().set(centerPosition);
+    }
+
     private float calculateHorizontalDifference() {
         return (float) (distanceFromCenter * Math.cos(Math.toRadians(pitch)));
     }

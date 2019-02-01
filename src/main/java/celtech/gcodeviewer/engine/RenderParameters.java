@@ -51,6 +51,7 @@ public class RenderParameters {
     private int windowXPos = 0;
     private int windowYPos = 0;
     private double frameTime = 0.0;
+    private boolean viewResetRequired = false;
 
     // Nuklear GUI requires 2 renders to update properly - the first updates the state
     // the second updates the GUI. Easy way to do this is it always set the render flag
@@ -152,6 +153,12 @@ public class RenderParameters {
         }
     }
 
+    public void setAllLayersToRender() {
+        topLayerToRender = indexOfTopLayer;
+        bottomLayerToRender = indexOfBottomLayer;
+        renderRequired = 2;
+    }
+ 
     public int getNumberOfLines() {
         return numberOfLines;
     }
@@ -463,6 +470,19 @@ public class RenderParameters {
             this.frameTime = frameTime;
             renderRequired = 2;
         }
+    }
+
+    public void setViewResetRequired() {
+        viewResetRequired = true;
+        renderRequired = 2;
+    }
+
+    public void clearViewResetRequired() {
+        viewResetRequired = false;
+    }
+
+    public boolean getViewResetRequired() {
+        return viewResetRequired;
     }
 
     public void setRenderRequired() {
