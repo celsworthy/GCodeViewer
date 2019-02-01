@@ -91,10 +91,6 @@ public class RenderParameters {
         guiConfiguration.setShowOnlySelected(this.showOnlySelected);
         guiConfiguration.setShowTools(this.showTools); 
         guiConfiguration.setColourMode(this.colourMode);
-        guiConfiguration.setWindowWidth(this.windowWidth);
-        guiConfiguration.setWindowHeight(this.windowHeight);
-        guiConfiguration.setWindowXPos(this.windowXPos);
-        guiConfiguration.setWindowYPos(this.windowYPos);
     }
 
     public void clearLinesAndLayer() {

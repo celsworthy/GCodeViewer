@@ -111,7 +111,6 @@ public class RenderingEngine {
         renderParameters.setWindowHeight(windowHeight);
         renderParameters.setWindowXPos(windowXPos);
         renderParameters.setWindowYPos(windowYPos);
-
         this.commandHandler = new CommandHandler();
         commandHandler.setRenderParameters(renderParameters);
         commandHandler.setRenderingEngine(this);
@@ -401,26 +400,28 @@ public class RenderingEngine {
     }
     
     public void setPrinterType(String printerType) {
-        this.printerType = printerType;
-        GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
-        this.printVolumeWidth = (float)printVolumeDetails.getDimensions().x();
-        this.printVolumeDepth = (float)printVolumeDetails.getDimensions().y();
-        this.printVolumeHeight = (float)printVolumeDetails.getDimensions().z();
-        this.printVolumeOffsetX = (float)printVolumeDetails.getOffset().x();
-        this.printVolumeOffsetY = (float)printVolumeDetails.getOffset().y();
-        this.printVolumeOffsetZ = (float)printVolumeDetails.getOffset().z();
-        
-        Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
-        centerPoint = new CenterPoint(centerPointStartPos, lineModel);
-        camera = new Camera(windowId, centerPoint, 3.0f * printVolumeDepth, guiManager);
-        floorLoader.cleanUp();
-        floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ, floorLoader);
-        printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeDepth, printVolumeHeight, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
+        if (camera == null || !this.printerType.equalsIgnoreCase(printerType)) {
+            this.printerType = printerType;
+            GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+            this.printVolumeWidth = printVolumeDetails.getDimensions().x();
+            this.printVolumeDepth = printVolumeDetails.getDimensions().y();
+            this.printVolumeHeight = printVolumeDetails.getDimensions().z();
+            this.printVolumeOffsetX = printVolumeDetails.getOffset().x();
+            this.printVolumeOffsetY = printVolumeDetails.getOffset().y();
+            this.printVolumeOffsetZ = printVolumeDetails.getOffset().z();
 
-        masterRenderer.processFloor(floor);
-        masterRenderer.processCentrePoint(centerPoint);
-        masterRenderer.processPrintVolume(printVolume);
+            Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
+            centerPoint = new CenterPoint(centerPointStartPos, lineModel);
+            camera = new Camera(windowId, centerPoint, printVolumeDetails.getDefaultCameraDistance(), guiManager);
+            floorLoader.cleanUp();
+            floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ, floorLoader);
+            printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeDepth, printVolumeHeight, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
 
-        renderParameters.setRenderRequired();
+            masterRenderer.processFloor(floor);
+            masterRenderer.processCentrePoint(centerPoint);
+            masterRenderer.processPrintVolume(printVolume);
+
+            renderParameters.setRenderRequired();
+        }
     }
 }

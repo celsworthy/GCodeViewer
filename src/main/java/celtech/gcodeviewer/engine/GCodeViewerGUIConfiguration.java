@@ -45,15 +45,6 @@ public class GCodeViewerGUIConfiguration {
     @JsonIgnore
     private RenderParameters.ColourMode colourMode = RenderParameters.ColourMode.COLOUR_AS_TOOL;
 
-    @JsonIgnore
-    private int windowXPos = 0;
-    @JsonIgnore
-    private int windowYPos = 0;
-    @JsonIgnore
-    private int windowWidth = 0;
-    @JsonIgnore
-    private int windowHeight = 0;
-
     GCodeViewerGUIConfiguration() {
     }
 
@@ -80,7 +71,7 @@ public class GCodeViewerGUIConfiguration {
         String configPath = projectDirectory + File.separator + GUI_CONFIG_FILE_NAME;
             
         try {
-            objectMapper.writeValue(new File(configPath), this);
+            objectMapper.writerWithDefaultPrettyPrinter().writeValue(new File(configPath), this);
         }
         catch (IOException ex) {
             STENO.error("Couldn't save gui configuration");
@@ -195,45 +186,5 @@ public class GCodeViewerGUIConfiguration {
     @JsonProperty
     public void setColourMode(RenderParameters.ColourMode colourMode) {
         this.colourMode = colourMode;
-    }
-
-    @JsonProperty
-    public int getWindowXPos() {
-        return windowXPos;
-    }
-
-    @JsonProperty
-    public void setWindowXPos(int windowXPos) {
-        this.windowXPos = windowXPos;
-    }
-
-    @JsonProperty
-    public int getWindowYPos() {
-        return windowYPos;
-    }
-
-    @JsonProperty
-    public void setWindowYPos(int windowYPos) {
-        this.windowYPos = windowYPos;
-    }
-
-    @JsonProperty
-    public int getWindowWidth() {
-        return windowWidth;
-    }
-
-    @JsonProperty
-    public void setWindowWidth(int windowWidth) {
-        this.windowWidth = windowWidth;
-    }
-
-    @JsonProperty
-    public int getWindowHeight() {
-        return windowHeight;
-    }
-
-    @JsonProperty
-    public void setWindowHeight(int windowHeight) {
-        this.windowHeight = windowHeight;
     }
 }

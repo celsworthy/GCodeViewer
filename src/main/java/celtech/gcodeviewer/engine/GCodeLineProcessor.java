@@ -23,7 +23,7 @@ import org.joml.Vector3f;
 public class GCodeLineProcessor implements GCodeConsumer
 {
     private final Stenographer steno = StenographerFactory.getStenographer(GCodeLineProcessor.class.getName());
-    private final double MINIMUM_STEP = 0.05;
+    private final double MINIMUM_STEP = 0.01;
     private final double MINIMUM_EXTRUSION = 0.0001;
     private final double MINIMUM_HEIGHT_DIFFERENCE = 0.0001;
     private final String NOZZLE_MOVE_TYPE = "NOZZLE-MOVE";
@@ -443,7 +443,6 @@ public class GCodeLineProcessor implements GCodeConsumer
         boolean isFilamentMove = (Math.abs(deltaD) > MINIMUM_EXTRUSION ||
                                   Math.abs(deltaE) > MINIMUM_EXTRUSION);
         boolean isExtrusion = (isNozzleMove || isFilamentMove);
-        
         if (isNozzleMove)
             typeSet.add(NOZZLE_MOVE_TYPE);
 

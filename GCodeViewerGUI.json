@@ -1,1 +1,13 @@
-{"sliderPanelExpanded":true,"controlPanelExpanded":true,"topLayerToRender":29,"bottomLayerToRender":0,"firstSelectedLine":0,"lastSelectedLine":0,"showMoves":false,"showOnlySelected":false,"showTools":65535,"colourMode":"COLOUR_AS_TYPE","windowXPos":315,"windowYPos":226,"windowWidth":2571,"windowHeight":1349,"gcodePanelExpanded":true}
+{
+  "sliderPanelExpanded" : true,
+  "controlPanelExpanded" : true,
+  "topLayerToRender" : 29,
+  "bottomLayerToRender" : 0,
+  "firstSelectedLine" : 0,
+  "lastSelectedLine" : 0,
+  "showMoves" : false,
+  "showOnlySelected" : false,
+  "showTools" : 65535,
+  "colourMode" : "COLOUR_AS_TYPE",
+  "gcodePanelExpanded" : true
+}
