@@ -2,6 +2,10 @@ package celtech.gcodeviewer.engine;
 
 import celtech.gcodeviewer.i18n.MessageLookup;
 import celtech.gcodeviewer.comms.CommandHandler;
+import celtech.roboxbase.licence.Licence;
+import celtech.roboxbase.licence.LicenceType;
+import celtech.roboxbase.licence.LicenceUtilities;
+import celtech.roboxbase.licence.NoHardwareLicenceTimer;
 import com.beust.jcommander.JCommander;
 import java.io.File;
 import static org.lwjgl.glfw.Callbacks.*;
@@ -13,7 +17,12 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import libertysystems.configuration.ConfigNotLoadedException;
 
+import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import static org.lwjgl.opengl.ARBDebugOutput.*;
@@ -28,6 +37,8 @@ public class GCodeViewer {
     private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewer.class.getName());
     
     private static final String PROGRAM_NAME = "G-Code Viewer";
+    private static final int FIFTEEN_DAYS = 15;
+    
     private GCodeViewerCommandLineArgs commandLineArgs = null;
     private GCodeViewerConfiguration configuration = null;
     private GCodeViewerGUIConfiguration guiConfiguration = null;
@@ -52,18 +63,24 @@ public class GCodeViewer {
 
         MessageLookup.loadMessages(configuration.getApplicationInstallDirectory(),
                                    MessageLookup.getDefaultApplicationLocale(commandLineArgs.languageTag));
+        
+        if (validateLicence())
+        {
+            init();
+            loop();
+
+            // Free the window callbacks and destroy the window
+            glfwFreeCallbacks(windowId);
+            glfwDestroyWindow(windowId);
+
+            // Terminate GLFW and free the error callback
+            glfwTerminate();
+            glfwSetErrorCallback(null).free();
+            guiConfiguration.saveToJSON(commandLineArgs.projectDirectory.toString());
+        }
+        else
+            STENO.error(MessageLookup.i18n("GCodeViewer.NoLicence"));
             
-        init();
-        loop();
-
-        // Free the window callbacks and destroy the window
-        glfwFreeCallbacks(windowId);
-        glfwDestroyWindow(windowId);
-
-        // Terminate GLFW and free the error callback
-        glfwTerminate();
-        glfwSetErrorCallback(null).free();
-        guiConfiguration.saveToJSON(commandLineArgs.projectDirectory.toString());
         System.out.println("Goodbye!");
     }
 
@@ -204,6 +221,30 @@ public class GCodeViewer {
                                              .map(File::toString)
                                              .findFirst()
                                              .orElse(""));
+    }
+    
+    public synchronized boolean validateLicence() 
+    {
+        try {
+            Configuration configuration = libertysystems.configuration.Configuration.getInstance();
+            String appStorageDir = configuration.getString("ApplicationConfiguration", "ApplicationDataStorageDirectory", "");
+            String licenceDir = configuration.getString("ApplicationConfiguration", "ApplicationDataStorageDirectory", "") + "License";
+            File licenseFile = new File(licenceDir + "/automaker.lic");
+            if (licenseFile.exists()) 
+            {
+                STENO.debug("Reading cached license file");
+                Optional<Licence> potentialLicence = LicenceUtilities.readEncryptedLicenceFile(licenseFile);
+                if (potentialLicence.isPresent() &&
+                    potentialLicence.get().getLicenceType() == LicenceType.AUTOMAKER_PRO) 
+                {
+                    NoHardwareLicenceTimer.getInstance().setTimerFilePath(licenceDir + "/timer.lic");
+                    return NoHardwareLicenceTimer.getInstance().hasHardwareBeenCheckedInLast(FIFTEEN_DAYS);
+                }
+            }  
+        } catch (ConfigNotLoadedException ex) {
+            STENO.debug("Failed to load configuration file");
+        }
+        return false;
     }
     
     /**

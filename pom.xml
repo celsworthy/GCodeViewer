@@ -54,6 +54,11 @@
             <releases><enabled>false</enabled></releases>
             <snapshots><enabled>true</enabled></snapshots>
         </repository>
+        <repository>
+            <id>celtechRepo</id>
+            <name>CELTech releases</name>
+            <url>http://build.cel-robox.com:8080/artifactory/libs-release-local</url>
+        </repository>        
     </repositories>
 
     <build>
@@ -121,6 +126,11 @@
             <artifactId>Stenographer</artifactId>
             <version>1.9</version>
             <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>celtech.roboxbase</groupId>
+            <artifactId>Licence</artifactId>
+            <version>1.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.beust/jcommander -->
         <dependency>
@@ -284,4 +294,17 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+    
+    <distributionManagement>
+        <repository>
+            <id>celtechRepo</id>
+            <name>CELTech releases</name>
+            <url>http://build.cel-robox.com:8080/artifactory/libs-release-local</url>
+        </repository>        
+        <snapshotRepository>
+            <id>celtechRepo</id>
+            <name>CELTech snapshots</name>
+            <url>http://build.cel-robox.com:8080/artifactory/libs-snapshot-local</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
