@@ -11,17 +11,12 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,8 +25,6 @@ import libertysystems.configuration.ConfigNotLoadedException;
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.joml.Vector3f;
 
 /**
@@ -39,29 +32,6 @@ import org.joml.Vector3f;
  * @author Tony
  */
 public class GCodeViewerConfiguration {
-
-    // Jackson deserializer for Vector3f.
-    public static class Vector3fDeserializer extends StdDeserializer<Vector3f> {
-     
-        public Vector3fDeserializer() {
-            this(null);
-        }
-
-        public Vector3fDeserializer(Class<?> vc) {
-            super(vc);
-        }
-
-        @Override
-        public Vector3f deserialize(JsonParser jp, DeserializationContext dc) throws IOException, JsonProcessingException
-        {
-            ObjectCodec codec = jp.getCodec();
-            JsonNode node = codec.readTree(jp);
-            Vector3f v3f = new Vector3f(node.get(0).floatValue(),
-                                        node.get(1).floatValue(),
-                                        node.get(2).floatValue());
-            return v3f;
-        }
-    }
 
     // Jackson deserializer for type colour map.
     public static class TypeColourMapDeserializer extends StdDeserializer<Map<String, Vector3f>> {
@@ -98,10 +68,13 @@ public class GCodeViewerConfiguration {
         private Vector3f dimensions;
         @JsonIgnore
         private Vector3f offset;
+        @JsonIgnore
+        private float defaultCameraDistance;
         
         public PrintVolumeDetails() {
             dimensions = null;
             offset = null;
+            defaultCameraDistance = 0.0f;
         }
     
         public PrintVolumeDetails(Vector3f d, Vector3f o) {
@@ -128,6 +101,16 @@ public class GCodeViewerConfiguration {
         public void setOffset(Vector3f o) {
             offset = o;
         }
+
+        @JsonProperty
+        public float getDefaultCameraDistance() {
+            return defaultCameraDistance;
+        }
+                
+        @JsonProperty
+        public void setDefaultCameraDistance(float d) {
+            defaultCameraDistance = d;
+        }
     }
     
     // Jackson deserializer for PrintVolumeDetails map.
@@ -148,19 +131,22 @@ public class GCodeViewerConfiguration {
             JsonNode node = codec.readTree(jp);
             Map<String, PrintVolumeDetails> pvdMap = new HashMap<>();
             for (final JsonNode entryNode : node) {
-                JsonNode v3fArray;
+                JsonNode pvdNode;
                 String typeName = entryNode.get("type").asText();
-                v3fArray = entryNode.get("dimensions");
-                Vector3f dimensions = new Vector3f(v3fArray.get(0).floatValue(),
-                                                   v3fArray.get(1).floatValue(),
-                                                   v3fArray.get(2).floatValue());
-                v3fArray = entryNode.get("offset");
-                Vector3f offset = new Vector3f(v3fArray.get(0).floatValue(),
-                                               v3fArray.get(1).floatValue(),
-                                               v3fArray.get(2).floatValue());
+                pvdNode = entryNode.get("dimensions");
+                Vector3f dimensions = new Vector3f(pvdNode.get(0).floatValue(),
+                                                   pvdNode.get(1).floatValue(),
+                                                   pvdNode.get(2).floatValue());
+                pvdNode = entryNode.get("offset");
+                Vector3f offset = new Vector3f(pvdNode.get(0).floatValue(),
+                                               pvdNode.get(1).floatValue(),
+                                               pvdNode.get(2).floatValue());
+                pvdNode = entryNode.get("defaultCameraDistance");
+                float defaultCameraDistance = pvdNode.floatValue();
                 PrintVolumeDetails pvd = new PrintVolumeDetails();
                 pvd.setDimensions(dimensions);
                 pvd.setOffset(offset);
+                pvd.setDefaultCameraDistance(defaultCameraDistance);
                 pvdMap.put(typeName, pvd);                
             }           
             return pvdMap;
@@ -197,6 +183,10 @@ public class GCodeViewerConfiguration {
     private double defaultFilamentFactor = 1.0;
     @JsonIgnore
     private boolean relativeExtrusionAsDefault = true;
+    @JsonIgnore
+    private boolean hasNozzleValves = false;
+    @JsonIgnore
+    private double nozzleEjectVolume = 0.01;
     
     GCodeViewerConfiguration() {
     }
@@ -205,9 +195,9 @@ public class GCodeViewerConfiguration {
     public static GCodeViewerConfiguration loadFromJSON() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        SimpleModule v3fModule = new SimpleModule("Vector3fDeserializer", new Version(1, 0, 0, null, null, null));
-        v3fModule.addDeserializer(Vector3f.class, new Vector3fDeserializer());
-        objectMapper.registerModule(v3fModule);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(Vector3f.class, new Vector3fToJsonConvertor.Vector3fDeserializer());
+        objectMapper.registerModule(module);
         String configPath = getApplicationInstallDirectory() + "GCodeViewer.json";
             
         GCodeViewerConfiguration configuration = null;
@@ -397,6 +387,26 @@ public class GCodeViewerConfiguration {
         this.relativeExtrusionAsDefault = relativeExtrusionAsDefault;
     }
 
+    @JsonProperty
+    public boolean getHasNozzleValves() {
+        return hasNozzleValves;
+    }
+
+    @JsonProperty
+    public void setHasNozzleValves(boolean hasNozzleValves) {
+        this.hasNozzleValves = hasNozzleValves;
+    }
+
+    @JsonProperty
+    public double getNozzleEjectVolume() {
+        return nozzleEjectVolume;
+    }
+
+    @JsonProperty
+    public void setNozzleEjectVolume(double nozzleEjectVolume) {
+        this.nozzleEjectVolume = nozzleEjectVolume;
+    }
+    
     @JsonProperty
     public Vector3f getMoveColour() {
         return moveColour;

@@ -1,26 +1,31 @@
 package celtech.gcodeviewer.engine;
 
 import celtech.gcodeviewer.i18n.MessageLookup;
-import celtech.gcodeviewer.i18n.languagedata.LanguageData;
 import celtech.gcodeviewer.comms.CommandHandler;
+import celtech.roboxbase.licence.Licence;
+import celtech.roboxbase.licence.LicenceType;
+import celtech.roboxbase.licence.LicenceUtilities;
+import celtech.roboxbase.licence.NoHardwareLicenceTimer;
+import com.beust.jcommander.JCommander;
+import java.io.File;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
-import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
+import static org.lwjgl.system.MemoryUtil.NULL;
 
 import org.lwjgl.glfw.*;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
-import java.util.Locale;
-import libertysystems.stenographer.LogLevel;
+import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import libertysystems.configuration.ConfigNotLoadedException;
 
+import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import static org.lwjgl.opengl.ARBDebugOutput.*;
-import static org.lwjgl.opengl.GL11.GL_NO_ERROR;
-import static org.lwjgl.opengl.GL11.glGetError;
 
 /**
  * Main entry point for the program. Window initialisation happens here.
@@ -32,60 +37,50 @@ public class GCodeViewer {
     private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewer.class.getName());
     
     private static final String PROGRAM_NAME = "G-Code Viewer";
-
-    private final int windowWidth = 1280;
-    private final int windowHeight = 700;  
+    private static final int FIFTEEN_DAYS = 15;
+    
+    private GCodeViewerCommandLineArgs commandLineArgs = null;
     private GCodeViewerConfiguration configuration = null;
-    private boolean floatingWindow = true;
-    private String printerType = "RBX01";
-
+    private GCodeViewerGUIConfiguration guiConfiguration = null;
     private long windowId;
+    private int windowX = -1;
+    private int windowY = -1;
+    private int windowWidth = -1;
+    private int windowHeight = -1;
     
     public CommandHandler commandHandler;
     
     /**
      * Run the program 
      */
-    public void run(String[] argv) {
+    public void run(GCodeViewerCommandLineArgs commandLineArgs) {
         System.out.println("Hello!");
         StenographerFactory.changeAllLogLevels(libertysystems.stenographer.LogLevel.INFO);
         STENO.debug("Running " + PROGRAM_NAME);
-        
+        this.commandLineArgs = commandLineArgs;
         configuration = GCodeViewerConfiguration.loadFromJSON();
+        guiConfiguration = GCodeViewerGUIConfiguration.loadFromJSON(commandLineArgs.projectDirectory.toString());
 
-        String gCodeFile = null;
-        String languageTag = null;
-        for (String arg : argv) {
-            if (arg.startsWith("-")) {
-                if (arg.startsWith("-l")) {
-                    if (arg.length() > 2)
-                        languageTag = arg.substring(2);
-                }
-                else if (arg.equals("-t")) {
-                    floatingWindow = false;
-                }
-                else if (arg.startsWith("-p")) {
-                    if (arg.length() > 2)
-                        printerType = arg.substring(2).toUpperCase();
-                }
-            }
-            else
-                gCodeFile = arg;
-        }
-        
         MessageLookup.loadMessages(configuration.getApplicationInstallDirectory(),
-                                   MessageLookup.getDefaultApplicationLocale(languageTag));
+                                   MessageLookup.getDefaultApplicationLocale(commandLineArgs.languageTag));
+        
+        if (validateLicence())
+        {
+            init();
+            loop();
+
+            // Free the window callbacks and destroy the window
+            glfwFreeCallbacks(windowId);
+            glfwDestroyWindow(windowId);
+
+            // Terminate GLFW and free the error callback
+            glfwTerminate();
+            glfwSetErrorCallback(null).free();
+            guiConfiguration.saveToJSON(commandLineArgs.projectDirectory.toString());
+        }
+        else
+            STENO.error(MessageLookup.i18n("GCodeViewer.NoLicence"));
             
-        init();
-        loop(gCodeFile);
-
-        // Free the window callbacks and destroy the window
-        glfwFreeCallbacks(windowId);
-        glfwDestroyWindow(windowId);
-
-        // Terminate GLFW and free the error callback
-        glfwTerminate();
-        glfwSetErrorCallback(null).free();
         System.out.println("Goodbye!");
     }
 
@@ -103,43 +98,30 @@ public class GCodeViewer {
         if ( !glfwInit() ) {
             throw new IllegalStateException("Unable to initialize GLFW");
         }
+        
+        determineWindowDimensions();
 
         // Configure GLFW
         glfwDefaultWindowHints(); // optional, the current window hints are already the default
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
-        if (floatingWindow)
-            glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // the window will stay on top.
+        glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowResizable ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
+        glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowDecorated ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
+        glfwWindowHint(GLFW_FLOATING, (commandLineArgs.windowAlwaysOnTop ? GLFW_TRUE : GLFW_FALSE)); // the window will stay on top.
         windowId = glfwCreateWindow(windowWidth, windowHeight, MessageLookup.i18n("window.title"), NULL, NULL);
         if ( windowId == NULL ) {
             throw new RuntimeException("Failed to create the GLFW window");
         }
-
+        
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
         glfwSetKeyCallback(windowId, (window, key, scancode, action, mods) -> {
             if ( key == GLFW_KEY_ESCAPE && action == GLFW_RELEASE )
                 glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop
         });
 
-        // Get the thread stack and push a new frame
-        try ( MemoryStack stack = stackPush() ) {
-            IntBuffer pWidth = stack.mallocInt(1); // int*
-            IntBuffer pHeight = stack.mallocInt(1); // int*
-
-            // Get the window size passed to glfwCreateWindow
-            glfwGetWindowSize(windowId, pWidth, pHeight);
-
-            // Get the resolution of the primary monitor
-            GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        // Set window position to the specified position after creation because it is created at a default position.
+        glfwSetWindowPos(windowId, windowX, windowY);
             
-            // Center the window
-            glfwSetWindowPos(
-                windowId,
-                (vidmode.width() - pWidth.get(0)) / 2,
-                (vidmode.height() - pHeight.get(0)) / 2
-            );
-        } // the stack frame is popped automatically
-
         // Make the OpenGL context current
         glfwMakeContextCurrent(windowId);
 
@@ -180,13 +162,89 @@ public class GCodeViewer {
         glfwShowWindow(windowId);
     }
     
-    private void loop(String gCodeFile) {
+    private void determineWindowDimensions() {
+        // Sort out the window position and size.
+        // Get the resolution of the primary monitor
+        // Get the thread stack and push a new frame
+        GLFWVidMode vidmode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+        if (vidmode != null)
+        {
+            if (commandLineArgs.windowNormalised) {
+                if (commandLineArgs.windowX > 0.0)
+                    commandLineArgs.windowX *= vidmode.width();
+                if (commandLineArgs.windowY > 0.0)
+                    commandLineArgs.windowY *= vidmode.height();
+                if (commandLineArgs.windowWidth > 0.0)
+                    commandLineArgs.windowWidth *= vidmode.width();
+                if (commandLineArgs.windowHeight > 0.0)
+                    commandLineArgs.windowHeight *= vidmode.height();
+            }
+            
+            if (commandLineArgs.windowWidth <= 0.0)
+                commandLineArgs.windowWidth = 0.5 * vidmode.width();
+            if (commandLineArgs.windowHeight <= 0.0)
+                commandLineArgs.windowHeight = 0.5 * vidmode.height();
+            if (commandLineArgs.windowCentered || commandLineArgs.windowX < 0.0)
+                commandLineArgs.windowX = 0.5 * (vidmode.width() - commandLineArgs.windowWidth);
+            if (commandLineArgs.windowCentered || commandLineArgs.windowY < 0.0)
+                commandLineArgs.windowY = 0.5 * (vidmode.height() - commandLineArgs.windowHeight);
+        }
+        else
+        {
+            if (commandLineArgs.windowWidth <= 0.0)
+                commandLineArgs.windowWidth = 640.0;
+            if (commandLineArgs.windowHeight <= 0.0)
+                commandLineArgs.windowHeight = 480.0;
+            if (commandLineArgs.windowCentered || commandLineArgs.windowX < 0.0)
+                commandLineArgs.windowX = 5.0;
+            if (commandLineArgs.windowCentered || commandLineArgs.windowY < 0.0)
+                commandLineArgs.windowY = 55.0;
+        }
+        
+        windowWidth = (int)Math.round(commandLineArgs.windowWidth);
+        windowHeight = (int)Math.round(commandLineArgs.windowHeight);
+        windowX = (int)Math.round(commandLineArgs.windowX);
+        windowY = (int)Math.round(commandLineArgs.windowY);
+    }
+    
+    private void loop() {
         RenderingEngine renderingEngine = new RenderingEngine(windowId,
                                                               windowWidth,
                                                               windowHeight,
-                                                              printerType,
-                                                              configuration);
-        renderingEngine.start(gCodeFile);
+                                                              windowX,
+                                                              windowY,
+                                                              commandLineArgs.printerType,
+                                                              configuration,
+                                                              guiConfiguration);
+        renderingEngine.start(commandLineArgs.gCodeFile
+                                             .stream()
+                                             .map(File::toString)
+                                             .findFirst()
+                                             .orElse(""));
+    }
+    
+    public synchronized boolean validateLicence() 
+    {
+        try {
+            Configuration configuration = libertysystems.configuration.Configuration.getInstance();
+            String appStorageDir = configuration.getString("ApplicationConfiguration", "ApplicationDataStorageDirectory", "");
+            String licenceDir = configuration.getString("ApplicationConfiguration", "ApplicationDataStorageDirectory", "") + "License";
+            File licenseFile = new File(licenceDir + "/automaker.lic");
+            if (licenseFile.exists()) 
+            {
+                STENO.debug("Reading cached license file");
+                Optional<Licence> potentialLicence = LicenceUtilities.readEncryptedLicenceFile(licenseFile);
+                if (potentialLicence.isPresent() &&
+                    potentialLicence.get().getLicenceType() == LicenceType.AUTOMAKER_PRO) 
+                {
+                    NoHardwareLicenceTimer.getInstance().setTimerFilePath(licenceDir + "/timer.lic");
+                    return NoHardwareLicenceTimer.getInstance().hasHardwareBeenCheckedInLast(FIFTEEN_DAYS);
+                }
+            }  
+        } catch (ConfigNotLoadedException ex) {
+            STENO.debug("Failed to load configuration file");
+        }
+        return false;
     }
     
     /**
@@ -195,7 +253,9 @@ public class GCodeViewer {
      * @param args 
      */
     public static void main(String[] argv) {
+        GCodeViewerCommandLineArgs commandLineArgs = new GCodeViewerCommandLineArgs();
+        new JCommander(commandLineArgs).parse(argv);
         GCodeViewer viewer = new GCodeViewer();
-        viewer.run(argv);
+        viewer.run(commandLineArgs);
     }
 }

@@ -1,0 +1,13 @@
+{
+  "sliderPanelExpanded" : true,
+  "controlPanelExpanded" : true,
+  "topLayerToRender" : 29,
+  "bottomLayerToRender" : 0,
+  "firstSelectedLine" : 0,
+  "lastSelectedLine" : 0,
+  "showMoves" : false,
+  "showOnlySelected" : false,
+  "showTools" : 65535,
+  "colourMode" : "COLOUR_AS_TYPE",
+  "gcodePanelExpanded" : true
+}

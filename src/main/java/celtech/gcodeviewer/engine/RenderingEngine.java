@@ -21,6 +21,7 @@ import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
@@ -68,6 +69,7 @@ public class RenderingEngine {
     private final MoveLoader moveLoader = new MoveLoader();
     
     private final GCodeViewerConfiguration configuration;
+    private final GCodeViewerGUIConfiguration guiConfiguration;
 
     private final CommandHandler commandHandler;
 
@@ -81,7 +83,7 @@ public class RenderingEngine {
     
     GCodeLoader fileLoader = null;
     String currentFilePath = null;
-    
+
     private final double minDataValues[];
     private final double maxDataValues[];
     
@@ -94,21 +96,28 @@ public class RenderingEngine {
     public RenderingEngine(long windowId,
                            int windowWidth,
                            int windowHeight,
+                           int windowXPos,
+                           int windowYPos,
                            String printerType,
-                           GCodeViewerConfiguration configuration) {
+                           GCodeViewerConfiguration configuration,
+                           GCodeViewerGUIConfiguration guiConfiguration) {
         this.windowId = windowId;
         this.configuration = configuration;
+        this.guiConfiguration = guiConfiguration;
         this.printerType = printerType;
         renderParameters.setFromConfiguration(configuration);
+        renderParameters.setFromGUIConfiguration(guiConfiguration);
         renderParameters.setWindowWidth(windowWidth);
         renderParameters.setWindowHeight(windowHeight);
-
+        renderParameters.setWindowXPos(windowXPos);
+        renderParameters.setWindowYPos(windowYPos);
         this.commandHandler = new CommandHandler();
         commandHandler.setRenderParameters(renderParameters);
         commandHandler.setRenderingEngine(this);
  
         masterRenderer = new MasterRenderer(renderParameters);
         guiManager = new GUIManager(windowId, renderParameters);
+        guiManager.setFromGUIConfiguration(guiConfiguration);
         model = null;
         lineModel = null;
         
@@ -165,7 +174,15 @@ public class RenderingEngine {
                 renderParameters.setDisplayHeight(h.get(0));
             }
 
+            if (renderParameters.getViewResetRequired())
+            {
+                GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+                Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
+                camera.reset(centerPointStartPos, printVolumeDetails.getDefaultCameraDistance());
+                renderParameters.clearViewResetRequired();
+            }
             camera.move();
+            
             renderParameters.checkLimits();
 
             if (renderParameters.getRenderRequired())
@@ -218,7 +235,8 @@ public class RenderingEngine {
                 }
             }
         }
-        
+        renderParameters.saveToGUIConfiguration(guiConfiguration);
+        guiManager.saveToGUIConfiguration(guiConfiguration);
         commandHandler.stop();
         masterRenderer.cleanUp();
         guiManager.cleanUp();
@@ -236,6 +254,11 @@ public class RenderingEngine {
             masterRenderer.createProjectionMatrix(width, height);
             masterRenderer.reloadProjectionMatrix();
         });
+        glfwSetWindowPosCallback(windowId, (window, xPos, yPos) -> {
+            renderParameters.setWindowXPos(xPos);
+            renderParameters.setWindowYPos(yPos);
+        });
+
     }
 
     public void startLoadingGCodeFile(String gCodeFile) {
@@ -385,26 +408,28 @@ public class RenderingEngine {
     }
     
     public void setPrinterType(String printerType) {
-        this.printerType = printerType;
-        GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
-        this.printVolumeWidth = (float)printVolumeDetails.getDimensions().x();
-        this.printVolumeDepth = (float)printVolumeDetails.getDimensions().y();
-        this.printVolumeHeight = (float)printVolumeDetails.getDimensions().z();
-        this.printVolumeOffsetX = (float)printVolumeDetails.getOffset().x();
-        this.printVolumeOffsetY = (float)printVolumeDetails.getOffset().y();
-        this.printVolumeOffsetZ = (float)printVolumeDetails.getOffset().z();
-        
-        Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
-        centerPoint = new CenterPoint(centerPointStartPos, lineModel);
-        camera = new Camera(windowId, centerPoint, 3.0f * printVolumeDepth, guiManager);
-        floorLoader.cleanUp();
-        floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ, floorLoader);
-        printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeDepth, printVolumeHeight, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
+        if (camera == null || !this.printerType.equalsIgnoreCase(printerType)) {
+            this.printerType = printerType;
+            GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+            this.printVolumeWidth = printVolumeDetails.getDimensions().x();
+            this.printVolumeDepth = printVolumeDetails.getDimensions().y();
+            this.printVolumeHeight = printVolumeDetails.getDimensions().z();
+            this.printVolumeOffsetX = printVolumeDetails.getOffset().x();
+            this.printVolumeOffsetY = printVolumeDetails.getOffset().y();
+            this.printVolumeOffsetZ = printVolumeDetails.getOffset().z();
 
-        masterRenderer.processFloor(floor);
-        masterRenderer.processCentrePoint(centerPoint);
-        masterRenderer.processPrintVolume(printVolume);
+            Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
+            centerPoint = new CenterPoint(centerPointStartPos, lineModel);
+            camera = new Camera(windowId, centerPoint, printVolumeDetails.getDefaultCameraDistance(), guiManager);
+            floorLoader.cleanUp();
+            floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ, floorLoader);
+            printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeDepth, printVolumeHeight, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
 
-        renderParameters.setRenderRequired();
+            masterRenderer.processFloor(floor);
+            masterRenderer.processCentrePoint(centerPoint);
+            masterRenderer.processPrintVolume(printVolume);
+
+            renderParameters.setRenderRequired();
+        }
     }
 }

@@ -88,14 +88,6 @@ public class CommandHandler {
                                 renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\cones_robox.gcode");
                                 break;
 
-                            case "l5":
-                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\ImpactWire\\step\\test_part_spline_combined.gcode");
-                                break;
-
-                            case "l6":
-                                renderingEngine.startLoadingGCodeFile("D:\\Documents\\Cel Robox\\Projects\\rbx_twisted_cone\\Draft\\Draft_robox.gcode");
-                                break;
-                                
                             case "show":
                             case "s":
                                 commandParameter = commandScanner.next().toLowerCase();

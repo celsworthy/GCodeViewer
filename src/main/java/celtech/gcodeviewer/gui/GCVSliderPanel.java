@@ -6,27 +6,16 @@ package celtech.gcodeviewer.gui;
 
 import celtech.gcodeviewer.engine.RenderParameters;
 import static celtech.gcodeviewer.engine.renderers.GUIRenderer.GUI_GCODE_PANEL_X;
-import static celtech.gcodeviewer.engine.renderers.GUIRenderer.GUI_SLIDER_PANEL_Y;
 import static celtech.gcodeviewer.gui.GCVGCodePanel.GUI_GCODE_PANEL_WIDTH;
 import celtech.gcodeviewer.i18n.MessageLookup;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
-import java.text.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import org.lwjgl.BufferUtils;
 
 import static org.lwjgl.nuklear.Nuklear.*;
 import static org.lwjgl.system.MemoryStack.*;
-import static org.lwjgl.system.MemoryUtil.*;
 
 public class GCVSliderPanel {
 
@@ -57,6 +46,15 @@ public class GCVSliderPanel {
         topLayerMsg = MessageLookup.i18n(topLayerMsg);
         bottomLayerMsg = MessageLookup.i18n(bottomLayerMsg);
     }
+
+    public void setPanelExpanded(boolean panelExpanded) {
+        this.panelExpanded = panelExpanded;
+    }
+
+    public boolean isPanelExpanded() {
+        return panelExpanded;
+    }
+    
     public int getPanelX() {
         return (int)panelX;
     }
@@ -139,6 +137,7 @@ public class GCVSliderPanel {
                     if(nk_button_label(ctx, "")) {
                         panelExpanded = !panelExpanded;
                     }
+                    nk_layout_row_end(ctx);
                 }
                 else {
                     nk_layout_row_begin(ctx, NK_STATIC, GUI_SLIDER_PANEL_CLOSED_HEIGHT - 2.0f * windowPaddingY, 1);
@@ -146,6 +145,7 @@ public class GCVSliderPanel {
                     if(nk_button_label(ctx, "")) {
                         panelExpanded = !panelExpanded;
                     }
+                    nk_layout_row_end(ctx);
                 }
             }
             nk_end(ctx);
@@ -158,8 +158,7 @@ public class GCVSliderPanel {
         nk_layout_row_begin(ctx, NK_STATIC, GUI_SLIDER_PANEL_ANNOTATION_HEIGHT, 4);
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_TITLE_WIDTH);
         if(nk_button_label(ctx, "*")) {
-            renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
-            renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
+            renderParameters.setAllLayersToRender();
         }
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_SLIDER_LABEL_WIDTH);
         nk_label(ctx, Integer.toString(renderParameters.getIndexOfBottomLayer()), NK_TEXT_ALIGN_LEFT | NK_TEXT_ALIGN_MIDDLE);
@@ -189,5 +188,6 @@ public class GCVSliderPanel {
             nk_slider_int(ctx, minValue, valueBuffer, maxValue, step);
             setValue.accept(valueBuffer.get(0));
         }
+        nk_layout_row_end(ctx);
     }
 }

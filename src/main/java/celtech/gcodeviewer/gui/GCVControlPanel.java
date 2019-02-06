@@ -12,11 +12,8 @@ import org.lwjgl.system.*;
 import java.nio.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import org.joml.Vector3f;
 
 import static org.lwjgl.nuklear.Nuklear.*;
@@ -27,17 +24,18 @@ public class GCVControlPanel {
 
     // These values are used GUI GCVControlPanel.
     public static final int GUI_CONTROL_PANEL_WIDTH = 260;
-    public static final int GUI_CONTROL_PANEL_OPEN_HEIGHT = 155;
+    public static final int GUI_CONTROL_PANEL_OPEN_HEIGHT = 185;
     public static final int GUI_CONTROL_PANEL_ROW_HEIGHT = 35;
     public static final int GUI_CONTROL_PANEL_TOOL_ROW_HEIGHT = 40;
     public static final int GUI_CONTROL_PANEL_CLOSED_HEIGHT = 30;
     public static final int GUI_CONTROL_PANEL_SIDE_WIDTH = 10;
 
+    private String resetViewMsg = "controlPanel.resetView";
     private String showMovesMsg = "controlPanel.showMoves";
     private String showOnlySelectedMsg = "controlPanel.showOnlySelected";
-    private String showToolNMsg = "controlPanel.ShowToolN";
-    private String colourAsTypeMsg = "controlPanel.ColourAsType";
-    private String frameRateMsg = "controlPanel.FrameRate";
+    private String showToolNMsg = "controlPanel.showToolN";
+    private String colourAsTypeMsg = "controlPanel.colourAsType";
+    private String frameRateMsg = "controlPanel.frameRate";
 
     private boolean panelExpanded = false;
     private float panelX = 0.0f;
@@ -52,6 +50,7 @@ public class GCVControlPanel {
     }
 
     public void loadMessages() {
+        resetViewMsg = MessageLookup.i18n(resetViewMsg);
         showMovesMsg = MessageLookup.i18n(showMovesMsg);
         showOnlySelectedMsg = MessageLookup.i18n(showOnlySelectedMsg);
         showToolNMsg = MessageLookup.i18n(showToolNMsg);
@@ -59,6 +58,10 @@ public class GCVControlPanel {
         frameRateMsg = MessageLookup.i18n(frameRateMsg);
     }
     
+    public void setPanelExpanded(boolean panelExpanded) {
+        this.panelExpanded = panelExpanded;
+    }
+
     public boolean isPanelExpanded() {
         return panelExpanded;
     }
@@ -116,6 +119,10 @@ public class GCVControlPanel {
                     nk_layout_row_begin(ctx, NK_STATIC, rect.h() - 2.0f * windowPaddingY, 2);
                     nk_layout_row_push(ctx, w);
                     if (nk_group_begin(ctx, "ControlGroup", NK_WINDOW_NO_SCROLLBAR)) {
+                        nk_layout_row_dynamic(ctx, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
+                        if(nk_button_label(ctx, resetViewMsg)) {
+                            renderParameters.setViewResetRequired();
+                        }
                         layoutCheckboxRow(ctx,
                                           w,
                                           showMovesMsg,
@@ -225,6 +232,7 @@ public class GCVControlPanel {
                         panelExpanded = !panelExpanded;
                         renderParameters.setRenderRequired();
                     }
+                    nk_layout_row_end(ctx);
                 }
                 else {
                     nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_CLOSED_HEIGHT - 2.0f * windowPaddingY, 1);
@@ -233,6 +241,7 @@ public class GCVControlPanel {
                         panelExpanded = !panelExpanded;
                         renderParameters.setRenderRequired();
                     }
+                    nk_layout_row_end(ctx);
                 }
             }
             nk_end(ctx);
