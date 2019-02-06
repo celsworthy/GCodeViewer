@@ -3,3 +3,4 @@
 *.log.*
 /nb-configuration.xml
 *.gcode
+GCodeViewerGUI.json
