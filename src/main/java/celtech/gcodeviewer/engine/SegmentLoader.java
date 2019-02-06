@@ -39,7 +39,10 @@ public class SegmentLoader {
             });
         storeVector3InAttributeList(segmentEntity, 3, segments, Entity::getColour);
         storeVector4InAttributeList(segmentEntity, 4, segments, (Entity s) -> {
-                Vector4f v = new Vector4f(s.getThickness(), s.getLayer(), s.getLineNumber(), s.getToolNumber());
+                int layerNumber = s.getLayer();
+                if (layerNumber == Entity.NULL_LAYER)
+                    layerNumber = s.getLineNumber();
+                Vector4f v = new Vector4f(s.getThickness(), layerNumber, s.getLineNumber(), s.getToolNumber());
                 return v;
             });
         unbindVAO();
