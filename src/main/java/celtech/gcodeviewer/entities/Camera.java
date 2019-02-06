@@ -80,19 +80,19 @@ public class Camera {
 
     private float getSensitivityModifier() {
         float s = 1.0f;
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || 
-            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS) {
-            if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || 
-                glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
+        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_RELEASE || 
+            glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) != GLFW_RELEASE) {
+            if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_RELEASE || 
+                glfwGetKey(window, GLFW_KEY_RIGHT_ALT) != GLFW_RELEASE) {
                 s = 10.0f;
             }
             else {
-                s = 2.0f;
+                s = 4.0f;
             }
         }
-        else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS || 
-                glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) == GLFW_PRESS) {
-                s = 0.5f;                
+        else if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_RELEASE || 
+                glfwGetKey(window, GLFW_KEY_RIGHT_ALT) != GLFW_RELEASE) {
+                s = 0.25f;                
         } 
         return s;
     }
@@ -153,7 +153,11 @@ public class Camera {
                 double yPositionDiff = previousYPosition - ypos;
                 float sensitivity = MOUSE_CONTROL_SENSITIVITY / getSensitivityModifier();
 
-                if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_RELEASE) {
+                boolean controlPressed = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) != GLFW_RELEASE || 
+                                         glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) !=GLFW_RELEASE;
+                boolean mouse2Pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE;
+                
+                if(mouse2Pressed && !controlPressed) {
                     angleAroundCenter -= xPositionDiff / sensitivity;
                     pitch += yPositionDiff / sensitivity;
                     if(pitch >= MAXIMUM_CAMERA_PITCH) {
@@ -164,7 +168,7 @@ public class Camera {
                     }
                 }
 
-                if(glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE) {
+                if(mouse2Pressed && controlPressed) {
                    Vector3f viewVector = calculateNormalisedViewVector();
                    Vector3f leftRightVect = new Vector3f(viewVector.y, -viewVector.x, 0);
                    Vector3f upDownVect = new Vector3f(leftRightVect).cross(viewVector);
