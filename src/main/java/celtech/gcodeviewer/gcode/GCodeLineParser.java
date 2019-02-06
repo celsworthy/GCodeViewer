@@ -140,7 +140,14 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                     ZeroOrMore(' '),
                     Optional(':'),
                     ZeroOrMore(' '),
-                    OneOrMore(Digit()),
+                    Sequence(
+                        Optional(
+                            FirstOf(
+                                Ch('+'),
+                                Ch('-')
+                            )
+                        ),
+                        OneOrMore(Digit())),
                     layerValue.set(Integer.valueOf(match())),
                     ZeroOrMore(' '),
                     Optional(

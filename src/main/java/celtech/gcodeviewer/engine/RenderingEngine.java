@@ -13,7 +13,9 @@ import celtech.gcodeviewer.i18n.MessageLookup;
 import celtech.gcodeviewer.utils.CubeConstants;
 import java.io.File;
 import java.nio.IntBuffer;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.joml.Vector3f;
@@ -267,6 +269,40 @@ public class RenderingEngine {
             fileLoader.start();
         }
     }
+    
+    private int processNullLayer(int numberOfBottomLayer, Map<Integer, LayerDetails> layerMap) {
+        // There may be a NULL layer that contains the lines before the first layer.
+        // If so, assign it the layer number before the bottom, so it becomes
+        // the bottom layer.
+        int nbl = numberOfBottomLayer;
+        LayerDetails nullLayer = layerMap.getOrDefault(Entity.NULL_LAYER, null);
+        if (nullLayer != null)
+        {
+            --nbl;
+            layerMap.remove(Entity.NULL_LAYER);
+            nullLayer.setLayerNumber(nbl);
+            layerMap.put(nbl, nullLayer);
+            
+            Iterator<Entity> entityIterator = segments.iterator();
+            while(entityIterator.hasNext()) {
+                Entity s = entityIterator.next();
+                if (s.getLayer() == Entity.NULL_LAYER)
+                    s.setLayer(nbl);
+                else
+                    break;
+            }
+
+            entityIterator = moves.iterator();
+            while(entityIterator.hasNext()) {
+                Entity s = entityIterator.next();
+                if (s.getLayer() == Entity.NULL_LAYER)
+                    s.setLayer(nbl);
+                else
+                    break;
+            }
+        }
+        return nbl;
+    }
 
     public void completeLoadingGCodeFile() {
         if (fileLoader != null && fileLoader.loadFinished()) {
@@ -294,10 +330,13 @@ public class RenderingEngine {
                         renderParameters.setIndexOfTopLayer(processor.getNumberOfTopLayer());
                     else
                         renderParameters.setIndexOfTopLayer(renderParameters.getNumberOfLines());
-                    if (processor.getNumberOfBottomLayer() > Entity.NULL_LAYER)
-                        renderParameters.setIndexOfBottomLayer(processor.getNumberOfBottomLayer());
+                    if (processor.getNumberOfBottomLayer() > Entity.NULL_LAYER) {
+                        int nbl = processNullLayer(processor.getNumberOfBottomLayer(), lineProcessor.getLayerMap());
+                        renderParameters.setIndexOfBottomLayer(nbl);
+                    }
                     else
                         renderParameters.setIndexOfBottomLayer(0);
+                    
                     renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
                     renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
                     guiManager.setToolSet(lineProcessor.getToolSet());

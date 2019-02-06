@@ -295,6 +295,12 @@ public class GCodeLineProcessor implements GCodeConsumer
         if (line.layerNumber > Entity.NULL_LAYER &&
             line.layerNumber != currentLayer)
         {
+            if (currentLayer == Entity.NULL_LAYER) {
+                // Add a "NULL" layer that contains the lines before the first layer comment.
+                layerMap.put(Entity.NULL_LAYER, new LayerDetails(Entity.NULL_LAYER, 0, currentLine,
+                                                                 currentZ, currentZ));
+            }
+ 
             completeLayerDetails();
             currentLayer = line.layerNumber;
             if (line.layerHeight > -Double.MAX_VALUE)

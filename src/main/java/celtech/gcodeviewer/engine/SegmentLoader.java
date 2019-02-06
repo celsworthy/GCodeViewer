@@ -26,13 +26,15 @@ public class SegmentLoader {
     public RawEntity loadToVAO(List<Entity> segments) {
         RawEntity segmentEntity = createVAO(segments.size());
         segmentEntities.add(segmentEntity);
-        
         storeTrianglesInElementBuffer(segmentEntity, segments);
         storeVerticesInAttributeList(segmentEntity, 0, segments);
         storeNormalsInAttributeList(segmentEntity, 1, segments);
         storeVector3InAttributeList(segmentEntity, 2, segments, Entity::getColour);
         storeVector3InAttributeList(segmentEntity, 3, segments, (Entity s) -> {
-                Vector3f v = new Vector3f(s.getLayer(), s.getLineNumber(), s.getToolNumber());
+				int layerNumber = s.getLayer();
+                if (layerNumber == Entity.NULL_LAYER)
+                    layerNumber = s.getLineNumber();
+                Vector3f v = new Vector3f(layerNumber, s.getLineNumber(), s.getToolNumber());
                 return v;
             });
         unbindVAO();

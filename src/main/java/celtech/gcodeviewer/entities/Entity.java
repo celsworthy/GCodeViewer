@@ -131,7 +131,7 @@ public class Entity {
     }
 
     public int getLayer() {
-        return (layer > NULL_LAYER ? layer : lineNumber);
+        return layer;
     }
 
     public void setLayer(int layer) {
