@@ -1,10 +1,24 @@
 #version 400 core
 
-in vec3 colour;
+in vec4 vColour;
 
 out vec4 out_Colour;
 
 void main(void) {
     
-    out_Colour = vec4(colour, 1.0);
+//	if (vColour.x > 0.9)
+//		out_Colour = vec4(1.0,0.0,0.0,1.0);
+//	else if (vColour.x > 0.7)
+//		out_Colour = vec4(0.0,1.0,0.0,1.0);
+//	else if (vColour.x > 0.5)
+//		out_Colour = vec4(0.0,0.0,1.0,1.0);
+//	else if (vColour.x > 0.2)
+//		out_Colour = vec4(1.0,1.0,1.0,1.0);
+//	else
+//		out_Colour = vec4(0.0,0.0,0.0,1.0);
+
+	if (vColour.a <= 0.001)
+		discard;
+	else
+		out_Colour = vColour;
 }
