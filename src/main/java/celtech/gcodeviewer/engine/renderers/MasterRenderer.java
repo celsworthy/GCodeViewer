@@ -13,6 +13,7 @@ import celtech.gcodeviewer.entities.LineEntity;
 import celtech.gcodeviewer.entities.PrintVolume;
 import celtech.gcodeviewer.shaders.SegmentShader;
 import celtech.gcodeviewer.shaders.FloorShader;
+import celtech.gcodeviewer.shaders.LineModelShader;
 import celtech.gcodeviewer.shaders.LineShader;
 import celtech.gcodeviewer.shaders.MoveShader;
 import celtech.gcodeviewer.utils.MatrixUtils;
@@ -43,19 +44,22 @@ public class MasterRenderer {
     private final MoveShader moveShader = new MoveShader();
     private final MoveRenderer moveRenderer;
 
-    private final LineShader lineShader = new LineShader();
-    private final LineRenderer lineRenderer;
+    private final LineModelShader lineShader = new LineModelShader();
+    private final LineModelRenderer lineRenderer;
     
+    private final LineShader lineShader2 = new LineShader();
+    private final LineRenderer lineRenderer2;
+
     private final FloorShader floorShader = new FloorShader();
     private final FloorRenderer floorRenderer;
     
     private RawEntity segmentEntity = null;
     private RawEntity moveEntity = null;
+    private RawEntity printVolumeEntity = null;
     private final Map<RawModel, List<Entity>> entities = new HashMap<>();
     private final List<LineEntity> lineEntities = new ArrayList<>();
     private Floor floor;
     private CenterPoint centrePoint;
-    private PrintVolume printVolume;
     
     private Matrix4f projectionMatrix;
 
@@ -66,7 +70,8 @@ public class MasterRenderer {
 //        this.staticEntityRenderer = new StaticRenderer(staticShader, projectionMatrix);
         this.segmentRenderer = new SegmentRenderer(segmentShader, projectionMatrix);
         this.moveRenderer = new MoveRenderer(moveShader, projectionMatrix);
-        this.lineRenderer = new LineRenderer(lineShader, projectionMatrix);
+        this.lineRenderer = new LineModelRenderer(lineShader, projectionMatrix);
+        this.lineRenderer2 = new LineRenderer(lineShader2, projectionMatrix);
         this.floorRenderer = new FloorRenderer(floorShader, projectionMatrix);
         this.renderParameters = renderParameters;
         glEnable(GL_CULL_FACE);
@@ -91,20 +96,22 @@ public class MasterRenderer {
 //        staticShader.stop();
         
         if (!lineEntities.isEmpty() ||
-            printVolume != null ||
             (centrePoint != null &&  centrePoint.isRendered())) {
             lineShader.start();
             lineShader.loadViewMatrix(camera);
             if(!lineEntities.isEmpty()) {
                 lineRenderer.render(lineEntities);
             }
-            if (printVolume != null) {
-                lineRenderer.render(printVolume.getLineEntities());
-            }
             if (centrePoint != null && centrePoint.isRendered()) {
                 lineRenderer.render(centrePoint.getLineEntities());
             }
             lineShader.stop();
+        }
+
+        if (printVolumeEntity != null) {
+            lineRenderer2.prepare(camera, light, renderParameters);
+            lineRenderer2.render(printVolumeEntity);
+            lineRenderer2.finish();
         }
 
         if (segmentEntity != null) {
@@ -174,7 +181,7 @@ public class MasterRenderer {
     }
     
     public void processPrintVolume(PrintVolume printVolume) {
-        this.printVolume = printVolume;
+        this.printVolumeEntity = printVolume.getRawEntity();
     }
 
     public void processLine(LineEntity lineEntity) {

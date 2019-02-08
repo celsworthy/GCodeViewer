@@ -69,6 +69,7 @@ public class RenderingEngine {
 
     private final SegmentLoader segmentLoader = new SegmentLoader();
     private final MoveLoader moveLoader = new MoveLoader();
+    private final LineLoader lineLoader = new LineLoader();
     
     private final GCodeViewerConfiguration configuration;
     private final GCodeViewerGUIConfiguration guiConfiguration;
@@ -246,6 +247,7 @@ public class RenderingEngine {
         modelLoader.cleanUp();
         segmentLoader.cleanUp();
         moveLoader.cleanUp();
+        lineLoader.cleanUp();
         fileLoader = null;
     }
     
@@ -462,7 +464,9 @@ public class RenderingEngine {
             camera = new Camera(windowId, centerPoint, printVolumeDetails.getDefaultCameraDistance(), guiManager);
             floorLoader.cleanUp();
             floor = new Floor(printVolumeWidth, printVolumeDepth, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ, floorLoader);
-            printVolume = new PrintVolume(lineModel, printVolumeWidth, printVolumeDepth, printVolumeHeight, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
+
+            lineLoader.cleanUp();
+            printVolume = new PrintVolume(lineLoader, printVolumeWidth, printVolumeDepth, printVolumeHeight, printVolumeOffsetX, printVolumeOffsetY, printVolumeOffsetZ);
 
             masterRenderer.processFloor(floor);
             masterRenderer.processCentrePoint(centerPoint);

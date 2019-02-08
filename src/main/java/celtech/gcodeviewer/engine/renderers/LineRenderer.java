@@ -1,63 +1,69 @@
 package celtech.gcodeviewer.engine.renderers;
 
-import celtech.gcodeviewer.engine.RawModel;
-import static org.lwjgl.opengl.GL11.*;
-import celtech.gcodeviewer.entities.LineEntity;
+import celtech.gcodeviewer.engine.RawEntity;
+import celtech.gcodeviewer.engine.RenderParameters;
+import celtech.gcodeviewer.entities.Camera;
+import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.shaders.LineShader;
-import celtech.gcodeviewer.utils.MatrixUtils;
-import java.util.List;
 import org.joml.Matrix4f;
-import static org.lwjgl.opengl.GL20.glDisableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL30.glBindVertexArray;
+import org.joml.Vector3f;
+import static org.lwjgl.opengl.GL11.*;
+import static org.lwjgl.opengl.GL20.*;
+import static org.lwjgl.opengl.GL30.*;
 
-/**
- *
- * @author George Salter
- */
 public class LineRenderer {
-    
+   
     private final LineShader shader;
-
-    LineRenderer(LineShader shader, Matrix4f projectionMatrix) {
+    private Matrix4f projectionMatrix;
+    
+    public LineRenderer(LineShader shader, Matrix4f projectionMatrix) {
         this.shader = shader;
-        loadProjectionMatrix(projectionMatrix);
+        this.projectionMatrix = projectionMatrix;
     }
     
-    public final void loadProjectionMatrix(Matrix4f projectionMatrix) {
+    public void prepare(Camera camera,
+                        Light light,
+                        RenderParameters renderParameters) {
+        MasterRenderer.checkErrors();
         shader.start();
-        shader.loadProjectionMatrix(projectionMatrix);
+        MasterRenderer.checkErrors();
+        shader.setProjectionMatrix(projectionMatrix);
+        MasterRenderer.checkErrors();
+        shader.setViewMatrix(camera);
+        MasterRenderer.checkErrors();
+        shader.loadCompositeMatrix();
+        MasterRenderer.checkErrors();
+    }
+    
+    public void render(RawEntity rawEntity) {
+        if (rawEntity != null) {
+            bindRawModel(rawEntity);
+            MasterRenderer.checkErrors();
+            glDrawArrays(GL_LINES, 0, rawEntity.getVertexCount());
+            MasterRenderer.checkErrors();
+            unbindRawModel();
+            MasterRenderer.checkErrors();
+        }
+    }
+
+    public void finish() {
         shader.stop();
+        MasterRenderer.checkErrors();
+    }
+
+    public void setProjectionMatrix(Matrix4f projectionMatrix) {
+        this.projectionMatrix = projectionMatrix;
     }
     
-    public void render(List<LineEntity> lineEntities) {
-        RawModel lineModel = lineEntities.get(0).getLineModel();
-        prepareRawModel(lineModel);
-        lineEntities.forEach(lineEntity -> {
-            prepareInstance(lineEntity);
-            glDrawArrays(GL_LINES, 0, 2);
-        });
-        unbindRawModel();
-    }
-    
-    public void prepareRawModel(RawModel model) {
-        glBindVertexArray(model.getVaoId());
+    public void bindRawModel(RawEntity rawEntity) {
+        glBindVertexArray(rawEntity.getVaoId());
         glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
     }
     
     public void unbindRawModel() {
         glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
         glBindVertexArray(0);
-    }
-    
-    public void prepareInstance(LineEntity lineEntity) {
-        Matrix4f transformationMatrix = MatrixUtils.createTransformationMatrixForLine(
-                lineEntity.getPosition(), 
-                lineEntity.getRotationX(), 
-                lineEntity.getRotationY(), 
-                lineEntity.getRotationZ(),
-                lineEntity.getLength());
-        shader.loadTransformationMatrix(transformationMatrix);
-        shader.loadColour(lineEntity.getColour());
     }
 }

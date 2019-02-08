@@ -1,5 +1,7 @@
 package celtech.gcodeviewer.entities;
 
+import celtech.gcodeviewer.engine.LineLoader;
+import celtech.gcodeviewer.engine.RawEntity;
 import celtech.gcodeviewer.engine.RawModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +15,9 @@ public class PrintVolume {
     
     private final List<LineEntity> lineEntities = new ArrayList<>();
     
-    private final RawModel lineModel;
+    private final RawModel lineModel = null;
+    private final LineLoader lineLoader;
+    private RawEntity rawEntity;
     
     private final float printVolumeWidth;
     private final float printVolumeHeight;
@@ -22,10 +26,10 @@ public class PrintVolume {
     private final float yOffset;
     private final float zOffset;
     
-    public PrintVolume(RawModel lineModel, float printVolumeWidth, 
+    public PrintVolume(LineLoader lineLoader, float printVolumeWidth, 
             float printVolumeDepth, float printVolumeHeight, 
             float xOffset, float yOffset, float zOffset) {
-        this.lineModel = lineModel;
+        this.lineLoader = lineLoader;
         this.printVolumeWidth = printVolumeWidth;
         this.printVolumeDepth = printVolumeDepth;
         this.printVolumeHeight = printVolumeHeight;
@@ -88,11 +92,15 @@ public class PrintVolume {
         lineEntities.add(backLeft);
         lineEntities.add(frontRight);
         lineEntities.add(backRight);
-        
         lineEntities.forEach(lineEntity -> lineEntity.setColour(new Vector3f(0, 0, 0)));
+        rawEntity = lineLoader.loadToVAO(lineEntities);
     }
     
     public List<LineEntity> getLineEntities() {
         return lineEntities;
+    }
+    
+    public RawEntity getRawEntity() {
+        return rawEntity;
     }
 }

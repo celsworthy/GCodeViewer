@@ -1,19 +1,13 @@
 #version 400 core
 
-uniform mat4 transformationMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
+uniform mat4 compositeMatrix;
 
-uniform vec3 modelColour;
+in vec4 position;
+in vec4 colour;
 
-in vec3 position;
-
-out vec3 colour;
+out vec4 vColour;
 
 void main(void) {
-    vec4 worldPosition = transformationMatrix * vec4(position, 1.0);
-
-    gl_Position = projectionMatrix * viewMatrix * worldPosition;
-
-    colour = modelColour;
+    gl_Position = compositeMatrix * position;
+	vColour = colour;
 }
