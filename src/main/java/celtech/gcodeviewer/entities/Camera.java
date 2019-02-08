@@ -145,9 +145,10 @@ public class Camera {
                                          glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) !=GLFW_RELEASE;
                 boolean altPressed = glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_RELEASE || 
                                          glfwGetKey(window, GLFW_KEY_RIGHT_ALT) !=GLFW_RELEASE;
-                boolean mouse2Pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE;
+                boolean mousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_RELEASE ||
+                                            glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE;
                 
-                if(mouse2Pressed && !controlPressed && !altPressed) {
+                if(mousePressed && !controlPressed && !altPressed) {
                     // Spin around control point.
                     angleAroundCenter -= xPositionDiff / sensitivity;
                     pitch += yPositionDiff / sensitivity;
@@ -159,7 +160,7 @@ public class Camera {
                     }
                 }
 
-                if(mouse2Pressed && controlPressed && !altPressed) {
+                if(mousePressed && controlPressed && !altPressed) {
                    // Pan.
                    Vector3f viewVector = calculateNormalisedViewVector();
                    Vector3f leftRightVect = new Vector3f(viewVector.y, -viewVector.x, 0);
@@ -178,7 +179,7 @@ public class Camera {
                    centerPoint.getPosition().z -= (upDownVect.z * yPositionDiff) / sensitivity;
                 }
 
-                if(mouse2Pressed && altPressed && !controlPressed) {
+                if(mousePressed && altPressed && !controlPressed) {
                     // Zoom.
                     distanceFromCenter -= yPositionDiff / sensitivity;
                 }
