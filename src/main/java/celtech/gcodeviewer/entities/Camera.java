@@ -73,27 +73,15 @@ public class Camera {
         position.x = centerPoint.getPosition().x + offsetX;
         position.y = centerPoint.getPosition().y + offsetY;
         position.z = centerPoint.getPosition().z - verticalDistance;
-//        position.x = centerPoint.getPosition().x - offsetX;
-//        position.y = centerPoint.getPosition().y - offsetY;
-//        position.z = centerPoint.getPosition().z + verticalDistance;
     }
 
     private float getSensitivityModifier() {
         float s = 1.0f;
         if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) != GLFW_RELEASE || 
             glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) != GLFW_RELEASE) {
-            if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_RELEASE || 
-                glfwGetKey(window, GLFW_KEY_RIGHT_ALT) != GLFW_RELEASE) {
-                s = 10.0f;
-            }
-            else {
-                s = 4.0f;
-            }
+            
+                s = 5.0f;
         }
-        else if (glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_RELEASE || 
-                glfwGetKey(window, GLFW_KEY_RIGHT_ALT) != GLFW_RELEASE) {
-                s = 0.25f;                
-        } 
         return s;
     }
 
@@ -109,7 +97,7 @@ public class Camera {
             if (guiManager.overGuiPanel((int)xpos, (int)ypos))
                 guiManager.onScroll(window, xoffset, yoffset);
             else {
-                distanceFromCenter += -yoffset * getSensitivityModifier() * MOUSE_ZOOM_SENSITIVITY;
+                distanceFromCenter -= yoffset * getSensitivityModifier() * MOUSE_ZOOM_SENSITIVITY;
             }
             guiManager.setRenderRequired();
         });
@@ -155,9 +143,12 @@ public class Camera {
 
                 boolean controlPressed = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) != GLFW_RELEASE || 
                                          glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) !=GLFW_RELEASE;
+                boolean altPressed = glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_RELEASE || 
+                                         glfwGetKey(window, GLFW_KEY_RIGHT_ALT) !=GLFW_RELEASE;
                 boolean mouse2Pressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_2) != GLFW_RELEASE;
                 
-                if(mouse2Pressed && !controlPressed) {
+                if(mouse2Pressed && !controlPressed && !altPressed) {
+                    // Spin around control point.
                     angleAroundCenter -= xPositionDiff / sensitivity;
                     pitch += yPositionDiff / sensitivity;
                     if(pitch >= MAXIMUM_CAMERA_PITCH) {
@@ -168,7 +159,8 @@ public class Camera {
                     }
                 }
 
-                if(mouse2Pressed && controlPressed) {
+                if(mouse2Pressed && controlPressed && !altPressed) {
+                   // Pan.
                    Vector3f viewVector = calculateNormalisedViewVector();
                    Vector3f leftRightVect = new Vector3f(viewVector.y, -viewVector.x, 0);
                    Vector3f upDownVect = new Vector3f(leftRightVect).cross(viewVector);
@@ -184,6 +176,11 @@ public class Camera {
                    centerPoint.getPosition().x -= (upDownVect.x * yPositionDiff) / sensitivity;
                    centerPoint.getPosition().y -= (upDownVect.y * yPositionDiff) / sensitivity;
                    centerPoint.getPosition().z -= (upDownVect.z * yPositionDiff) / sensitivity;
+                }
+
+                if(mouse2Pressed && altPressed && !controlPressed) {
+                    // Zoom.
+                    distanceFromCenter -= yPositionDiff / sensitivity;
                 }
 
                 previousXPosition = xpos;
