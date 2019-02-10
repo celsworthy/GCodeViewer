@@ -135,7 +135,7 @@ public class GCVControlPanel {
                                           renderParameters.getShowOnlySelected(),
                                           renderParameters::setShowOnlySelected);
 
-                        IntBuffer toolBuffer = stack.mallocInt(1);
+                        IntBuffer checkBuffer = stack.mallocInt(1);
                         NkStyleToggle checkboxStyle = ctx.style().checkbox();
                         NkColor cbnc = NkColor.mallocStack();
                         NkColor cbhc = NkColor.mallocStack();
@@ -145,7 +145,7 @@ public class GCVControlPanel {
                         toolList.forEach(t -> {
                             String label = showToolNMsg.replaceAll("#1", Integer.toString(t));
                             boolean currentValue = renderParameters.getShowFlagForTool(t);
-                            toolBuffer.put(0, (currentValue ? 1 : 0));
+                            checkBuffer.put(0, (currentValue ? 1 : 0));
                             if (!colourAsType)
                             {
                                 Vector3f c = renderParameters.getColourForTool(t);
@@ -155,9 +155,9 @@ public class GCVControlPanel {
                             }
                             nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
                             nk_layout_row_push(ctx, w);
-                            nk_checkbox_label(ctx, label, toolBuffer);
+                            nk_checkbox_label(ctx, label, checkBuffer);
                             nk_layout_row_end(ctx);
-                            renderParameters.setShowFlagForTool(t, (toolBuffer.get(0) != 0));
+                            renderParameters.setShowFlagForTool(t, (checkBuffer.get(0) != 0));
                         });
 
                         checkboxStyle.cursor_normal().data().color().set(cbhc);
@@ -170,46 +170,19 @@ public class GCVControlPanel {
                                                                                     : RenderParameters.ColourMode.COLOUR_AS_TOOL); });
 
                         if (colourAsType) {
-                            float cb = checkboxStyle.border();
-                            NkColor cbta = NkColor.mallocStack();
-                            cbta.set(checkboxStyle.text_active());
-                            NkColor cbth = NkColor.mallocStack();
-                            cbth.set(checkboxStyle.text_hover());
-                            NkColor cbtn = NkColor.mallocStack();
-                            cbtn.set(checkboxStyle.text_normal());
-                            NkColor cbbc = NkColor.mallocStack();
-                            cbbc.set(checkboxStyle.border_color());
-                            NkColor cba = NkColor.mallocStack();
-                            cba.set(checkboxStyle.active().data().color());
-                            NkColor cbh = NkColor.mallocStack();
-                            cbh.set(checkboxStyle.hover().data().color());
-                            NkColor cbn = NkColor.mallocStack();
-                            cbn.set(checkboxStyle.normal().data().color());
-                            
-                            checkboxStyle.border(0.0f);
-                            checkboxStyle.text_active().set(cbtn);
-                            checkboxStyle.text_hover().set(cbtn);
-                            checkboxStyle.active().data().color().set(cbn);
-                            checkboxStyle.hover().data().color().set(cbn);
-                            
                             typeList.forEach(t -> {
                                 Vector3f c = renderParameters.getColourForType(t);
                                 tc.set((byte)(255.0f * c.x() + 0.5f), (byte)(255.0f * c.y() + 0.5f), (byte)(255.0f * c.z() + 0.5f), (byte)255);
                                 checkboxStyle.cursor_normal().data().color().set(tc);
                                 checkboxStyle.cursor_hover().data().color().set(tc);
-                                checkboxStyle.border_color().set(tc);
                                 nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
                                 nk_layout_row_push(ctx, w);
-                                toolBuffer.put(0, 1);
-                                nk_checkbox_label(ctx, t, toolBuffer);
+                                boolean currentValue = renderParameters.getShowFlagForType(t);
+                                checkBuffer.put(0, (currentValue ? 1 : 0));
+                                nk_checkbox_label(ctx, t, checkBuffer);
                                 nk_layout_row_end(ctx);
+                                renderParameters.setShowFlagForType(t, (checkBuffer.get(0) != 0));
                             });
-                            checkboxStyle.border(cb);
-                            checkboxStyle.border_color().set(cbbc);
-                            checkboxStyle.text_active().set(cbta);
-                            checkboxStyle.text_hover().set(cbth);
-                            checkboxStyle.active().data().color().set(cba);
-                            checkboxStyle.hover().data().color().set(cbh);
                         }
 
                         checkboxStyle.cursor_normal().data().color().set(cbhc);

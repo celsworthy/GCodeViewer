@@ -7,7 +7,7 @@ uniform vec3 lightPosition;
 
 in vec4 vColour[]; // Output from vertex shader for each vertex
 in vec4 vNormal[];
-in vec4 vDimension[]; // Length width and height of segment.
+in vec4 vDimensions[]; // x = length, y = width, z = thickness, w = 1.0.
 in vec4 vDirection[];
 
 out vec4 fColour; // Output to fragment shader
@@ -25,12 +25,12 @@ void main()
 		vec3 b = cross(n, d); // bi-normal.
 		b = normalize(b);
 		
-		// Same vDimension also has the segment length in x and width in y,
-		// but also has the thickness in z. 
-		vec4 dd = vec4(0.5 * vDimension[0].x * d, 0.0);
-		vec4 dp = vec4(0.5 * vDimension[0].y * d, 0.0); // Direction and length of end pyramids.
-		vec4 nn = vec4(0.5 * vDimension[0].y * n, 0.0);
-		vec4 bb = vec4(0.5 * vDimension[0].z * b, 0.0);
+		// vDimensions has the segment length in x and width in y,
+		// and thickness in z. 
+		vec4 dd = vec4(0.5 * vDimensions[0].x * d, 0.0);
+		vec4 dp = vec4(0.5 * vDimensions[0].y * d, 0.0); // Direction and length of end pyramids.
+		vec4 nn = vec4(0.5 * vDimensions[0].y * n, 0.0);
+		vec4 bb = vec4(0.5 * vDimensions[0].z * b, 0.0);
 		
 		vec4 p = gl_in[0].gl_Position;
 	

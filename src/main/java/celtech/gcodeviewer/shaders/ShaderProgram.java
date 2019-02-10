@@ -17,7 +17,7 @@ import org.joml.Vector4f;
 
 public abstract class ShaderProgram {
     
-    private static final int MAX_UNIFORM_VECTOR = 8;
+    private static final int MAX_UNIFORM_VECTOR = 16;
     private static final FloatBuffer MATRIX_BUFFER = BufferUtils.createFloatBuffer(16);
     private static final FloatBuffer UNIFORM_VECTOR_BUFFER = BufferUtils.createFloatBuffer(MAX_UNIFORM_VECTOR * 4);
     

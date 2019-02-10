@@ -41,7 +41,9 @@ public class SegmentRenderer {
                                   renderParameters.getLastSelectedLine());
             shader.loadShowFlags(renderParameters.getShowFlags());
             shader.loadShowTools(renderParameters.getShowTools());
+            shader.loadShowTypes(renderParameters.getShowTypes());
             shader.loadToolColours(renderParameters.getToolColours());
+            shader.loadTypeColours(renderParameters.getTypeColours());
             shader.loadSelectColour(renderParameters.getSelectColour());
             bindRawModel(rawEntity);
             glDrawArrays(GL_POINTS, 0, rawEntity.getVertexCount());
@@ -61,6 +63,7 @@ public class SegmentRenderer {
         glEnableVertexAttribArray(2);
         glEnableVertexAttribArray(3);
         glEnableVertexAttribArray(4);
+        glEnableVertexAttribArray(5);
     }
     
     public void unbindRawModel() {
@@ -69,6 +72,7 @@ public class SegmentRenderer {
         glDisableVertexAttribArray(2);
         glDisableVertexAttribArray(3);
         glDisableVertexAttribArray(4);
+        glDisableVertexAttribArray(5);
         glBindVertexArray(0);
     }
 }

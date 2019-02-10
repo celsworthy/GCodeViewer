@@ -29,20 +29,27 @@ public class SegmentLoader {
         storeVector3InAttributeList(segmentEntity, 0, segments, Entity::getPosition);
         storeVector4InAttributeList(segmentEntity, 1, segments, (Entity s) -> {
                 Vector3f d = s.getDirection();
-                Vector4f d4 = new Vector4f(d.x(), d.y(), d.z(), s.getLength());
+                Vector4f d4 = new Vector4f(d.x(), d.y(), d.z(), 1.0f);
                 return d4;
             });
         storeVector4InAttributeList(segmentEntity, 2, segments, (Entity s) -> {
                 Vector3f n = s.getNormal();
-                Vector4f n4 = new Vector4f(n.x(), n.y(), n.z(), s.getWidth());
+                Vector4f n4 = new Vector4f(n.x(), n.y(), n.z(), 1.0f);
                 return n4;
             });
-        storeVector3InAttributeList(segmentEntity, 3, segments, Entity::getColour);
-        storeVector4InAttributeList(segmentEntity, 4, segments, (Entity s) -> {
+        storeVector4InAttributeList(segmentEntity, 3, segments, (Entity s) -> {
                 int layerNumber = s.getLayer();
                 if (layerNumber == Entity.NULL_LAYER)
                     layerNumber = s.getLineNumber();
-                Vector4f v = new Vector4f(s.getThickness(), layerNumber, s.getLineNumber(), s.getToolNumber());
+                Vector4f v = new Vector4f(s.getLength(), s.getWidth(), s.getThickness(), 1.0f);
+                return v;
+            });
+        storeVector3InAttributeList(segmentEntity, 4, segments, Entity::getColour);
+        storeVector4InAttributeList(segmentEntity, 5, segments, (Entity s) -> {
+                int layerNumber = s.getLayer();
+                if (layerNumber == Entity.NULL_LAYER)
+                    layerNumber = s.getLineNumber();
+                Vector4f v = new Vector4f(s.getTypeIndex(), layerNumber, s.getLineNumber(), s.getToolNumber());
                 return v;
             });
         unbindVAO();

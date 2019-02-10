@@ -225,7 +225,7 @@ public class CommandHandler {
                                         {
                                             renderingEngine.colourSegmentsFromData(dataIndex);
                                             renderingEngine.reloadSegmentColours();
-                                            renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
+                                            renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_DATA);
                                         }
                                         break;
                                 
