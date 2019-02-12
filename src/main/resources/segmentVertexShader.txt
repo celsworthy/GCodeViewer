@@ -1,4 +1,5 @@
-#version 400 core
+#version 130
+
 uniform int firstSelectedLine;
 uniform int lastSelectedLine;
 uniform int topVisibleLayer;
@@ -35,11 +36,12 @@ void main(void) {
 	if (((showTools & toolFlag) == toolFlag) &&
 		(attributes.y >= bottomVisibleLayer && attributes.y <= topVisibleLayer)) {
 		
-     	if (attributes.z >= firstSelectedLine && attributes.z < lastSelectedLine)
-			vColour = vec4(selectColour, 1.0);
-		else if ((showFlags & 8) == 8) // Show only selected.
-			vColour = vec4(0.0, 0.0, 0.0, 0.0);
-		else if ((showFlags & 2) == 2) { // Colour as type
+//     	if (attributes.z >= firstSelectedLine && attributes.z < lastSelectedLine)
+//			vColour = vec4(selectColour, 1.0);
+//		else if ((showFlags & 8) == 8) // Show only selected.
+//			vColour = vec4(0.0, 0.0, 0.0, 0.0);
+//		else if ((showFlags & 2) == 2) { // Colour as type
+		if ((showFlags & 2) == 2) { // Colour as type
 			int type = int(attributes.x + 0.5);
 			int typeFlag = 1 << type;
 			if ((showTypes & typeFlag) == typeFlag)
@@ -51,6 +53,15 @@ void main(void) {
 			vColour = vec4(colour, 1.0);
 		else
 			vColour = vec4(toolColours[tool].rgb, 1.0);
+
+     	if (firstSelectedLine != lastSelectedLine &&
+			(attributes.z < firstSelectedLine || attributes.z >= lastSelectedLine)) {
+
+			if ((showFlags & 8) == 8) // Show only selected.
+				vColour = vec4(0.0, 0.0, 0.0, 0.0);
+			else
+				vColour.rgb *= 0.6; // Make unselected things darker.
+		}
 	}
 	else
 		vColour = vec4(0.0, 0.0, 0.0, 0.0);

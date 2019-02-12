@@ -1,4 +1,4 @@
-#version 400 core
+#version 130
 
 uniform mat4 transformationMatrix;
 uniform mat4 viewMatrix;
@@ -18,7 +18,8 @@ void main(void) {
 
     gl_Position = projectionMatrix * viewMatrix * worldPosition;
     
-//    surfaceNormal = (transformationMatrix * vec4(normal, 0.0)).xyz; // transformationMatrix is just a translation, which not be applied to a normal.
+	// transformationMatrix is just a translation, which should not be applied to a normal.
+	// surfaceNormal = (transformationMatrix * vec4(normal, 0.0)).xyz;
     surfaceNormal = normal;
     toLightNormal = lightPosition - worldPosition.xyz;
 }

@@ -195,7 +195,7 @@ public class GCVControlPanel {
                         if (frameTime > 0.0)
                             fps = 1.0 / frameTime;
                         DecimalFormat fpsFormat = new DecimalFormat("0.#"); 
-                        DecimalFormat ftFormat = new DecimalFormat("0.00"); 
+                        DecimalFormat ftFormat = new DecimalFormat("0.000"); 
                         nk_label(ctx, frameRateMsg.replaceAll("#1", fpsFormat.format(fps)).replaceAll("#2", ftFormat.format(frameTime)), NK_TEXT_ALIGN_LEFT);
 
                         nk_group_end(ctx);

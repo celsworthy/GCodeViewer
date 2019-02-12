@@ -1,4 +1,5 @@
-#version 400 core
+#version 150
+
 layout(points) in;
 layout(triangle_strip, max_vertices = 48) out;
 
