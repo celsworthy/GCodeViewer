@@ -10,7 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 import org.joml.Vector3f;
 
@@ -23,9 +22,17 @@ public class RenderParameters {
     public static enum ColourMode {
         COLOUR_AS_TYPE,
         COLOUR_AS_DATA,
-        COLOUR_AS_TOOL;
+        COLOUR_AS_TOOL
     }
       
+    public static enum WindowAction {
+        WINDOW_NO_ACTION,
+        WINDOW_SHOW,
+        WINDOW_ICONIFY,
+        WINDOW_HIDE,
+        WINDOW_RESTORE
+    }
+
     private int indexOfTopLayer = 0;
     private int indexOfBottomLayer = 0;
     private int topLayerToRender = 0;
@@ -59,7 +66,8 @@ public class RenderParameters {
     private int windowYPos = 0;
     private double frameTime = 0.0;
     private boolean viewResetRequired = false;
-
+    private WindowAction windowAction = WindowAction.WINDOW_NO_ACTION;
+    
     // Nuklear GUI requires 2 renders to update properly - the first updates the state
     // the second updates the GUI. Easy way to do this is it always set the render flag
     // to 2, and decrement by one when cleared.
@@ -567,6 +575,16 @@ public class RenderParameters {
 
     public boolean getViewResetRequired() {
         return viewResetRequired;
+    }
+
+    public void setWindowAction(WindowAction state) {
+        windowAction = state;
+        if (windowAction != WindowAction.WINDOW_NO_ACTION)
+            renderRequired = 2;
+    }
+
+    public WindowAction getWindowAction() {
+        return windowAction;
     }
 
     public void setRenderRequired() {
