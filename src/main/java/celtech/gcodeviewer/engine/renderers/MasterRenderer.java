@@ -44,11 +44,11 @@ public class MasterRenderer {
     private final MoveShader moveShader = new MoveShader();
     private final MoveRenderer moveRenderer;
 
-    private final LineModelShader lineShader = new LineModelShader();
-    private final LineModelRenderer lineRenderer;
+    private final LineModelShader lineModelShader = new LineModelShader();
+    private final LineModelRenderer lineModelRenderer;
     
-    private final LineShader lineShader2 = new LineShader();
-    private final LineRenderer lineRenderer2;
+    private final LineShader lineShader = new LineShader();
+    private final LineRenderer lineRenderer;
 
     private final FloorShader floorShader = new FloorShader();
     private final FloorRenderer floorRenderer;
@@ -70,8 +70,8 @@ public class MasterRenderer {
 //        this.staticEntityRenderer = new StaticRenderer(staticShader, projectionMatrix);
         this.segmentRenderer = new SegmentRenderer(segmentShader, projectionMatrix);
         this.moveRenderer = new MoveRenderer(moveShader, projectionMatrix);
-        this.lineRenderer = new LineModelRenderer(lineShader, projectionMatrix);
-        this.lineRenderer2 = new LineRenderer(lineShader2, projectionMatrix);
+        this.lineModelRenderer = new LineModelRenderer(lineModelShader, projectionMatrix);
+        this.lineRenderer = new LineRenderer(lineShader, projectionMatrix);
         this.floorRenderer = new FloorRenderer(floorShader, projectionMatrix);
         this.renderParameters = renderParameters;
         glEnable(GL_CULL_FACE);
@@ -97,21 +97,21 @@ public class MasterRenderer {
         
         if (!lineEntities.isEmpty() ||
             (centrePoint != null &&  centrePoint.isRendered())) {
-            lineShader.start();
-            lineShader.loadViewMatrix(camera);
+            lineModelShader.start();
+            lineModelShader.loadViewMatrix(camera);
             if(!lineEntities.isEmpty()) {
-                lineRenderer.render(lineEntities);
+                lineModelRenderer.render(lineEntities);
             }
             if (centrePoint != null && centrePoint.isRendered()) {
-                lineRenderer.render(centrePoint.getLineEntities());
+                lineModelRenderer.render(centrePoint.getLineEntities());
             }
-            lineShader.stop();
+            lineModelShader.stop();
         }
 
         if (printVolumeEntity != null) {
-            lineRenderer2.prepare(camera, light, renderParameters);
-            lineRenderer2.render(printVolumeEntity);
-            lineRenderer2.finish();
+            lineRenderer.prepare(camera, light, renderParameters);
+            lineRenderer.render(printVolumeEntity);
+            lineRenderer.finish();
         }
 
         if (segmentEntity != null) {
@@ -198,6 +198,7 @@ public class MasterRenderer {
     public void cleanUp() {
         //staticShader.cleanUp();
         floorShader.cleanUp();
+        lineModelShader.cleanUp();
         lineShader.cleanUp();
         segmentShader.cleanUp();
     }
@@ -237,7 +238,8 @@ public class MasterRenderer {
      */
     public final void reloadProjectionMatrix() {
 //        staticEntityRenderer.loadProjectionMatrix(projectionMatrix);
-        lineRenderer.loadProjectionMatrix(projectionMatrix);
+        lineModelRenderer.loadProjectionMatrix(projectionMatrix);
+        lineRenderer.setProjectionMatrix(projectionMatrix);
         segmentRenderer.setProjectionMatrix(projectionMatrix);
         moveRenderer.setProjectionMatrix(projectionMatrix);
         floorRenderer.loadProjectionMatrix(projectionMatrix);

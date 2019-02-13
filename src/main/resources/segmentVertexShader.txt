@@ -1,18 +1,20 @@
-#version 400 core
+#version 130
+
 uniform int firstSelectedLine;
 uniform int lastSelectedLine;
 uniform int topVisibleLayer;
 uniform int bottomVisibleLayer;
-uniform int showFlags; // 2 = show type. 4 = show only selected.
+uniform int showFlags; // 2 = show colour as type. 4 = show colour as data. 8 = show only selected
 uniform int showTools; // Bit n(in range 0-15) 0 = hide tool n, 1 = show tool n.
-uniform vec4 toolColours[8];
+uniform int showTypes; // Bit n(in range 0-15) 0 = hide type n, 1 = show type n.
+uniform vec4 toolColours[16];
+uniform vec4 typeColours[16];
 uniform vec3 selectColour;
 
 in vec3 position;
 in vec4 normal;
 in vec3 colour;
-in vec3 attributes; // x = layer, y = line, z = tool
-
+in vec4 attributes; // x = type, y = layer, z = line, w = tool
 out vec4 vNormal;
 out vec4 vColour;
 
@@ -20,21 +22,34 @@ void main(void) {
     gl_Position = vec4(position, 1.0);
 	vNormal = normal;
 	
-	int tool = int(attributes.z + 0.5);
+	int tool = int(attributes.w + 0.5);
 
 	int toolFlag = 1 << tool;
 		
 	if (((showTools & toolFlag) == toolFlag) &&
 		(attributes.x >= bottomVisibleLayer && attributes.x <= topVisibleLayer)) {
 		
-     	if (attributes.y >= firstSelectedLine && attributes.y < lastSelectedLine)
-			vColour = vec4(selectColour, 1.0);
-		else if ((showFlags & 4) == 4) // Show only selected.
-			vColour = vec4(0.0, 0.0, 0.0, 0.0);
-		else if ((showFlags & 2) == 2) // Colour as type.
-				vColour = vec4(colour, 1.0);
-		else
-		vColour = vec4(toolColours[tool].rgb, 1.0);
+		if ((showFlags & 2) == 2) { // Colour as type
+			int type = int(attributes.x + 0.5);
+			int typeFlag = 1 << type;
+			if ((showTypes & typeFlag) == typeFlag)
+				vColour = vec4(typeColours[type].rgb, 1.0);
+			else
+				vColour = vec4(0.0, 0.0, 0.0, 0.0);
+		}
+		else if ((showFlags & 4) == 4) // Colour as data.
+			vColour = vec4(colour, 1.0);
+		else // Colour as tool.
+			vColour = vec4(toolColours[tool].rgb, 1.0);
+
+     	if (firstSelectedLine != lastSelectedLine &&
+			(attributes.z < firstSelectedLine || attributes.z >= lastSelectedLine)) {
+
+			if ((showFlags & 8) == 8) // Show only selected.
+				vColour = vec4(0.0, 0.0, 0.0, 0.0);
+			else
+				vColour.rgb *= 0.6; // Make unselected things darker.
+		}
 	}
 	else
 		vColour = vec4(0.0, 0.0, 0.0, 0.0);

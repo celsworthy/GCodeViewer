@@ -11,6 +11,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
+import static org.lwjgl.glfw.GLFW.glfwPostEmptyEvent;
 
 /**
  *
@@ -54,6 +55,7 @@ public class CommandQueue extends Thread {
         STENO.debug("Add command = \"" + command + "\"");
         try {
             pendingCommands.put(command);
+            glfwPostEmptyEvent(); // Wake up main thread.
         } catch(InterruptedException e) {
             //e.printStackTrace();
         }

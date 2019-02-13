@@ -561,25 +561,31 @@ public class GUIManager {
     
     public void pollEvents(long windowId) {
         nk_input_begin(nkContext);
-        glfwPollEvents();
+        if (renderParameters.getRenderRequired())
+            glfwPollEvents(); // Do not wait as we need to go around the render loop again.
+        else
+            glfwWaitEvents();
         
         // This is copied from the LWJGL demo and seems to be a bit
-        // of boiler plate code, although I'm not sure what it does!
+        // of boiler plate code that hides the mouse pointer when
+        // dragging.
         NkMouse mouse = nkContext.input().mouse();
         if (mouse.grab()) {
             glfwSetInputMode(windowId, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
             renderParameters.setRenderRequired();
-       } else if (mouse.grabbed()) {
+        }
+        else if (mouse.grabbed()) {
             float prevX = mouse.prev().x();
             float prevY = mouse.prev().y();
             glfwSetCursorPos(windowId, prevX, prevY);
             mouse.pos().x(prevX);
             mouse.pos().y(prevY);
             renderParameters.setRenderRequired();
-       } else if (mouse.ungrab()) {
+        }
+        else if (mouse.ungrab()) {
             glfwSetInputMode(windowId, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             renderParameters.setRenderRequired();
-      }
+        }
 
         nk_input_end(nkContext);
     }

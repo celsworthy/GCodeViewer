@@ -6,9 +6,11 @@
 package celtech.gcodeviewer.engine;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.joml.Vector3f;
 
 /**
@@ -19,9 +21,18 @@ public class RenderParameters {
 
     public static enum ColourMode {
         COLOUR_AS_TYPE,
-        COLOUR_AS_TOOL;
+        COLOUR_AS_DATA,
+        COLOUR_AS_TOOL
     }
       
+    public static enum WindowAction {
+        WINDOW_NO_ACTION,
+        WINDOW_SHOW,
+        WINDOW_ICONIFY,
+        WINDOW_HIDE,
+        WINDOW_RESTORE
+    }
+
     private int indexOfTopLayer = 0;
     private int indexOfBottomLayer = 0;
     private int topLayerToRender = 0;
@@ -39,8 +50,11 @@ public class RenderParameters {
     private Vector3f selectColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private List<Vector3f> toolColours = new ArrayList<>();
     private List<Vector3f> dataColourPalette = new ArrayList<>();
-    private List<Vector3f> typeColours = new ArrayList<>();
+    private int showTypes = 0xFFFF; 
     private Map<String, Vector3f> typeColourMap = new HashMap<>();
+    List<String> types = new ArrayList<>();
+    private List<Vector3f> typeColours = new ArrayList<>();
+    private Map<String, Integer> typeIndexMap = new HashMap<>();
     private Vector3f defaultColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private List<Double> toolFilamentFactors = new ArrayList<>();
     private double defaultFilamentFactor = 0.0;
@@ -52,7 +66,8 @@ public class RenderParameters {
     private int windowYPos = 0;
     private double frameTime = 0.0;
     private boolean viewResetRequired = false;
-
+    private WindowAction windowAction = WindowAction.WINDOW_NO_ACTION;
+    
     // Nuklear GUI requires 2 renders to update properly - the first updates the state
     // the second updates the GUI. Easy way to do this is it always set the render flag
     // to 2, and decrement by one when cleared.
@@ -65,7 +80,7 @@ public class RenderParameters {
         moveColour = configuration.getMoveColour();
         selectColour = configuration.getSelectColour();
         toolColours = configuration.getToolColours();
-        typeColourMap = configuration.getTypeColourMap();
+        setTypeColourMap(configuration.getTypeColourMap());
         dataColourPalette = configuration.getDataColourPalette();
         defaultColour = configuration.getDefaultColour();
         toolFilamentFactors = configuration.getToolFilamentFactors();
@@ -80,6 +95,7 @@ public class RenderParameters {
         this.showMoves = guiConfiguration.getShowMoves();
         this.showOnlySelected = guiConfiguration.getShowOnlySelected();
         this.showTools = guiConfiguration.getShowTools(); 
+        this.showTypes = guiConfiguration.getShowTypes(); 
         this.colourMode = guiConfiguration.getColourMode();
     }
 
@@ -91,6 +107,7 @@ public class RenderParameters {
         guiConfiguration.setShowMoves(this.showMoves);
         guiConfiguration.setShowOnlySelected(this.showOnlySelected);
         guiConfiguration.setShowTools(this.showTools); 
+        guiConfiguration.setShowTypes(this.showTypes); 
         guiConfiguration.setColourMode(this.colourMode);
     }
 
@@ -269,9 +286,34 @@ public class RenderParameters {
 
     public void setTypeColourMap(Map<String, Vector3f> typeColourMap) {
         this.typeColourMap = typeColourMap;
+        
+        this.types = typeColourMap.keySet()
+                             .stream()
+                             .collect(Collectors.toList());
+        Collections.sort(types);
+        this.typeIndexMap = new HashMap<>();
+        this.typeColours = new ArrayList<>();
+        for (int index = 0; index < types.size(); ++index) {
+            String type = types.get(index);
+            Vector3f colour = typeColourMap.get(type);
+            typeIndexMap.put(type, index);
+            typeColours.add(typeColourMap.get(type));
+        }
         renderRequired = 2;
+        
     }
     
+    public int getIndexForType(String type) {
+        return typeIndexMap.getOrDefault(type, -1);
+    }
+
+    public String getTypeForIndex(int index) {
+        if (index >= 0 && index < types.size())
+            return types.get(index);
+        else
+            return "";
+    }
+
     public Vector3f getColourForType(String type) {
         return typeColourMap.getOrDefault(type, defaultColour);
     }
@@ -279,6 +321,10 @@ public class RenderParameters {
     public void setColourForType(String type, Vector3f c) {
         typeColourMap.put(type, c);
         renderRequired = 2;
+    }
+
+    public List<Vector3f> getTypeColours() {
+        return typeColours;
     }
 
     public List<Double> getToolFilamentFactors() {
@@ -323,10 +369,20 @@ public class RenderParameters {
     
     public int getShowFlags() {
         int showFlags = (showMoves ? 1 : 0);
-        if (colourMode == ColourMode.COLOUR_AS_TYPE)
-            showFlags += 2;
+        switch (colourMode) {
+            case COLOUR_AS_TYPE:
+                showFlags += 2;
+                break;
+            case COLOUR_AS_DATA:
+                showFlags += 4;
+                break;
+            case COLOUR_AS_TOOL:
+            default:
+                break;
+        }
+            
         if (showOnlySelected)
-            showFlags += 4;
+            showFlags += 8;
         return showFlags;
     }
 
@@ -341,28 +397,64 @@ public class RenderParameters {
         }
     }
 
-    public boolean getShowFlagForTool(int toolIndex) {
-        boolean showTool = false;
-        if (toolIndex >= 0 && toolIndex < 16)
+    private boolean getFlagFromFlags(int flags, int flagIndex) {
+        boolean showFlag = false;
+        if (flagIndex >= 0 && flagIndex < 16)
         {
-            int toolFlag = 1 << toolIndex;
-            showTool = ((showTools & toolFlag) == toolFlag);
+            int flag = 1 << flagIndex;
+            showFlag = ((flags & flag) == flag);
         }
-        return showTool;
+        return showFlag;
     }
 
-    public void setShowFlagForTool(int toolIndex, boolean showFlag) {
-        if (toolIndex >= 0 && toolIndex < 16)
+    private int setFlagInFlags(int flags, int flagIndex, boolean showFlag) {
+        if (flagIndex >= 0 && flagIndex < 16)
         {
-            int toolFlag = 1 << toolIndex;
-            if (showFlag != ((showTools & toolFlag) == toolFlag)) {
+            int flag = 1 << flagIndex;
+            if (showFlag != ((flags & flag) == flag)) {
                 if (showFlag)
-                    showTools |= toolFlag;
+                    flags |= flag;
                 else
-                    showTools &= ~toolFlag;
+                    flags &= ~flag;
                 renderRequired = 2;
             }
         }
+        return flags;
+    }
+
+    public boolean getShowFlagForTool(int toolIndex) {
+        return getFlagFromFlags(showTools, toolIndex);
+    }
+
+    public void setShowFlagForTool(int toolIndex, boolean showFlag) {
+        showTools = setFlagInFlags(showTools, toolIndex, showFlag);
+    }
+
+    public int getShowTypes() {
+        return showTypes;
+    }
+
+    public void setShowTypes(int showTypes) {
+        if (this.showTypes != showTypes) {
+            this.showTypes = showTypes;
+            renderRequired = 2;
+        }
+    }
+
+    public boolean getShowFlagForTypeIndex(int typeIndex) {
+        return getFlagFromFlags(showTypes, typeIndex);
+    }
+
+    public boolean getShowFlagForType(String type) {
+        return getFlagFromFlags(showTypes, getIndexForType(type));
+    }
+
+    public void setShowFlagForTypeIndex(int typeIndex, boolean showFlag) {
+        showTypes = setFlagInFlags(showTypes, typeIndex, showFlag);
+    }
+
+    public void setShowFlagForType(String type, boolean showFlag) {
+        showTypes = setFlagInFlags(showTypes, getIndexForType(type), showFlag);
     }
 
     public void checkLimits() {
@@ -483,6 +575,16 @@ public class RenderParameters {
 
     public boolean getViewResetRequired() {
         return viewResetRequired;
+    }
+
+    public void setWindowAction(WindowAction state) {
+        windowAction = state;
+        if (windowAction != WindowAction.WINDOW_NO_ACTION)
+            renderRequired = 2;
+    }
+
+    public WindowAction getWindowAction() {
+        return windowAction;
     }
 
     public void setRenderRequired() {

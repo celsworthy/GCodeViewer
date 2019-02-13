@@ -24,6 +24,7 @@ public class Entity {
     private int layer;
     private int lineNumber;
     private int toolNumber;
+    private int typeIndex;
     private boolean isMoveFlag;
 
     public Entity(RawModel model, Vector3f position, Vector3f direction, Vector3f normal,
@@ -40,6 +41,7 @@ public class Entity {
         this.layer = layer;
         this.lineNumber = lineNumber;
         this.toolNumber = toolNumber;
+        this.typeIndex = -1;
         this.isMoveFlag = isMoveFlag;
         this.dataValues = new float[N_DATA_VALUES];
         for (int i = 0; i < N_DATA_VALUES; ++i) {
@@ -152,6 +154,14 @@ public class Entity {
 
     public void setToolNumber(int toolNumber) {
         this.toolNumber = toolNumber;
+    }
+
+    public int getTypeIndex() {
+        return typeIndex;
+    }
+
+    public void setTypeIndex(int typeIndex) {
+        this.typeIndex = typeIndex;
     }
 
     public boolean isMove() {

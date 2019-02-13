@@ -29,6 +29,8 @@ public class SegmentShader  extends ShaderProgram {
     private int location_showFlags;
     private int location_showTools;
     private int location_toolColours;
+    private int location_showTypes;
+    private int location_typeColours;
     private int location_selectColour;
     
     private Matrix4f projectionMatrix;
@@ -57,7 +59,9 @@ public class SegmentShader  extends ShaderProgram {
         location_lastSelectedLine = super.getUniformLocation("lastSelectedLine");
         location_showFlags = super.getUniformLocation("showFlags");
         location_showTools = super.getUniformLocation("showTools");
+        location_showTypes = super.getUniformLocation("showTypes");
         location_toolColours = super.getUniformLocation("toolColours");
+        location_typeColours = super.getUniformLocation("typeColours");
         location_selectColour = super.getUniformLocation("selectColour");
     }
     
@@ -98,8 +102,16 @@ public class SegmentShader  extends ShaderProgram {
         super.loadInt(location_showTools, showTools);
     }
 
+    public void loadShowTypes(int showTypes) {
+        super.loadInt(location_showTypes, showTypes);
+    }
+
     public void loadToolColours(List<Vector3f> toolColours) {
         super.loadVector3ArraytoUVector4(location_toolColours, toolColours);
+    }
+
+    public void loadTypeColours(List<Vector3f> typeColours) {
+        super.loadVector3ArraytoUVector4(location_typeColours, typeColours);
     }
 
     public void loadSelectColour(Vector3f selectColour) {

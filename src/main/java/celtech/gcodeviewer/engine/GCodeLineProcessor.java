@@ -507,6 +507,7 @@ public class GCodeLineProcessor implements GCodeConsumer
             {
                 String t = (isNozzleMove ? NOZZLE_MOVE_TYPE : currentType);
                 entity.setType(t);
+                entity.setTypeIndex(renderParameters.getIndexForType(t));
                 Vector3f typeColour = configuration.getColourForType(t);
                 entity.setTypeColour(typeColour);
                 entity.setColour(typeColour);

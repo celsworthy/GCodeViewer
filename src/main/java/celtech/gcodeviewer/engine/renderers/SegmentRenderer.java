@@ -41,7 +41,9 @@ public class SegmentRenderer {
                                   renderParameters.getLastSelectedLine());
             shader.loadShowFlags(renderParameters.getShowFlags());
             shader.loadShowTools(renderParameters.getShowTools());
+            shader.loadShowTypes(renderParameters.getShowTypes());
             shader.loadToolColours(renderParameters.getToolColours());
+            shader.loadTypeColours(renderParameters.getTypeColours());
             shader.loadSelectColour(renderParameters.getSelectColour());
             bindRawModel(rawEntity);
             glDrawElements(GL_TRIANGLES, rawEntity.getElementCount(), GL_UNSIGNED_INT, 0);

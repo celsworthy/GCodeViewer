@@ -19,14 +19,21 @@ import java.util.Map;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.joml.Vector3f;
+import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
+import static org.lwjgl.glfw.GLFW.glfwFocusWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
+import static org.lwjgl.glfw.GLFW.glfwGetWindowAttrib;
+import static org.lwjgl.glfw.GLFW.glfwHideWindow;
+import static org.lwjgl.glfw.GLFW.glfwIconifyWindow;
+import static org.lwjgl.glfw.GLFW.glfwRestoreWindow;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowTitle;
+import static org.lwjgl.glfw.GLFW.glfwShowWindow;
 import static org.lwjgl.glfw.GLFW.glfwSwapBuffers;
 import static org.lwjgl.glfw.GLFW.glfwSwapInterval;
 import static org.lwjgl.glfw.GLFW.glfwWindowShouldClose;
@@ -165,6 +172,28 @@ public class RenderingEngine {
         double previousTime = glfwGetTime();
         boolean  frameRendered = false;
         while (!glfwWindowShouldClose(windowId)) {
+            switch (renderParameters.getWindowAction()) {
+                case WINDOW_RESTORE:
+                    glfwRestoreWindow(windowId);
+                    break;
+
+                case WINDOW_ICONIFY:
+                    glfwIconifyWindow(windowId);
+                    break;
+
+                case WINDOW_SHOW:
+                    glfwShowWindow(windowId);
+                    break;
+                    
+                case WINDOW_HIDE:
+                    glfwHideWindow(windowId);
+                    break;
+
+                case WINDOW_NO_ACTION:
+                default:
+                    break;                    
+            }
+            renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_NO_ACTION);
             frameRendered = false;
             
             GL11.glViewport(0, 0, renderParameters.getWindowWidth(), renderParameters.getWindowHeight());
@@ -228,15 +257,15 @@ public class RenderingEngine {
             // To prevent this, make the system wait at least the MINIMUM_ITERATION_TIME before
             // starting the next iteration. Currently this would give a maximum of 100 frames per second, which
             // should be enough.
-            double remainingLoopTime = MINIMUM_ITERATION_TIME - iterationTime;
-            if (remainingLoopTime > 0.001) {
-                try {
-                    Thread.sleep((long)(1000.0 * remainingLoopTime)); // convert seconds to milliseconds.
-                }
-                catch (InterruptedException ex) {
+            //double remainingLoopTime = MINIMUM_ITERATION_TIME - iterationTime;
+            //if (remainingLoopTime > 0.001) {
+            //    try {
+            //        Thread.sleep((long)(1000.0 * remainingLoopTime)); // convert seconds to milliseconds.
+            //    }
+            //    catch (InterruptedException ex) {
                     // Carry on!
-                }
-            }
+            //    }
+            //}
         }
         renderParameters.saveToGUIConfiguration(guiConfiguration);
         guiManager.saveToGUIConfiguration(guiConfiguration);

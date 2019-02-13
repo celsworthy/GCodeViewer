@@ -30,11 +30,11 @@ public class SegmentLoader {
         storeVerticesInAttributeList(segmentEntity, 0, segments);
         storeNormalsInAttributeList(segmentEntity, 1, segments);
         storeVector3InAttributeList(segmentEntity, 2, segments, Entity::getColour);
-        storeVector3InAttributeList(segmentEntity, 3, segments, (Entity s) -> {
-				int layerNumber = s.getLayer();
+        storeVector4InAttributeList(segmentEntity, 3, segments, (Entity s) -> {
+                int layerNumber = s.getLayer();
                 if (layerNumber == Entity.NULL_LAYER)
                     layerNumber = s.getLineNumber();
-                Vector3f v = new Vector3f(layerNumber, s.getLineNumber(), s.getToolNumber());
+                Vector4f v = new Vector4f(s.getTypeIndex(), layerNumber, s.getLineNumber(), s.getToolNumber());
                 return v;
             });
         unbindVAO();
@@ -336,6 +336,26 @@ public class SegmentLoader {
         floatBuffer.flip();
         glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STATIC_DRAW);
         glVertexAttribPointer(attributeNumber, 3, GL_FLOAT, false, 0, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+    
+    private void storeVector4InAttributeList(RawEntity segmentEntity, int attributeNumber, List<Entity> segments, Function<Entity, Vector4f> getVector4) {
+        int vboId = glGenBuffers();
+        segmentEntity.setVboId(attributeNumber, vboId);
+        glBindBuffer(GL_ARRAY_BUFFER, vboId);
+        FloatBuffer floatBuffer = BufferUtils.createFloatBuffer(40 * segments.size());
+        segments.forEach(segment -> {
+                Vector4f v = getVector4.apply(segment);
+                for (int i = 0; i < 10; ++i) {
+                    floatBuffer.put(v.x());
+                    floatBuffer.put(v.y());
+                    floatBuffer.put(v.z());
+                    floatBuffer.put(v.w());
+                }
+            });
+        floatBuffer.flip();
+        glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STATIC_DRAW);
+        glVertexAttribPointer(attributeNumber, 4, GL_FLOAT, false, 0, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 

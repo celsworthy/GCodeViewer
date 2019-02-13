@@ -105,6 +105,11 @@ public class CommandHandler {
                                            STENO.error("Unrecognised option in command " + command);
                                         break;
 
+                                    case "window":
+                                    case "w":
+                                        renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_SHOW);
+                                        break;
+
                                     default:
                                         STENO.error("Unrecognised option in command " + command);
                                 }
@@ -126,10 +131,25 @@ public class CommandHandler {
                                         else
                                            STENO.error("Unrecognised option in command " + command);
                                         break;
-
+                                    
+                                    case "window":
+                                    case "w":
+                                        renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_HIDE);
+                                        break;
+                                    
                                     default:
                                         STENO.error("Unrecognised option in command " + command);
                                 }
+                                break;
+
+                            case "iconify":
+                            case "i":
+                                renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_ICONIFY);
+                                break;
+                                    
+                            case "restore":
+                            case "r":
+                                renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_RESTORE);
                                 break;
 
                             case "top":
@@ -171,8 +191,6 @@ public class CommandHandler {
                                 switch (commandParameter) {
                                     case "type":
                                     case "ty":
-                                        renderingEngine.colourSegmentsFromType();
-                                        renderingEngine.reloadSegments();
                                         renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
                                         break;
 
@@ -225,24 +243,11 @@ public class CommandHandler {
                                         {
                                             renderingEngine.colourSegmentsFromData(dataIndex);
                                             renderingEngine.reloadSegmentColours();
-                                            renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
+                                            renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_DATA);
                                         }
                                         break;
                                 
-                                    case "extrusion":
-                                    case "e":
-                                        if (commandScanner.hasNextInt()) {
-                                            int toolIndex = commandScanner.nextInt();
-                                            if (commandScanner.hasNextFloat()) {
-                                                float extrusionFactor = commandScanner.nextFloat();
-                                                if (toolIndex >= 0 &&
-                                                    toolIndex < renderParameters.getToolColours().size() &&
-                                                    extrusionFactor > 0.0f &&  extrusionFactor < 10.0f) {
-                                                }
-                                            }
-                                        }
-                                        break;
-
+           
                                     default:
                                         System.out.println("Unrecognised colour mode in command " + command);
                                 }

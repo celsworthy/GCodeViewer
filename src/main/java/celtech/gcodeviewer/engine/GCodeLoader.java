@@ -2,6 +2,7 @@ package celtech.gcodeviewer.engine;
 
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
+import static org.lwjgl.glfw.GLFW.glfwPostEmptyEvent;
 
 /**
  *
@@ -28,9 +29,9 @@ public class GCodeLoader extends Thread {
     @Override
     public void run()
     {
-        STENO.debug("Starting command queue.");
+        STENO.debug("Loading GCode file");
         loadOK = processor.processFile(gCodeFile, lineProcessor);
-
+        glfwPostEmptyEvent(); // Wake up main thread.
         loadDone = true;
     }
     

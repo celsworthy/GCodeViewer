@@ -103,14 +103,16 @@ public class GCodeViewer {
 
         // Configure GLFW
         glfwDefaultWindowHints(); // optional, the current window hints are already the default
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // OpenGL V3.3 or higher needed for geometry shader.
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE); // the window will be resizable
-        glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowResizable ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
-        glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowDecorated ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
+        glfwWindowHint(GLFW_RESIZABLE, (commandLineArgs.windowResizable ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
+        glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowDecorated ? GLFW_TRUE : GLFW_FALSE)); // the window will be decorated
         glfwWindowHint(GLFW_FLOATING, (commandLineArgs.windowAlwaysOnTop ? GLFW_TRUE : GLFW_FALSE)); // the window will stay on top.
         windowId = glfwCreateWindow(windowWidth, windowHeight, MessageLookup.i18n("window.title"), NULL, NULL);
         if ( windowId == NULL ) {
-            throw new RuntimeException("Failed to create the GLFW window");
+            throw new RuntimeException("Unable to create the GLFW window");
         }
         
         // Setup a key callback. It will be called every time a key is pressed, repeated or released.
