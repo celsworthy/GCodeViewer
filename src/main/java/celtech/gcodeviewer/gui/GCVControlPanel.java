@@ -35,7 +35,7 @@ public class GCVControlPanel {
     private String showOnlySelectedMsg = "controlPanel.showOnlySelected";
     private String showToolNMsg = "controlPanel.showToolN";
     private String colourAsTypeMsg = "controlPanel.colourAsType";
-    private String frameRateMsg = "controlPanel.frameRate";
+    private String frameTimeMsg = "controlPanel.frameTime";
 
     private boolean panelExpanded = false;
     private float panelX = 0.0f;
@@ -55,7 +55,7 @@ public class GCVControlPanel {
         showOnlySelectedMsg = MessageLookup.i18n(showOnlySelectedMsg);
         showToolNMsg = MessageLookup.i18n(showToolNMsg);
         colourAsTypeMsg = MessageLookup.i18n(colourAsTypeMsg);
-        frameRateMsg = MessageLookup.i18n(frameRateMsg);
+        frameTimeMsg = MessageLookup.i18n(frameTimeMsg);
     }
     
     public void setPanelExpanded(boolean panelExpanded) {
@@ -191,12 +191,8 @@ public class GCVControlPanel {
                         // Show the frame rate.
                         nk_layout_row_dynamic(ctx, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
                         double frameTime = renderParameters.getFrameTime();
-                        double fps = 0.0;
-                        if (frameTime > 0.0)
-                            fps = 1.0 / frameTime;
-                        DecimalFormat fpsFormat = new DecimalFormat("0.#"); 
-                        DecimalFormat ftFormat = new DecimalFormat("0.000"); 
-                        nk_label(ctx, frameRateMsg.replaceAll("#1", fpsFormat.format(fps)).replaceAll("#2", ftFormat.format(frameTime)), NK_TEXT_ALIGN_LEFT);
+                        DecimalFormat ftFormat = new DecimalFormat("0.0000"); 
+                        nk_label(ctx, frameTimeMsg.replaceAll("#1", ftFormat.format(frameTime)), NK_TEXT_ALIGN_LEFT);
 
                         nk_group_end(ctx);
                     }
