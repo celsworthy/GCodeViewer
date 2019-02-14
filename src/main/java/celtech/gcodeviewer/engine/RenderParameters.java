@@ -207,6 +207,13 @@ public class RenderParameters {
         }
     }
 
+    public void clearSelectedLines() {
+        if (firstSelectedLine != lastSelectedLine)
+            renderRequired = 2;
+        firstSelectedLine = 0;
+        lastSelectedLine = 0;
+    }
+
     public boolean getShowMoves() {
         return showMoves;
     }
