@@ -215,6 +215,9 @@ public class RenderingEngine {
             }
             camera.move();
             
+            // Set the light to the camera position so that it behaves like a headtorch on the camera.
+            light.getPosition().set(camera.getPosition());
+            
             renderParameters.checkLimits();
 
             if (renderParameters.getRenderRequired())
