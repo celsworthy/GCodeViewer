@@ -108,12 +108,14 @@ public class GUIRenderer {
         controlPanel.setPanelExpanded(guiConfiguration.getControlPanelExpanded());
         sliderPanel.setPanelExpanded(guiConfiguration.getSliderPanelExpanded());
         gCodePanel.setPanelExpanded(guiConfiguration.getGCodePanelExpanded());
+        gCodePanel.setShowLineNumbers(guiConfiguration.getShowLineNumbers());
     }
 
     public void saveToGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
         guiConfiguration.setControlPanelExpanded(controlPanel.isPanelExpanded());
         guiConfiguration.setSliderPanelExpanded(sliderPanel.isPanelExpanded());
         guiConfiguration.setGCodePanelExpanded(gCodePanel.isPanelExpanded());
+        guiConfiguration.setShowLineNumbers(gCodePanel.getShowLineNumbers());
     }
     
     public void loadProjectionMatrix() {

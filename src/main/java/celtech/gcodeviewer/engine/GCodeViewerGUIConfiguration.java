@@ -46,6 +46,8 @@ public class GCodeViewerGUIConfiguration {
     private int showTypes = 0xFFFF; 
     @JsonIgnore
     private RenderParameters.ColourMode colourMode = RenderParameters.ColourMode.COLOUR_AS_TOOL;
+    @JsonIgnore
+    private boolean showLineNumbers = false;
 
     GCodeViewerGUIConfiguration() {
     }
@@ -198,5 +200,15 @@ public class GCodeViewerGUIConfiguration {
     @JsonProperty
     public void setColourMode(RenderParameters.ColourMode colourMode) {
         this.colourMode = colourMode;
+    }
+
+    @JsonProperty
+    public boolean getShowLineNumbers() {
+        return showLineNumbers;
+    }
+
+    @JsonProperty
+    public void setShowLineNumbers(boolean showLineNumbers) {
+        this.showLineNumbers = showLineNumbers;
     }
 }

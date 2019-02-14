@@ -30,21 +30,22 @@ public class GCVGCodePanel {
     public static final int GUI_GCODE_PANEL_SIDE_WIDTH = 10;
     public static final int GUI_GCODE_PANEL_ROW_HEIGHT = 35;
     public static final int GUI_GCODE_PANEL_BUTTON_WIDTH = 35;
-    public static final int GUI_GCODE_PANEL_EDIT_WIDTH = 175;
+    public static final int GUI_GCODE_PANEL_CHECKBOX_WIDTH = 180;
     public static final int GUI_GCODE_PANEL_LINE_HEIGHT = 25;
     public static final int GUI_GCODE_PANEL_CHAR_WIDTH = 14;
     public static final int GUI_GCODE_PANEL_LINE_WIDTH = 80 * GUI_GCODE_PANEL_CHAR_WIDTH;
     public static final int GUI_GCODE_PANEL_CLOSED_HEIGHT = 30;
-    public static final int GUI_GCODE_PANEL_VERTICAL_BORDER = 100;
     public static final int GUI_GCODE_PANEL_TOP_HEIGHT = 82;
     public static final int GUI_GCODE_PANEL_SCROLL_PADDING = 10;
     public static final int GUI_GCODE_PANEL_FIDDLE_FACTOR = 10;
+    private static final String LINE_NUMBER_POSTFIX = " :";
 
     private String firstSelectedMsg = "gcodePanel.firstSelected";
     private String lastSelectedMsg = "gcodePanel.lastSelected";
     private String goToLineMsg = "gcodePanel.goToLine";
     private String goToFirstSelectedMsg = "gcodePanel.goToFirstSelected";
     private String goToLastSelectedMsg = "gcodePanel.goToLastSelected";
+    private String showLineNumbersMsg = "gcodePanel.showLineNumbers";
 
     private boolean panelExpanded = false;
     private float panelX = 0.0f;
@@ -69,6 +70,10 @@ public class GCVGCodePanel {
     private int lastSelected = 0;
     private boolean goToLineBlank = true;
     private int goToLine = 0;
+    private int topLine = 0;
+    private int lineNumberSpace = GUI_GCODE_PANEL_CHAR_WIDTH;
+    private boolean topLineEdited = false;
+    private boolean showLineNumbers = false;
     
     private final DecimalFormat format = new DecimalFormat();
     final NkPluginFilter numberFilter;
@@ -85,6 +90,7 @@ public class GCVGCodePanel {
         goToLineMsg = MessageLookup.i18n(goToLineMsg);
         goToFirstSelectedMsg = MessageLookup.i18n(goToFirstSelectedMsg);
         goToLastSelectedMsg = MessageLookup.i18n(goToLastSelectedMsg);
+        showLineNumbersMsg = MessageLookup.i18n(showLineNumbersMsg);
     }
     
     public void setLines(List<String> lines) {
@@ -123,10 +129,7 @@ public class GCVGCodePanel {
                 }
                 details.setStartOffset(maxOffset);
                 if (closeAllLayers)
-                {
                     details.setLayerOpen(false);
-                    details.setMouseWasDown(false);
-                }
                 if (details.getLayerOpen())
                     maxOffset += details.getNumberOfLines();
                 else
@@ -183,6 +186,14 @@ public class GCVGCodePanel {
     
     public int getPanelY() {
         return (int)panelY;
+    }
+    
+    public boolean getShowLineNumbers() {
+        return showLineNumbers;
+    }
+
+    public void setShowLineNumbers(boolean showLineNumbers) {
+        this.showLineNumbers = showLineNumbers;
     }
 
     public void layout(NkContext ctx, int x, int y, RenderParameters renderParameters) {
@@ -241,7 +252,7 @@ public class GCVGCodePanel {
     }
     private void layoutTopRow(NkContext ctx, float width, RenderParameters renderParameters) {
         try (MemoryStack stack = stackPush()) {
-            nk_layout_row_begin(ctx, NK_STATIC, GUI_GCODE_PANEL_ROW_HEIGHT, 3);
+            nk_layout_row_begin(ctx, NK_STATIC, GUI_GCODE_PANEL_ROW_HEIGHT, 5);
             int step = 1;
             if (renderParameters.getNumberOfLines() < 1000)
                 step = 10;
@@ -253,7 +264,7 @@ public class GCVGCodePanel {
                 step = 500;
             else
                 step = 1000;
-            float pWidth = (width - GUI_GCODE_PANEL_BUTTON_WIDTH - 2.0f * ctx.style().window().group_padding().x()) / 2;
+            float pWidth = 0.5f * (width - 3.0f * GUI_GCODE_PANEL_BUTTON_WIDTH - 5.0f * ctx.style().window().group_padding().x());
             layoutProperty(ctx,
                            firstSelectedMsg,
                            pWidth,
@@ -263,6 +274,11 @@ public class GCVGCodePanel {
                            step,
                            renderParameters.getFirstSelectedLine(),
                            renderParameters::setFirstSelectedLine);
+            nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
+            if (nk_button_label(ctx, goToFirstSelectedMsg) &&
+                renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
+                vOffset[0] = lineToOffset(renderParameters.getFirstSelectedLine(), true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+            }
             layoutProperty(ctx,
                            lastSelectedMsg,
                            pWidth,
@@ -272,45 +288,51 @@ public class GCVGCodePanel {
                            step,
                            renderParameters.getLastSelectedLine(),
                            renderParameters::setLastSelectedLine);
-
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
-            if(nk_button_label(ctx, "*")) {
-                renderParameters.setFirstSelectedLine(0);
-                renderParameters.setLastSelectedLine(0);
-            }
-            nk_layout_row_begin(ctx, NK_STATIC, GUI_GCODE_PANEL_ROW_HEIGHT, 5);
-            nk_layout_row_push(ctx, GUI_GCODE_PANEL_EDIT_WIDTH);
-            ByteBuffer editBuffer = stack.calloc(256);
-            int length = memASCII((goToLineBlank ? "" : format.format(goToLine)), false, editBuffer);
-            IntBuffer len = stack.ints(length);
-            nk_edit_string(ctx, NK_EDIT_SIMPLE, editBuffer, len, 255, numberFilter);
-            try {
-                goToLineBlank = (len.get(0) == 0);
-                if (goToLineBlank)
-                    goToLine = 0;
-                else {
-                    int l = format.parse(memASCII(editBuffer, len.get(0))).intValue();
-                    if (l >= 0 && l < renderParameters.getNumberOfLines())
-                        goToLine = l;
-                }
-            } catch (ParseException e) {
-                //e.printStackTrace();
-            }
-            float bWidth = (width - GUI_GCODE_PANEL_EDIT_WIDTH - 5.0f * ctx.style().window().group_padding().x()) / 3.0f;
-            nk_layout_row_push(ctx, bWidth);
-            if(nk_button_label(ctx, goToLineMsg) && !goToLineBlank && lines != null) {
-                vOffset[0] = lineToOffset(goToLine, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
-            }
-            nk_layout_row_push(ctx, bWidth);
-            if(nk_button_label(ctx, goToFirstSelectedMsg) &&
-               renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
-                vOffset[0] = lineToOffset(renderParameters.getFirstSelectedLine(), true) * GUI_GCODE_PANEL_LINE_HEIGHT;
-            }
-            nk_layout_row_push(ctx, bWidth);
-            if(nk_button_label(ctx, goToLastSelectedMsg) &&
-               renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
+            if (nk_button_label(ctx, goToLastSelectedMsg) &&
+                renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
                 vOffset[0] = lineToOffset(renderParameters.getLastSelectedLine() - 1, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
             }
+            nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
+            if (nk_button_label(ctx, "*"))
+                renderParameters.clearSelectedLines();
+            nk_layout_row_begin(ctx, NK_STATIC, GUI_GCODE_PANEL_ROW_HEIGHT, 3);
+            float eWidth = (width - GUI_GCODE_PANEL_BUTTON_WIDTH - GUI_GCODE_PANEL_CHECKBOX_WIDTH - 3.0f * ctx.style().window().group_padding().x());
+            nk_layout_row_push(ctx, eWidth);
+            ByteBuffer editBuffer = stack.calloc(256);
+            String lineString;
+            if (topLineEdited)
+                lineString = (goToLineBlank ? "" : Integer.toString(goToLine));
+            else
+                lineString = Integer.toString(topLine);
+            int length = memASCII(lineString, false, editBuffer);
+            IntBuffer len = stack.ints(length);
+            int flags = nk_edit_string(ctx, NK_EDIT_SIMPLE, editBuffer, len, 255, numberFilter);
+            topLineEdited = ((flags & NK_EDIT_ACTIVE) == NK_EDIT_ACTIVE);
+            if (topLineEdited) {
+                try {
+                    goToLineBlank = (len.get(0) == 0);
+                    if (goToLineBlank)
+                        goToLine = 0;
+                    else {
+                        int l = Integer.parseInt(memASCII(editBuffer, len.get(0)));
+                        if (l >= 0 && l < renderParameters.getNumberOfLines())
+                            goToLine = l;
+                    }
+                } catch (NumberFormatException e) {
+                    //e.printStackTrace();
+                }
+            }
+            nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
+            if (nk_button_label(ctx, goToLineMsg) && !goToLineBlank && lines != null) {
+                vOffset[0] = lineToOffset(goToLine, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+            }
+            IntBuffer checkBuffer = stack.mallocInt(1);
+            checkBuffer.put(0, (showLineNumbers ? 1 : 0));
+            nk_layout_row_push(ctx, GUI_GCODE_PANEL_CHECKBOX_WIDTH);
+            nk_checkbox_label(ctx, showLineNumbersMsg, checkBuffer);
+            nk_layout_row_end(ctx);
+            showLineNumbers = (checkBuffer.get(0) != 0);
         }
     }
     
@@ -368,7 +390,8 @@ public class GCVGCodePanel {
                 Vector3f selectedColour = renderParameters.getSelectColour();
                 selectedTextColour.set((byte)(255 * selectedColour.x()), (byte)(255 * selectedColour.y()), (byte)(255 * selectedColour.z()), (byte)255);
 
-                NkColor originalTextColour = ctx.style().text().color();
+                NkColor originalTextColour = NkColor.mallocStack(stack);
+                originalTextColour.set(ctx.style().text().color());
                 int scrollShowingButtons = ctx.style().scrollv().show_buttons();
                 ctx.style().scrollv().show_buttons(1);
                 int previousVOffset = vOffset[0];
@@ -377,7 +400,7 @@ public class GCVGCodePanel {
                     // This test is required to stop mouse clicks on the scroll bar being registered as
                     // clicks on a GCode line.
                     boolean mouseInArea = (ctx.input().mouse().pos().x() >= panelX &&
-                                           ctx.input().mouse().pos().x() <= panelX + panelWidth - 15);
+                                           ctx.input().mouse().pos().x() <= panelX + panelWidth - 25);
                     // Find the layer in which the view begins.
                     LayerDetails currentDetails = null;
                     int currentLayerIndex = 0;
@@ -393,7 +416,8 @@ public class GCVGCodePanel {
                         }
                     }
                     
-                    int labelSpace = ((int)Math.floor(Math.log10(previousVOffset + viewCount - 1)) + 6) * GUI_GCODE_PANEL_CHAR_WIDTH;
+                    int labelSpace = (showLineNumbers ? lineNumberSpace : GUI_GCODE_PANEL_CHAR_WIDTH);
+                    int lineIndex = 0;
                     for (int i = 0; i < viewCount; ++i) {
                         int index = viewBegin + i;
                         if (index == offsetToFirstLayer &&
@@ -411,23 +435,17 @@ public class GCVGCodePanel {
                                 currentDetails = layerMap.get(layerList.get(currentLayerIndex));
                             }
                         }
-                        boolean mouseIsDown = false;
-                        int lineIndex = 0;
+                        boolean mouseIsClicked = false;
                         nk_layout_row_begin(ctx, NK_STATIC, GUI_GCODE_PANEL_LINE_HEIGHT, 2);
                         if (currentDetails != null && index == currentDetails.getStartOffset())
                         {
                             // Draw a tree entry
                             nk_layout_row_push(ctx, labelSpace);
-                            if (mouseInArea && nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
-                                if (!currentDetails.getMouseWasDown()) {
-                                    //System.out.println("Mouse clicked inside tree line number");
-                                    currentDetails.setLayerOpen(!currentDetails.getLayerOpen());
-                                    calculateLayerOffsets(false);
-                                    currentDetails.setMouseWasDown(true);
-                                }
+                            if (nk_widget_is_mouse_clicked(ctx, NK_BUTTON_LEFT)) {
+                                //System.out.println("Mouse clicked inside tree line number");
+                                currentDetails.setLayerOpen(!currentDetails.getLayerOpen());
+                                calculateLayerOffsets(false);
                             }
-                            else
-                                currentDetails.setMouseWasDown(false);
                             ctx.style().text().color(textColour);
                             lineIndex = currentDetails.getStartLine();
                             if (lineIndex >= renderParameters.getFirstSelectedLine() && lineIndex < renderParameters.getLastSelectedLine())
@@ -436,14 +454,16 @@ public class GCVGCodePanel {
                                 ctx.style().text().color(textColour);
                             String prefix;
                             if (currentDetails.getLayerOpen())
-                                prefix = "V";
+                                prefix = "V ";
                             else
-                                prefix = ">";
-                            nk_label(ctx, prefix + " " + Integer.toString(lineIndex) + ": ", NK_TEXT_LEFT);
+                                prefix = "> ";
+                            if (showLineNumbers)
+                                prefix += Integer.toString(lineIndex) + LINE_NUMBER_POSTFIX;
+                            nk_label(ctx, prefix, NK_TEXT_LEFT);
                             nk_layout_row_push(ctx, GUI_GCODE_PANEL_LINE_WIDTH - labelSpace);
-                            if (mouseInArea && nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
-                                //System.out.println("Mouse down inside tree line label");
-                                mouseIsDown = true;
+                            if (nk_widget_is_mouse_clicked(ctx, NK_BUTTON_LEFT)) {
+                                //System.out.println("Mouse clicked inside tree line label");
+                                mouseIsClicked = true;
                             }
                             nk_label(ctx, lines.get(lineIndex), NK_TEXT_LEFT);
                             nk_layout_row_end(ctx);
@@ -456,25 +476,28 @@ public class GCVGCodePanel {
                             else
                                 lineIndex = currentDetails.getStartLine() + index - currentDetails.getStartOffset();
                             nk_layout_row_push(ctx, labelSpace);
-                            if (mouseInArea && nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
-                                //System.out.println("Mouse down inside line number");
-                                mouseIsDown = true;
+                            if (nk_widget_is_mouse_clicked(ctx, NK_BUTTON_LEFT)) {
+                                //System.out.println("Mouse clicked inside line number");
+                                mouseIsClicked = true;
                             }
                             if (lineIndex >= renderParameters.getFirstSelectedLine() && lineIndex < renderParameters.getLastSelectedLine())
                                 ctx.style().text().color(selectedTextColour);
                             else
                                 ctx.style().text().color(textColour);
-                            nk_label(ctx, "  " + Integer.toString(lineIndex) + ":", NK_TEXT_LEFT);
+                            String lineLabel = "   ";
+                            if (showLineNumbers)
+                                lineLabel += Integer.toString(lineIndex) + LINE_NUMBER_POSTFIX;
+                            nk_label(ctx, lineLabel, NK_TEXT_LEFT);
                             nk_layout_row_push(ctx, GUI_GCODE_PANEL_LINE_WIDTH - labelSpace);
-                            if (mouseInArea & nk_widget_has_mouse_click_down(ctx, NK_BUTTON_LEFT, true)) {
-                                //System.out.println("Mouse down inside line label");
-                                mouseIsDown = true;
+                            if (nk_widget_is_mouse_clicked(ctx, NK_BUTTON_LEFT)) {
+                                //System.out.println("Mouse clicked inside line label");
+                                mouseIsClicked = true;
                             }
                             nk_label(ctx, lines.get(lineIndex), NK_TEXT_LEFT);
                             nk_layout_row_end(ctx);
                         }
 
-                        if (mouseIsDown) {
+                        if (mouseIsClicked) {
                             if (nk_input_is_key_down(ctx.input(), NK_KEY_SHIFT) &&
                                 renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
                                 // Extend existing selection.
@@ -494,19 +517,42 @@ public class GCVGCodePanel {
                                 }
                             }
                             else {
-                                if (lineIndex >= offsetToFirstLayer && lineIndex == currentDetails.getStartLine() && !currentDetails.getLayerOpen()) {
-                                    // Set selection to cover the whole of the layer.
-                                    renderParameters.setFirstSelectedLine(currentDetails.getStartLine());
-                                    renderParameters.setLastSelectedLine(currentDetails.getEndLine());                                        
+                                if (lineIndex >= offsetToFirstLayer &&
+                                    lineIndex == currentDetails.getStartLine() &&
+                                    !currentDetails.getLayerOpen()) {
+                                    
+                                    if (lineIndex == renderParameters.getFirstSelectedLine() &&
+                                        currentDetails.getEndLine() == renderParameters.getLastSelectedLine())
+                                    {
+                                        renderParameters.clearSelectedLines();
+                                    }
+                                    else {
+                                        // Set selection to cover the whole of the layer.
+                                        renderParameters.setFirstSelectedLine(currentDetails.getStartLine());
+                                        renderParameters.setLastSelectedLine(currentDetails.getEndLine()); 
+                                    }
+                                }
+                                else if (lineIndex == renderParameters.getFirstSelectedLine() && 
+                                         lineIndex + 1 == renderParameters.getLastSelectedLine())
+                                {
+                                    renderParameters.clearSelectedLines();
                                 }
                                 else {
                                     // Set selection to line index.
                                     renderParameters.setFirstSelectedLine(lineIndex);
                                     renderParameters.setLastSelectedLine(lineIndex + 1);
                                 }
+                                
                             }
                         }
+                        if (i == 0 && topLine != lineIndex) {
+                            topLine = lineIndex;
+                            renderParameters.setRenderRequired();
+                        }
                     }
+                    
+                    lineNumberSpace = ((int)Math.floor(Math.log10(lineIndex)) + 3) * GUI_GCODE_PANEL_CHAR_WIDTH;
+
                     vOffset[0] = vOffset[0] + previousVOffset;
                     nk_layout_row_dynamic(ctx, remainingHeight, 1);
                     nk_group_end(ctx);

@@ -191,8 +191,8 @@ public class GCVControlPanel {
                         // Show the frame rate.
                         nk_layout_row_dynamic(ctx, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
                         double frameTime = renderParameters.getFrameTime();
-                        DecimalFormat ftFormat = new DecimalFormat("0.0000"); 
-                        nk_label(ctx, frameTimeMsg.replaceAll("#1", ftFormat.format(frameTime)), NK_TEXT_ALIGN_LEFT);
+                        DecimalFormat ftFormat = new DecimalFormat("0.0"); 
+                        nk_label(ctx, frameTimeMsg.replaceAll("#1", ftFormat.format(1000.0 * frameTime)), NK_TEXT_ALIGN_LEFT);
 
                         nk_group_end(ctx);
                     }

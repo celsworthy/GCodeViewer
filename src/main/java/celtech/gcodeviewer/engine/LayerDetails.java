@@ -19,7 +19,6 @@ public class LayerDetails {
     private double layerHeight;
     private double layerThickness;
     private boolean layerOpen;
-    private boolean mouseWasDown;
 
     public LayerDetails(int layerNumber, int startLine, int endLine,
                         double layerHeight, double layerThickness) {
@@ -32,7 +31,6 @@ public class LayerDetails {
         this.layerHeight = layerHeight;
         this.layerThickness = layerThickness;
         this.layerOpen = false;
-        this.mouseWasDown = false;
     }
     
     public int getLayerNumber() {
@@ -106,13 +104,5 @@ public class LayerDetails {
 
     public void setLayerOpen(boolean layerOpen) {
         this.layerOpen = layerOpen;
-    }
-
-    public boolean getMouseWasDown() {
-        return mouseWasDown;
-    }
-
-    public void setMouseWasDown(boolean mouseWasDown) {
-        this.mouseWasDown = mouseWasDown;
     }
 }
