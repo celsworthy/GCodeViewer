@@ -109,7 +109,7 @@ public class GCodeViewer {
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, (commandLineArgs.windowResizable ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
         glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowDecorated ? GLFW_TRUE : GLFW_FALSE)); // the window will be decorated
-        glfwWindowHint(GLFW_FLOATING, (commandLineArgs.windowAlwaysOnTop ? GLFW_TRUE : GLFW_FALSE)); // the window will stay on top.
+        glfwWindowHint(GLFW_FLOATING, (commandLineArgs.windowAlwaysOnTop || configuration.getWindowAlwaysOnTop() ? GLFW_TRUE : GLFW_FALSE)); // the window will stay on top.
         windowId = glfwCreateWindow(windowWidth, windowHeight, MessageLookup.i18n("window.title"), NULL, NULL);
         if ( windowId == NULL ) {
             throw new RuntimeException("Unable to create the GLFW window");

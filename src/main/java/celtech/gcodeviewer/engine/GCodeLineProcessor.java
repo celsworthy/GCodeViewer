@@ -58,7 +58,6 @@ public class GCodeLineProcessor implements GCodeConsumer
     boolean relativeMoves = false;
     private boolean relativeExtrusion = false;
     private boolean hasNozzleValves = false;
-    private double nozzleEjectVolume = 0.0;
     private int currentLayer = Entity.NULL_LAYER;
     private int currentLine = 0;
     private double currentLayerHeight = -Double.MAX_VALUE;
@@ -85,7 +84,6 @@ public class GCodeLineProcessor implements GCodeConsumer
         this.renderParameters = renderParameters;
         this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
         this.hasNozzleValves = configuration.getHasNozzleValves();
-        this.nozzleEjectVolume = configuration.getNozzleEjectVolume();
         
         for (int dataIndex = 0; dataIndex < Entity.N_DATA_VALUES; ++dataIndex)
         {
@@ -476,7 +474,7 @@ public class GCodeLineProcessor implements GCodeConsumer
                 // Calculate volume of filament to extrude.
                 double v = renderParameters.getFilamentFactorForTool(currentTool) * (deltaD >= deltaE ? deltaD : deltaE);
                 if (isNozzleMove)
-                    v -= nozzleEjectVolume * deltaB;
+                    v -= renderParameters.getNozzleEjectVolumeForTool(currentTool) * deltaB;
 
                 if (v > 0) {
                     // Calculate cross sectional area of segment from volume.

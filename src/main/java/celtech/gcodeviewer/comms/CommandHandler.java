@@ -49,7 +49,7 @@ public class CommandHandler {
     public void setRenderingEngine(RenderingEngine renderingEngine) {
        this.renderingEngine = renderingEngine; 
     }
-
+    
     public boolean processCommands() {
         for (int commandCount = 0; commandCount < MAX_COMMAND_COUNT && commandQueue.commandAvailable(); ++commandCount) {
             String command = commandQueue.getNextCommandFromQueue().trim();
@@ -64,6 +64,55 @@ public class CommandHandler {
                     if (commandScanner.hasNext()) {
                         String commandWord = commandScanner.next().toLowerCase();
                         switch (commandWord) {
+                            case "bottom":
+                            case "b":
+                                if (commandScanner.hasNextInt())
+                                    renderParameters.setBottomLayerToRender(commandScanner.nextInt());
+                                else
+                                    renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
+                                break;
+
+                            case "clear":
+                            case "cl":
+                                renderingEngine.clearGCode();
+                                break;
+                                
+                            case "colour":
+                            case "co":
+                                processColourCommand(command, commandScanner);
+                                break;
+
+                            case "first":
+                            case "fi":
+                                if (commandScanner.hasNextInt())
+                                    renderParameters.setFirstSelectedLine(commandScanner.nextInt());
+                                else
+                                    renderParameters.setFirstSelectedLine(0);
+                                break;
+
+                            case "focus":
+                            case "fo":
+                                renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_FOCUS);
+                                break;
+
+                            case "hide":
+                            case "h":
+                                processHideCommand(command, commandScanner);
+                                break;
+
+                            case "iconify":
+                            case "i":
+                                renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_ICONIFY);
+                                break;
+                                    
+                            case "last":
+                            case "l":
+                                if (commandScanner.hasNextInt())
+                                    renderParameters.setLastSelectedLine(commandScanner.nextInt());
+                                else
+                                    renderParameters.setLastSelectedLine(0);
+                                break;
+
                             case "load":
                             case "ld":
                                 if (commandScanner.hasNext())
@@ -88,68 +137,25 @@ public class CommandHandler {
                                 renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\cones_robox.gcode");
                                 break;
 
-                            case "show":
-                            case "s":
-                                commandParameter = commandScanner.next().toLowerCase();
-                                switch (commandParameter) {
-                                    case "moves":
-                                    case "m":
-                                        renderParameters.setShowMoves(true);
-                                        break;
-
-                                    case "tool":
-                                    case "t":
-                                        if (commandScanner.hasNextInt())
-                                            renderParameters.setShowFlagForTool(commandScanner.nextInt(), true);
-                                        else
-                                           STENO.error("Unrecognised option in command " + command);
-                                        break;
-
-                                    case "window":
-                                    case "w":
-                                        renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_SHOW);
-                                        break;
-
-                                    default:
-                                        STENO.error("Unrecognised option in command " + command);
-                                }
+                            case "printer":
+                            case "p":
+                                String printerType = commandScanner.next().toUpperCase();
+                                renderingEngine.setPrinterType(printerType);
                                 break;
 
-                            case "hide":
-                            case "h":
-                                commandParameter = commandScanner.next().toLowerCase();
-                                switch (commandParameter) {
-                                    case "moves":
-                                    case "m":
-                                        renderParameters.setShowMoves(false);
-                                        break;
-
-                                    case "tool":
-                                    case "t":
-                                        if (commandScanner.hasNextInt())
-                                            renderParameters.setShowFlagForTool(commandScanner.nextInt(), false);
-                                        else
-                                           STENO.error("Unrecognised option in command " + command);
-                                        break;
-                                    
-                                    case "window":
-                                    case "w":
-                                        renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_HIDE);
-                                        break;
-                                    
-                                    default:
-                                        STENO.error("Unrecognised option in command " + command);
-                                }
-                                break;
-
-                            case "iconify":
-                            case "i":
-                                renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_ICONIFY);
-                                break;
-                                    
                             case "restore":
                             case "r":
                                 renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_RESTORE);
+                                break;
+
+                            case "show":
+                            case "s":
+                                processShowCommand(command, commandScanner);
+                                break;
+
+                            case "tool":
+                            case "to":
+                                processToolCommand(command, commandScanner);
                                 break;
 
                             case "top":
@@ -158,110 +164,6 @@ public class CommandHandler {
                                     renderParameters.setTopLayerToRender(commandScanner.nextInt());
                                 else
                                     renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
-                                break;
-
-                            case "bottom":
-                            case "b":
-                                if (commandScanner.hasNextInt())
-                                    renderParameters.setBottomLayerToRender(commandScanner.nextInt());
-                                else
-                                    renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
-                                break;
-
-
-                            case "first":
-                            case "f":
-                                if (commandScanner.hasNextInt())
-                                    renderParameters.setFirstSelectedLine(commandScanner.nextInt());
-                                else
-                                    renderParameters.setFirstSelectedLine(0);
-                                break;
-
-                            case "last":
-                            case "l":
-                                if (commandScanner.hasNextInt())
-                                    renderParameters.setLastSelectedLine(commandScanner.nextInt());
-                                else
-                                    renderParameters.setLastSelectedLine(0);
-                                break;
-
-                            case "colour":
-                            case "co":
-                                commandParameter = commandScanner.next().toLowerCase();
-                                switch (commandParameter) {
-                                    case "type":
-                                    case "ty":
-                                        renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
-                                        break;
-
-                                    case "tool":
-                                    case "to":
-                                        processColourToolSubCommand(command, commandScanner);
-                                        break;
-
-                                    case "data":
-                                    case "d":
-                                        int dataIndex = -1;
-                                        if (commandScanner.hasNextInt()) {
-                                            dataIndex = commandScanner.nextInt();
-                                            if (dataIndex < 0 || dataIndex >= Entity.N_DATA_VALUES)
-                                                dataIndex = -1;
-                                        }
-                                        else {
-                                            commandParameter = commandScanner.next().toLowerCase();
-                                            switch (commandParameter)
-                                            {
-                                                case "a":
-                                                    dataIndex = 0;
-                                                    break;
-                                                case "b":
-                                                    dataIndex = 1;
-                                                    break;
-                                                case "d":
-                                                    dataIndex = 2;
-                                                    break;
-                                                case "e":
-                                                    dataIndex = 3;
-                                                    break;
-                                                case "f":
-                                                    dataIndex = 4;
-                                                    break;
-                                                case "x":
-                                                    dataIndex = 5;
-                                                    break;
-                                                case "y":
-                                                    dataIndex = 6;
-                                                    break;
-                                                case "z":
-                                                    dataIndex = 7;
-                                                    break;
-                                                default:
-                                                    break;
-                                            }
-                                        }
-                                        if (dataIndex >= 0)
-                                        {
-                                            renderingEngine.colourSegmentsFromData(dataIndex);
-                                            renderingEngine.reloadSegmentColours();
-                                            renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_DATA);
-                                        }
-                                        break;
-                                
-           
-                                    default:
-                                        System.out.println("Unrecognised colour mode in command " + command);
-                                }
-                                break;
-
-                            case "clear":
-                            case "cl":
-                                renderingEngine.clearGCode();
-                                break;
-                                
-                            case "printer":
-                            case "p":
-                                String printerType = commandScanner.next().toUpperCase();
-                                renderingEngine.setPrinterType(printerType);
                                 break;
 
                             default:
@@ -279,9 +181,83 @@ public class CommandHandler {
         return false;
     }
     
-    private void processColourToolSubCommand(String command, Scanner commandScanner) {
-        if (commandScanner.hasNextInt()) {
-            int toolIndex = commandScanner.nextInt();
+    private void processColourCommand(String command, Scanner commandScanner) {
+        String commandParameter = commandScanner.next().toLowerCase();
+        switch (commandParameter) {
+            case "type":
+            case "ty":
+                renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
+                break;
+
+            case "tool":
+            case "to":
+                if (commandScanner.hasNextInt()) {
+                    int toolIndex = commandScanner.nextInt();
+                    processColourToolSubCommand(command, commandScanner, toolIndex);
+                }
+                else if (!commandScanner.hasNext()) {
+                    renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TOOL);
+                }
+                else {
+                    System.out.println("Unrecognised option in command " + command);
+                }
+                break;
+
+            case "data":
+            case "d":
+                int dataIndex = -1;
+                if (commandScanner.hasNextInt()) {
+                    dataIndex = commandScanner.nextInt();
+                    if (dataIndex < 0 || dataIndex >= Entity.N_DATA_VALUES)
+                        dataIndex = -1;
+                }
+                else {
+                    commandParameter = commandScanner.next().toLowerCase();
+                    switch (commandParameter)
+                    {
+                        case "a":
+                            dataIndex = 0;
+                            break;
+                        case "b":
+                            dataIndex = 1;
+                            break;
+                        case "d":
+                            dataIndex = 2;
+                            break;
+                        case "e":
+                            dataIndex = 3;
+                            break;
+                        case "f":
+                            dataIndex = 4;
+                            break;
+                        case "x":
+                            dataIndex = 5;
+                            break;
+                        case "y":
+                            dataIndex = 6;
+                            break;
+                        case "z":
+                            dataIndex = 7;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                if (dataIndex >= 0)
+                {
+                    renderingEngine.colourSegmentsFromData(dataIndex);
+                    renderingEngine.reloadSegmentColours();
+                    renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_DATA);
+                }
+                break;
+
+
+            default:
+                System.out.println("Unrecognised colour mode in command " + command);
+        }
+    }
+    
+    private void processColourToolSubCommand(String command, Scanner commandScanner, int toolIndex) {
             float r = -1.0f;
             float g = -1.0f;
             float b = -1.0f;
@@ -305,12 +281,111 @@ public class CommandHandler {
             else {
                 System.out.println("Unrecognised option in colour command " + command);
             }
+    }
+    
+    private void processHideCommand(String command, Scanner commandScanner) {
+        String  commandParameter = commandScanner.next().toLowerCase();
+        switch (commandParameter) {
+            case "moves":
+            case "m":
+                renderParameters.setShowMoves(false);
+                break;
+
+            case "tool":
+            case "t":
+                if (commandScanner.hasNextInt())
+                    renderParameters.setShowFlagForTool(commandScanner.nextInt(), false);
+                else
+                   STENO.error("Unrecognised option in command " + command);
+                break;
+
+            case "window":
+            case "w":
+                renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_HIDE);
+                break;
+
+            default:
+                STENO.error("Unrecognised option in command " + command);
         }
-        else if (!commandScanner.hasNext()) {
-            renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TOOL);
+    }
+
+    private void processShowCommand(String command, Scanner commandScanner) {
+        String  commandParameter = commandScanner.next().toLowerCase();
+        switch (commandParameter) {
+            case "moves":
+            case "m":
+                renderParameters.setShowMoves(true);
+                break;
+
+            case "tool":
+            case "t":
+                if (commandScanner.hasNextInt())
+                    renderParameters.setShowFlagForTool(commandScanner.nextInt(), true);
+                else
+                   STENO.error("Unrecognised option in command " + command);
+                break;
+
+            case "window":
+            case "w":
+                renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_SHOW);
+                break;
+
+            default:
+                STENO.error("Unrecognised option in command " + command);
         }
-        else {
+    }
+
+    private void processToolCommand(String command, Scanner commandScanner) {
+        int toolIndex = -1;
+        String commandParameter = "";
+        double value = -1.0;
+        boolean processedOK = false;
+        if (commandScanner.hasNextInt())
+            toolIndex = commandScanner.nextInt();
+        if (commandScanner.hasNext())
+            commandParameter = commandScanner.next().toLowerCase();
+        if (commandScanner.hasNextDouble())
+            value = commandScanner.nextDouble();
+        if (toolIndex >= 0) {
+            switch (commandParameter) {
+                case "colour":
+                case "c":
+                    processColourToolSubCommand(command, commandScanner, toolIndex);
+                    processedOK = true;
+                    break;
+
+                case "filamentfactor":
+                case "ff":
+                    renderParameters.setFilamentFactorForTool(toolIndex, value);
+                    processedOK = true;
+                    break;
+
+                case "hide":
+                case "h":
+                    renderParameters.setShowFlagForTool(toolIndex, false);
+                    processedOK = true;
+                    break;
+
+                case "nozzleejectvolume":
+                case "nev":
+                    if (value > 0.0) {
+                        renderParameters.setNozzleEjectVolumeForTool(toolIndex, value);
+                        processedOK = true;
+                    }
+                    break;
+
+                case "show":
+                case "s":
+                    renderParameters.setShowFlagForTool(toolIndex, true);
+                    processedOK = true;
+                    break;
+
+                default:
+                    break;
+            }
+        }
+        
+        if (!processedOK)
             System.out.println("Unrecognised option in command " + command);
-        }
     }
 }

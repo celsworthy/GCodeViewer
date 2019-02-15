@@ -186,7 +186,11 @@ public class GCodeViewerConfiguration {
     @JsonIgnore
     private boolean hasNozzleValves = false;
     @JsonIgnore
-    private double nozzleEjectVolume = 0.01;
+    private List<Double> toolNozzleEjectVolumes = new ArrayList<>();
+    @JsonIgnore
+    private double defaultNozzleEjectVolume = 0.01;
+    @JsonIgnore
+    private boolean windowAlwaysOnTop = false;
     
     GCodeViewerConfiguration() {
     }
@@ -396,15 +400,25 @@ public class GCodeViewerConfiguration {
     public void setHasNozzleValves(boolean hasNozzleValves) {
         this.hasNozzleValves = hasNozzleValves;
     }
-
-    @JsonProperty
-    public double getNozzleEjectVolume() {
-        return nozzleEjectVolume;
+    
+        @JsonProperty
+    public List<Double> getToolNozzleEjectVolumes() {
+        return toolNozzleEjectVolumes;
     }
 
     @JsonProperty
-    public void setNozzleEjectVolume(double nozzleEjectVolume) {
-        this.nozzleEjectVolume = nozzleEjectVolume;
+    public void setToolNozzleEjectVolumes(List<Double> toolNozzleEjectVolumes) {
+        this.toolNozzleEjectVolumes = toolNozzleEjectVolumes;
+    }
+
+    @JsonProperty
+    public double getDefaultNozzleEjectVolume() {
+        return defaultNozzleEjectVolume;
+    }
+
+    @JsonProperty
+    public void setDefaultNozzleEjectVolume(double defaultNozzleEjectVolume) {
+        this.defaultNozzleEjectVolume = defaultNozzleEjectVolume;
     }
     
     @JsonProperty
@@ -425,5 +439,15 @@ public class GCodeViewerConfiguration {
     @JsonProperty
     public void setSelectColour(Vector3f selectColour) {
         this.selectColour = selectColour;
+    }
+
+    @JsonProperty
+    public boolean getWindowAlwaysOnTop() {
+        return windowAlwaysOnTop;
+    }
+
+    @JsonProperty
+    public void setWindowAlwaysOnTop(boolean windowAlwaysOnTop) {
+        this.windowAlwaysOnTop = windowAlwaysOnTop;
     }
 }
