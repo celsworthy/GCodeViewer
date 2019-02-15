@@ -27,12 +27,14 @@ public class RenderParameters {
       
     public static enum WindowAction {
         WINDOW_NO_ACTION,
-        WINDOW_SHOW,
-        WINDOW_ICONIFY,
+        WINDOW_FOCUS,
         WINDOW_HIDE,
-        WINDOW_RESTORE
+        WINDOW_ICONIFY,
+        WINDOW_RESTORE,
+        WINDOW_SHOW
     }
-
+    public static int MAX_NUMBER_OF_TOOLS = 16;
+     
     private int indexOfTopLayer = 0;
     private int indexOfBottomLayer = 0;
     private int topLayerToRender = 0;
@@ -58,6 +60,8 @@ public class RenderParameters {
     private Vector3f defaultColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private List<Double> toolFilamentFactors = new ArrayList<>();
     private double defaultFilamentFactor = 0.0;
+    private List<Double> toolNozzleEjectVolumes = new ArrayList<>();
+    private double defaultNozzleEjectVolume = 0.0;
     private int displayWidth = 0;
     private int displayHeight = 0;
     private int windowWidth = 0;
@@ -85,6 +89,8 @@ public class RenderParameters {
         defaultColour = configuration.getDefaultColour();
         toolFilamentFactors = configuration.getToolFilamentFactors();
         defaultFilamentFactor = configuration.getDefaultFilamentFactor();
+        toolNozzleEjectVolumes = configuration.getToolNozzleEjectVolumes();
+        defaultNozzleEjectVolume = configuration.getDefaultNozzleEjectVolume();
     }
             
     public void setFromGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
@@ -282,8 +288,13 @@ public class RenderParameters {
     }
 
     public void setColourForTool(int toolNumber, Vector3f c) {
-        if (toolNumber >= 0 && toolNumber < toolColours.size())
+        if (toolNumber >= 0 && toolNumber < MAX_NUMBER_OF_TOOLS) {
+            if (toolNumber >= toolColours.size()) {
+                for (int i = toolColours.size(); i <= toolNumber; ++i)
+                    toolColours.add(defaultColour);
+            }
             toolColours.set(toolNumber, c);
+        }
         renderRequired = 2;
     }
 
@@ -344,15 +355,47 @@ public class RenderParameters {
     }
     
     public double getFilamentFactorForTool(int toolNumber) {
-        if (toolNumber >= 0 && toolNumber < toolColours.size())
+        if (toolNumber >= 0 && toolNumber < toolFilamentFactors.size())
             return toolFilamentFactors.get(toolNumber);
         else
             return defaultFilamentFactor;
     }
 
     public void setFilamentFactorForTool(int toolNumber, double filamentFactor) {
-        if (toolNumber >= 0 && toolNumber < toolColours.size())
+        if (toolNumber >= 0 && toolNumber < MAX_NUMBER_OF_TOOLS) {
+            if (toolNumber >= toolFilamentFactors.size()) {
+                for (int i = toolFilamentFactors.size(); i <= toolNumber; ++i)
+                    toolFilamentFactors.add(defaultFilamentFactor);
+            }
             toolFilamentFactors.set(toolNumber, filamentFactor);
+        }
+        renderRequired = 2;
+    }
+
+    public List<Double> getToolNozzleEjectVolumes() {
+        return toolFilamentFactors;
+    }
+
+    public void setToolNozzleEjectVolumes(List<Double> toolFilamentFactors) {
+        this.toolFilamentFactors = toolFilamentFactors;
+        renderRequired = 2;
+    }
+    
+    public double getNozzleEjectVolumeForTool(int toolNumber) {
+        if (toolNumber >= 0 && toolNumber < toolNozzleEjectVolumes.size())
+            return toolNozzleEjectVolumes.get(toolNumber);
+        else
+            return defaultNozzleEjectVolume;
+    }
+
+    public void setNozzleEjectVolumeForTool(int toolNumber, double nozzleEjectVolume) {
+        if (toolNumber >= 0 && toolNumber < MAX_NUMBER_OF_TOOLS) {
+            if (toolNumber >= toolNozzleEjectVolumes.size()) {
+                for (int i = toolNozzleEjectVolumes.size(); i <= toolNumber; ++i)
+                    toolNozzleEjectVolumes.add(defaultNozzleEjectVolume);
+            }
+            toolNozzleEjectVolumes.set(toolNumber, nozzleEjectVolume);
+        }
         renderRequired = 2;
     }
 

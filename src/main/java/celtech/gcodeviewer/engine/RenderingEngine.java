@@ -19,6 +19,8 @@ import java.util.Map;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.joml.Vector3f;
+import static org.lwjgl.glfw.GLFW.GLFW_FLOATING;
+import static org.lwjgl.glfw.GLFW.GLFW_ICONIFIED;
 import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwFocusWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
@@ -179,6 +181,27 @@ public class RenderingEngine {
 
                 case WINDOW_ICONIFY:
                     glfwIconifyWindow(windowId);
+                    break;
+
+                case WINDOW_FOCUS:
+                    if (glfwGetWindowAttrib(windowId, GLFW_ICONIFIED) == 0) {
+                        
+                        if (System.getProperty("os.name").startsWith("Windows") &&
+                            glfwGetWindowAttrib(windowId, GLFW_FLOATING) == 0) {
+                            // Calling glfwFocusWindow() once on Windows 10
+                            // just flashes the toolbar icon without bringing it
+                            // to the front. Waiting, then calling glfwFocusWindow()
+                            // again does seem to bring it to the front.
+                            glfwFocusWindow(windowId);
+                            try {
+                                Thread.sleep(50);
+                            }
+                            catch (InterruptedException ex) {
+                                // Carry on!
+                            }
+                        }
+                        glfwFocusWindow(windowId);
+                    }
                     break;
 
                 case WINDOW_SHOW:
