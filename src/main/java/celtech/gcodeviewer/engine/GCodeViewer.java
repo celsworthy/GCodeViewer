@@ -250,9 +250,9 @@ public class GCodeViewer {
     }
     
     /**
-     * Start of the program, simply calls {@link GCodeViewer#run()}
+     * Start of the program.
      * 
-     * @param args 
+     * @param argv 
      */
     public static void main(String[] argv) {
         GCodeViewerCommandLineArgs commandLineArgs = new GCodeViewerCommandLineArgs();

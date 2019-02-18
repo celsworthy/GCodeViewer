@@ -31,8 +31,6 @@ import static org.lwjgl.opengl.GL30C.glGenVertexArrays;
 import org.lwjgl.system.MemoryStack;
 import static org.lwjgl.system.MemoryStack.stackPush;
 
-import org.lwjgl.util.vector.Matrix4f;
-
 /**
  *
  * @author George Salter
