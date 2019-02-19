@@ -8,6 +8,7 @@ import celtech.roboxbase.licence.LicenceUtilities;
 import celtech.roboxbase.licence.NoHardwareLicenceTimer;
 import com.beust.jcommander.JCommander;
 import java.io.File;
+import java.io.InputStream;
 import static org.lwjgl.glfw.Callbacks.*;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.system.MemoryUtil.NULL;
@@ -17,14 +18,18 @@ import org.lwjgl.opengl.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
+import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.util.Optional;
 import libertysystems.configuration.ConfigNotLoadedException;
 
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
+import org.lwjgl.BufferUtils;
 import static org.lwjgl.opengl.ARBDebugOutput.*;
 import static org.lwjgl.opengl.GL11.GL_TRUE;
+import static org.lwjgl.stb.STBImage.stbi_load_from_memory;
 
 /**
  * Main entry point for the program. Window initialisation happens here.
@@ -36,6 +41,7 @@ public class GCodeViewer {
     private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewer.class.getName());
     
     private static final String PROGRAM_NAME = "G-Code Viewer";
+    private static final String WINDOW_ICON_PATH = "/celtech/gcodeviewer/resources/GCodeViewerIcon_#x#.png";
     private static final int FIFTEEN_DAYS = 15;
     
     private GCodeViewerCommandLineArgs commandLineArgs = null;
@@ -125,7 +131,9 @@ public class GCodeViewer {
 
         // Set window position to the specified position after creation because it is created at a default position.
         glfwSetWindowPos(windowId, windowX, windowY);
-            
+
+        loadWindowIcon();
+
         // Make the OpenGL context current
         glfwMakeContextCurrent(windowId);
 
@@ -249,6 +257,70 @@ public class GCodeViewer {
             STENO.debug("Failed to load configuration file");
         }
         return false;
+    }
+    
+    // At Java9, ioResourceToByteBuffer can be replaced by the following:
+    //
+    // InputStream source = GCodeViewer.class.getResourceAsStream(resource);
+    // byte[] bytes = is.readAllBytes()
+    // ByteBuffer buffer = ByteBuffer.wrap(bytes)
+    //    
+    private ByteBuffer ioResourceToByteBuffer(String resource, int bufferSize) {
+        ByteBuffer buffer = null;
+
+        try (InputStream source = GCodeViewer.class.getResourceAsStream(resource);
+             ReadableByteChannel rbc = Channels.newChannel(source)) {
+
+            buffer = BufferUtils.createByteBuffer(bufferSize);
+
+            while (true) {
+                int bytes = rbc.read(buffer);
+                if (bytes == -1) {
+                    break;
+                }
+                if (buffer.remaining() == 0) {
+                    ByteBuffer newBuffer = BufferUtils.createByteBuffer(buffer.capacity() * 3 / 2);
+                    buffer.flip();
+                    newBuffer.put(buffer);
+                    buffer = newBuffer; // 50%
+                }
+            }
+        } catch (Exception e) {
+        }
+
+        if (buffer != null) {
+            buffer.flip();
+            return buffer.slice();
+        }
+        else
+            return null;
+    }
+
+    private void loadWindowIcon() {
+        
+        ByteBuffer icon32 = ioResourceToByteBuffer(WINDOW_ICON_PATH.replaceAll("#", "32"), 32*32*4);
+        ByteBuffer icon256 = ioResourceToByteBuffer(WINDOW_ICON_PATH.replaceAll("#", "256"), 256*256*4);
+        if (icon32 != null && icon256 != null ) {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                IntBuffer comp = stack.mallocInt(1);
+                IntBuffer w = stack.mallocInt(1);
+                IntBuffer h = stack.mallocInt(1);
+
+                GLFWImage.Buffer icons = GLFWImage.malloc(2);
+                ByteBuffer pixels32 = stbi_load_from_memory(icon32, w, h, comp, 4);
+                icons.position(0)
+                     .width(w.get(0))
+                     .height(h.get(0))
+                     .pixels(pixels32);
+                ByteBuffer pixels256 = stbi_load_from_memory(icon256, w, h, comp, 4);
+                icons.position(1)
+                     .width(w.get(0))
+                     .height(h.get(0))
+                     .pixels(pixels256);
+                icons.position(0);
+                glfwSetWindowIcon(windowId, icons);
+            }
+        }
     }
     
     /**
