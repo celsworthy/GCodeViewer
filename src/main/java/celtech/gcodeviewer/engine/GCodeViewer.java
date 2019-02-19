@@ -64,7 +64,7 @@ public class GCodeViewer {
         MessageLookup.loadMessages(configuration.getApplicationInstallDirectory(),
                                    MessageLookup.getDefaultApplicationLocale(commandLineArgs.languageTag));
         
-        if (true || validateLicence())
+        if (validateLicence())
         {
             init();
             loop();
