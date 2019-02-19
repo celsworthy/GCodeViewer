@@ -18,14 +18,13 @@ import org.lwjgl.system.*;
 
 import java.nio.*;
 import java.util.Optional;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import libertysystems.configuration.ConfigNotLoadedException;
 
 import libertysystems.configuration.Configuration;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import static org.lwjgl.opengl.ARBDebugOutput.*;
+import static org.lwjgl.opengl.GL11.GL_TRUE;
 
 /**
  * Main entry point for the program. Window initialisation happens here.
@@ -57,14 +56,15 @@ public class GCodeViewer {
         System.out.println("Hello!");
         StenographerFactory.changeAllLogLevels(libertysystems.stenographer.LogLevel.INFO);
         STENO.debug("Running " + PROGRAM_NAME);
+        
         this.commandLineArgs = commandLineArgs;
         configuration = GCodeViewerConfiguration.loadFromJSON();
         guiConfiguration = GCodeViewerGUIConfiguration.loadFromJSON(commandLineArgs.projectDirectory.toString());
-
+        
         MessageLookup.loadMessages(configuration.getApplicationInstallDirectory(),
                                    MessageLookup.getDefaultApplicationLocale(commandLineArgs.languageTag));
         
-        if (validateLicence())
+        if (true || validateLicence())
         {
             init();
             loop();
@@ -106,6 +106,8 @@ public class GCodeViewer {
 
         glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3); // OpenGL V3.3 or higher needed for geometry shader.
         glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE); // the window will stay hidden after creation
         glfwWindowHint(GLFW_RESIZABLE, (commandLineArgs.windowResizable ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
         glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowDecorated ? GLFW_TRUE : GLFW_FALSE)); // the window will be decorated

@@ -10,7 +10,6 @@ import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.entities.PrintVolume;
 import celtech.gcodeviewer.gui.GUIManager;
 import celtech.gcodeviewer.i18n.MessageLookup;
-import celtech.gcodeviewer.utils.CubeConstants;
 import java.io.File;
 import java.nio.IntBuffer;
 import java.util.Iterator;
@@ -21,7 +20,6 @@ import libertysystems.stenographer.StenographerFactory;
 import org.joml.Vector3f;
 import static org.lwjgl.glfw.GLFW.GLFW_FLOATING;
 import static org.lwjgl.glfw.GLFW.GLFW_ICONIFIED;
-import static org.lwjgl.glfw.GLFW.GLFW_VISIBLE;
 import static org.lwjgl.glfw.GLFW.glfwFocusWindow;
 import static org.lwjgl.glfw.GLFW.glfwGetFramebufferSize;
 import static org.lwjgl.glfw.GLFW.glfwGetTime;
@@ -86,8 +84,7 @@ public class RenderingEngine {
     private final CommandHandler commandHandler;
 
     private RawModel lineModel;
-    private RawModel model;
-
+    
     private CenterPoint centerPoint = null;
     Floor floor = null;
     String printerType;
@@ -130,7 +127,6 @@ public class RenderingEngine {
         masterRenderer = new MasterRenderer(renderParameters);
         guiManager = new GUIManager(windowId, renderParameters);
         guiManager.setFromGUIConfiguration(guiConfiguration);
-        model = null;
         lineModel = null;
         
         this.minDataValues = new double[Entity.N_DATA_VALUES];
@@ -152,7 +148,6 @@ public class RenderingEngine {
                                          configuration.getLightPosition().z());
         Light light = new Light(lightPos, configuration.getLightColour());
 
-        model = modelLoader.loadToVAO(CubeConstants.VERTICES, CubeConstants.NORMALS, CubeConstants.INDICES);
         lineModel = modelLoader.loadToVAO(new float[]{-0.5f, 0, 0, 0.5f, 0, 0});
         
         setPrinterType(printerType);
@@ -322,7 +317,7 @@ public class RenderingEngine {
 
     public void startLoadingGCodeFile(String gCodeFile) {
         if (gCodeFile != null && !gCodeFile.isEmpty()) {
-            fileLoader = new GCodeLoader(gCodeFile, model, renderParameters, configuration);
+            fileLoader = new GCodeLoader(gCodeFile, renderParameters, configuration);
             fileLoader.start();
         }
     }

@@ -3,8 +3,6 @@ package celtech.gcodeviewer.engine;
 import celtech.gcodeviewer.entities.Entity;
 import celtech.gcodeviewer.utils.VectorUtils;
 import celtech.gcodeviewer.gcode.GCodeLine;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,17 +67,14 @@ public class GCodeLineProcessor implements GCodeConsumer
     private String currentType = "";
     private Set<String> typeSet = new HashSet<>();
 
-    private RawModel lineModel;
-    
     // Moves a rendered separately from lines.
     private List<Entity> segments = new ArrayList<>();
     private List<Entity> moves = new ArrayList<>();
     
     static private final double RADIANS_TO_DEGREES = 57.2957795131;
     
-    public GCodeLineProcessor(RawModel lineModel, RenderParameters renderParameters, GCodeViewerConfiguration configuration)
+    public GCodeLineProcessor(RenderParameters renderParameters, GCodeViewerConfiguration configuration)
     {
-        this.lineModel = lineModel;
         this.configuration = configuration;
         this.renderParameters = renderParameters;
         this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
@@ -498,7 +493,7 @@ public class GCodeLineProcessor implements GCodeConsumer
             Vector3f toPosition = new Vector3f((float)(currentX), (float)(currentY), (float)(currentZ));
             Vector3f fromPosition = new Vector3f((float)(previousX), (float)(previousY), (float)(previousZ));
             Vector3f entityPosition = VectorUtils.calculateCenterBetweenVectors(fromPosition, toPosition);
-            Entity entity = new Entity(lineModel, entityPosition, direction, normal,
+            Entity entity = new Entity(null, entityPosition, direction, normal,
                                        length, width, thickness,
                                        currentLayer, currentLine, currentTool, !isExtrusion, null);
             if (isExtrusion)
