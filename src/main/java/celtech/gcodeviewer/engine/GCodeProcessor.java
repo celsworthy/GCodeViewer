@@ -8,7 +8,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.parboiled.Parboiled;
@@ -29,7 +31,11 @@ public class GCodeProcessor {
     int numberOfTopLayer = Entity.NULL_LAYER;
     
     List<String> lines = new ArrayList<>();
-    
+    // Settings can be included in the GCode comments, and can be used to "tweak" the generated view.
+    // For example, the infill width and thickness are used to correct the appearance of thick
+    // infill layers.
+    Map<String, Double> settingsMap = new HashMap<>(); // Settings read from the GCode comments.
+        
     /**
      * Read G-Code file from the given file path passing each line to the consumer.
      * 
@@ -43,6 +49,8 @@ public class GCodeProcessor {
             BufferedReader bufferedReader = new BufferedReader(fileReader);
 
             GCodeLineParser gCodeParser = Parboiled.createParser(GCodeLineParser.class);
+            gCodeParser.setSettingsMap(settingsMap);
+            
             ReportingParseRunner runner = new ReportingParseRunner<>(gCodeParser.Line());
             consumer.reset();
             int lineNumber = -1;
@@ -156,5 +164,10 @@ public class GCodeProcessor {
     public List<String> getLines()
     {
         return lines;
+    }
+
+    public Map<String, Double> getSettings()
+    {
+        return settingsMap;
     }
 }

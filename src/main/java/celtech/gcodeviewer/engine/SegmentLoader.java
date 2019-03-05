@@ -163,22 +163,22 @@ public class SegmentLoader {
         Vector3f bb = new Vector3f(b).mul(0.5f * t);
 		
         // Calculate the 8 points of the block.
-        Vector3f p1 = new Vector3f(p).sub(bb);
-        Vector3f p2 = new Vector3f(p).add(nn);
-        Vector3f p3 = new Vector3f(p).add(bb);
-        Vector3f p4 = new Vector3f(p).sub(nn);
-        Vector3f p5 = new Vector3f(p1).add(dd);
-        Vector3f p6 = new Vector3f(p2).add(dd);
-        Vector3f p7 = new Vector3f(p3).add(dd);
-        Vector3f p8 = new Vector3f(p4).add(dd);
+        Vector3f p1 = new Vector3f(p).sub(bb).sub(bb);
+        Vector3f p2 = new Vector3f(p).add(nn).sub(bb);
+        Vector3f p3 = new Vector3f(p);
+        Vector3f p4 = new Vector3f(p).sub(nn).sub(bb);
+        Vector3f p5 = new Vector3f(p1).add(dd).sub(bb);
+        Vector3f p6 = new Vector3f(p2).add(dd).sub(bb);
+        Vector3f p7 = new Vector3f(p3).add(dd).sub(bb);
+        Vector3f p8 = new Vector3f(p4).add(dd).sub(bb);
         p1.sub(dd);
         p2.sub(dd);
         p3.sub(dd);
         p4.sub(dd);
 
         // Calculate the centre  points of the end pyramids.
-        Vector3f pp1 = new Vector3f(p).sub(dd).sub(dp);
-        Vector3f pp2 = new Vector3f(p).add(dd).add(dp);
+        Vector3f pp1 = new Vector3f(p).sub(dd).sub(dp).sub(bb);
+        Vector3f pp2 = new Vector3f(p).add(dd).add(dp).sub(bb);
         
         vertexBuffer.put(p1.x());
         vertexBuffer.put(p1.y());

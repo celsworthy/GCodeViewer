@@ -3,8 +3,6 @@ package celtech.gcodeviewer.engine;
 import celtech.gcodeviewer.entities.Entity;
 import celtech.gcodeviewer.utils.VectorUtils;
 import celtech.gcodeviewer.gcode.GCodeLine;
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 import static java.lang.Math.sqrt;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -30,6 +28,7 @@ public class GCodeLineProcessor implements GCodeConsumer
     
     private final GCodeViewerConfiguration configuration;
     private final RenderParameters renderParameters;
+    private final Map<String, Double> settingsMap; // Settings read from comments in the GCode.
 
     private double previousX = 0.0;
     private double previousY = 0.0;
@@ -69,19 +68,17 @@ public class GCodeLineProcessor implements GCodeConsumer
     private String currentType = "";
     private Set<String> typeSet = new HashSet<>();
 
-    private RawModel lineModel;
-    
     // Moves a rendered separately from lines.
     private List<Entity> segments = new ArrayList<>();
     private List<Entity> moves = new ArrayList<>();
     
     static private final double RADIANS_TO_DEGREES = 57.2957795131;
     
-    public GCodeLineProcessor(RawModel lineModel, RenderParameters renderParameters, GCodeViewerConfiguration configuration)
+    public GCodeLineProcessor(RenderParameters renderParameters, GCodeViewerConfiguration configuration, Map<String, Double> settingsMap)
     {
-        this.lineModel = lineModel;
         this.configuration = configuration;
         this.renderParameters = renderParameters;
+        this.settingsMap = settingsMap;
         this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
         this.hasNozzleValves = configuration.getHasNozzleValves();
         
@@ -350,7 +347,11 @@ public class GCodeLineProcessor implements GCodeConsumer
         
         // The rest are always absolute?
         currentA = line.getValue('A', currentA);
-        currentB = line.getValue('B', currentB);
+        // Partial valve opens have a minimum open value. If the original value
+        // was smaller, the viewer will show this as a large blob. The original
+        // B value is included in the comment and stored in 'b'. It is used
+        // in place of B to suppress the annoying blobs.
+        currentB = line.getValue('b', line.getValue('B', currentB));
         currentF = line.getValue('F', currentF);
         
         if (layerHeightUpdateRequired && currentZ > currentLayerHeight + MINIMUM_HEIGHT_DIFFERENCE)
@@ -418,9 +419,10 @@ public class GCodeLineProcessor implements GCodeConsumer
         }
         if (line.isValueSet('B'))
         {
-            currentB = line.getValue('B', currentB);
+            currentB = line.getValue('M', line.getValue('B', currentB));
             previousB = currentB;
         }
+
         if (line.isValueSet('D'))
         {
             currentD = line.getValue('D', currentD);
@@ -492,13 +494,27 @@ public class GCodeLineProcessor implements GCodeConsumer
                         width = (float)sqrt(2.0 * a);
                         thickness = width;
                     }
+                    
+                    if (currentType.equalsIgnoreCase("FILL"))
+                    {
+                        // Infill can be a multiple of the layer thickness.
+                        double infillLayerThickness = settingsMap.getOrDefault("infillLayerThickness", 0.0);
+                        double fillExtrusionWidth = settingsMap.getOrDefault("fillExtrusionWidth_mm", 0.0);
+                        if (infillLayerThickness > 0.0 && fillExtrusionWidth > 0.0 && width > fillExtrusionWidth)
+                        {
+                            // Calculated width is wider than the specified infill width.
+                            // Recalculate the thickness based on the width.
+                            width = (float)fillExtrusionWidth;
+                            thickness = (float)(2.0 * a / fillExtrusionWidth);
+                        }
+                    }
                 }
             }
 
             Vector3f toPosition = new Vector3f((float)(currentX), (float)(currentY), (float)(currentZ));
             Vector3f fromPosition = new Vector3f((float)(previousX), (float)(previousY), (float)(previousZ));
             Vector3f entityPosition = VectorUtils.calculateCenterBetweenVectors(fromPosition, toPosition);
-            Entity entity = new Entity(lineModel, entityPosition, direction, normal,
+            Entity entity = new Entity(null, entityPosition, direction, normal,
                                        length, width, thickness,
                                        currentLayer, currentLine, currentTool, !isExtrusion, null);
             if (isExtrusion)

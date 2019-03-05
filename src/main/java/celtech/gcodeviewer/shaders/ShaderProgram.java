@@ -5,7 +5,6 @@ import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL32.*;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.FloatBuffer;
@@ -20,7 +19,6 @@ public abstract class ShaderProgram {
     private static final int MAX_UNIFORM_VECTOR = 16;
     private static final FloatBuffer MATRIX_BUFFER = BufferUtils.createFloatBuffer(16);
     private static final FloatBuffer UNIFORM_VECTOR_BUFFER = BufferUtils.createFloatBuffer(MAX_UNIFORM_VECTOR * 4);
-    
     protected static final String SHADER_DIRECTORY = "/celtech/gcodeviewer/resources/";
     
     protected final int programId;
@@ -34,27 +32,33 @@ public abstract class ShaderProgram {
 
     public ShaderProgram(String vertexFile, String geometryFile, String fragmentFile) {
         vertexShaderId = loadShader(vertexFile, GL_VERTEX_SHADER);
-        if (geometryFile != null)
+        if (geometryFile != null) {
             geometryShaderId = loadShader(geometryFile, GL_GEOMETRY_SHADER);
+        }
         else
             geometryShaderId = -1;
         fragmentShaderId = loadShader(fragmentFile, GL_FRAGMENT_SHADER);
         programId = glCreateProgram();
         glAttachShader(programId, vertexShaderId);
-        if (geometryShaderId != -1)
+        if (geometryShaderId != -1) {
             glAttachShader(programId, geometryShaderId);
+        }
         glAttachShader(programId, fragmentShaderId);
         bindAttributes();
         glLinkProgram(programId);
-        if(glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE)
-        {
+        if(glGetProgrami(programId, GL_LINK_STATUS) == GL_FALSE) {
             System.err.println(glGetProgramInfoLog(programId, 1024));
         }
+        // This VAO is not used, bue is needed for the Mac, which reports a validation failure "unbound VAO"
+        // without it.
+        int validateVAO = glGenVertexArrays();
+        glBindVertexArray(validateVAO);
         glValidateProgram(programId);
-        if(glGetProgrami(programId, GL_VALIDATE_STATUS) == GL_FALSE)
-        {
+        if(glGetProgrami(programId, GL_VALIDATE_STATUS) == GL_FALSE) {
             System.err.println(glGetProgramInfoLog(programId, 1024));
         }
+        glBindVertexArray(0);
+        glDeleteVertexArrays(validateVAO);
         getAllUniformLocations();
     }
     

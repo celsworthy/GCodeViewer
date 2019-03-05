@@ -1,14 +1,10 @@
 package celtech.gcodeviewer.i18n;
 
-import celtech.gcodeviewer.i18n.languagedata.LanguageData;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import libertysystems.stenographer.LogLevel;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;

@@ -6,6 +6,7 @@ import com.beust.jcommander.converters.PathConverter;
 import java.io.File;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -21,7 +22,7 @@ public class GCodeViewerCommandLineArgs {
     @Parameter(names={"--printer-type", "-p"}, description = "printer type to define the printer volume")
     String printerType = "RBX01";
     @Parameter(names={"--project-directory", "-pd"}, converter = PathConverter.class, description = "directory in which the interface configuration is stored")
-    Path projectDirectory = null;
+    Path projectDirectory = Paths.get(".");
     @Parameter(names={"--always-on-top", "-wt"}, description = "flag to indicate window should always be above other desktop windows")
     boolean windowAlwaysOnTop = false;
     @Parameter(names={"--centered", "-wc"}, description = "flag to indicate window should be centered on screen")

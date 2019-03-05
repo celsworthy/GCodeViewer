@@ -18,12 +18,12 @@ public class GCodeLoader extends Thread {
     private boolean loadDone = false;
     private String gCodeFile;
 
-    public GCodeLoader(String gCodeFile, RawModel lineModel, RenderParameters renderParameters, GCodeViewerConfiguration configuration)
+    public GCodeLoader(String gCodeFile, RenderParameters renderParameters, GCodeViewerConfiguration configuration)
     {
         this.setName("GCodeLoader");
         this.gCodeFile = gCodeFile;
         this.processor = new GCodeProcessor();
-        this.lineProcessor = new GCodeLineProcessor(lineModel, renderParameters, configuration);
+        this.lineProcessor = new GCodeLineProcessor(renderParameters, configuration, this.processor.getSettings());
     }
 
     @Override
