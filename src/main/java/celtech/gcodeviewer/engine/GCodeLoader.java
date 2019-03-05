@@ -23,7 +23,7 @@ public class GCodeLoader extends Thread {
         this.setName("GCodeLoader");
         this.gCodeFile = gCodeFile;
         this.processor = new GCodeProcessor();
-        this.lineProcessor = new GCodeLineProcessor(renderParameters, configuration);
+        this.lineProcessor = new GCodeLineProcessor(renderParameters, configuration, this.processor.getSettings());
     }
 
     @Override

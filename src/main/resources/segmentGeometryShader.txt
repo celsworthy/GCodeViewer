@@ -39,10 +39,11 @@ void main()
 		lNormal = normalize(lightPosition - p.xyz);
 
 		// Calculate the 8 points of the block.
-		vec4 p1 = (p - bb);
-		vec4 p2 = (p + nn);
-		vec4 p3 = (p + bb);
-		vec4 p4 = (p - nn);
+		// The cross section is a diamond, with p at the top.
+		vec4 p1 = (p - bb - bb);
+		vec4 p2 = (p + nn - bb);
+		vec4 p3 = p;
+		vec4 p4 = (p - nn - bb);
 		vec4 p5 = compositeMatrix * (p1 + dd);
 		vec4 p6 = compositeMatrix * (p2 + dd);
 		vec4 p7 = compositeMatrix * (p3 + dd);
@@ -53,8 +54,8 @@ void main()
 		p4 = compositeMatrix * (p4 - dd);
 		
 		// Calculate the centre  points of the end pyramids.
-		vec4 pp1 = compositeMatrix * (p - dd - dp);
-		vec4 pp2 = compositeMatrix * (p + dd + dp);
+		vec4 pp1 = compositeMatrix * (p - dd - dp - bb);
+		vec4 pp2 = compositeMatrix * (p + dd + dp - bb);
 
 		// End pyramid
 		fNormal = -d;		

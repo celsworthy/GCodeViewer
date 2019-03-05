@@ -1,5 +1,6 @@
 package celtech.gcodeviewer.gcode;
 
+import java.util.Map;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 import org.parboiled.Action;
@@ -19,6 +20,7 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     private final Stenographer steno = StenographerFactory.getStenographer(GCodeLineParser.class.getName());
 
     private final GCodeLine line = new GCodeLine();
+    private Map<String, Double> settingsMap = null;
     
     public GCodeLine getLine()
     {
@@ -30,12 +32,23 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
         line.reset();
     }
 
+    public Map<String, Double> getSettingsMap()
+    {
+        return this.settingsMap;
+    }
+
+    public void setSettingsMap(Map<String, Double> settingsMap)
+    {
+        this.settingsMap = settingsMap;
+    }
+
     public Rule Line()
     {
         return FirstOf(
             Command(),
             TypeComment(),
             LayerComment(),
+            SettingsComment(),
             Comment(),
             EqualsComment()
         );
@@ -82,7 +95,8 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                         )
                     ),
                     Optional(
-                        Comment()
+                        FirstOf(PartialBComment(),
+                                Comment())
                     ),
                     new Action()
                     {
@@ -176,6 +190,70 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                 );
     }
     
+    // Comment specifying a partial open, with the original B value.
+    // ;PARTIAL OPEN B0.102
+    @SuppressSubnodes
+    Rule PartialBComment()
+    {
+        Var<Double> idealBValue = new Var<>();
+        
+        return Sequence(
+                    ZeroOrMore(' '),
+                    ';',
+                    ZeroOrMore(' '),
+                    IgnoreCase("PARTIAL"),
+                    OneOrMore(' '),
+                    IgnoreCase("OPEN"),
+                    ZeroOrMore(' '),
+                    IgnoreCase("B"),
+                    ZeroOrMore(' '),
+                    PositiveFloatingPointNumber(),
+                    idealBValue.set(Double.valueOf(match())),
+                    new Action()
+                    {
+                        @Override
+                        public boolean run(Context context)
+                        {
+                            line.setValue('b', idealBValue.get());
+                            line.comment = match().trim();
+                            return true;
+                        }
+                    }
+                );
+    }
+
+    // Comment specifying a setting.
+    // ;# infillLayerThickness = 0.3
+    @SuppressSubnodes
+    Rule SettingsComment()
+    {
+        Var<String> settingId = new Var<>();
+        Var<Double> settingValue = new Var<>();
+
+        return Sequence(
+                    ZeroOrMore(' '),
+                    ";#",
+                    ZeroOrMore(' '),
+                    Identifier(),
+                    settingId.set(match()),
+                    ZeroOrMore(' '),
+                    '=',
+                    ZeroOrMore(' '),
+                    PositiveFloatingPointNumber(),
+                    settingValue.set(Double.valueOf(match())),
+                    new Action()
+                    {
+                        @Override
+                        public boolean run(Context context)
+                        {
+                            line.comment = match().trim();
+                            settingsMap.put(settingId.get(), settingValue.get());
+                            return true;
+                        }
+                    }                    
+                );
+    }
+    
     // Comment element.
     // ;Blah blah blah\n
     @SuppressSubnodes
@@ -198,7 +276,7 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     }
     
     // Comment element.
-    // ;Blah blah blah\n
+    // =Blah blah blah\n
     @SuppressSubnodes
     Rule EqualsComment()
     {
@@ -222,6 +300,21 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     Rule Digit()
     {
         return CharRange('0', '9');
+    }
+
+    @SuppressSubnodes
+    Rule Identifier()
+    {
+        return Sequence(FirstOf(
+                            CharRange('a', 'z'),
+                            CharRange('A', 'Z')),
+                        OneOrMore(
+                            FirstOf(
+                                CharRange('a', 'z'),
+                                CharRange('A', 'Z'),
+                                CharRange('0', '9'),
+                                '-',
+                                '_')));
     }
 
     @SuppressSubnodes

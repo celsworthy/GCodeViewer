@@ -28,6 +28,7 @@ public class GCodeLineProcessor implements GCodeConsumer
     
     private final GCodeViewerConfiguration configuration;
     private final RenderParameters renderParameters;
+    private final Map<String, Double> settingsMap; // Settings read from comments in the GCode.
 
     private double previousX = 0.0;
     private double previousY = 0.0;
@@ -73,10 +74,11 @@ public class GCodeLineProcessor implements GCodeConsumer
     
     static private final double RADIANS_TO_DEGREES = 57.2957795131;
     
-    public GCodeLineProcessor(RenderParameters renderParameters, GCodeViewerConfiguration configuration)
+    public GCodeLineProcessor(RenderParameters renderParameters, GCodeViewerConfiguration configuration, Map<String, Double> settingsMap)
     {
         this.configuration = configuration;
         this.renderParameters = renderParameters;
+        this.settingsMap = settingsMap;
         this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
         this.hasNozzleValves = configuration.getHasNozzleValves();
         
@@ -345,7 +347,11 @@ public class GCodeLineProcessor implements GCodeConsumer
         
         // The rest are always absolute?
         currentA = line.getValue('A', currentA);
-        currentB = line.getValue('B', currentB);
+        // Partial valve opens have a minimum open value. If the original value
+        // was smaller, the viewer will show this as a large blob. The original
+        // B value is included in the comment and stored in 'b'. It is used
+        // in place of B to suppress the annoying blobs.
+        currentB = line.getValue('b', line.getValue('B', currentB));
         currentF = line.getValue('F', currentF);
         
         if (layerHeightUpdateRequired && currentZ > currentLayerHeight + MINIMUM_HEIGHT_DIFFERENCE)
@@ -413,9 +419,10 @@ public class GCodeLineProcessor implements GCodeConsumer
         }
         if (line.isValueSet('B'))
         {
-            currentB = line.getValue('B', currentB);
+            currentB = line.getValue('M', line.getValue('B', currentB));
             previousB = currentB;
         }
+
         if (line.isValueSet('D'))
         {
             currentD = line.getValue('D', currentD);
@@ -486,6 +493,20 @@ public class GCodeLineProcessor implements GCodeConsumer
                         // Calculate width of a square (i.e. diamond with width = thickness) with the given cross sectional area.
                         width = (float)sqrt(2.0 * a);
                         thickness = width;
+                    }
+                    
+                    if (currentType.equalsIgnoreCase("FILL"))
+                    {
+                        // Infill can be a multiple of the layer thickness.
+                        double infillLayerThickness = settingsMap.getOrDefault("infillLayerThickness", 0.0);
+                        double fillExtrusionWidth = settingsMap.getOrDefault("fillExtrusionWidth_mm", 0.0);
+                        if (infillLayerThickness > 0.0 && fillExtrusionWidth > 0.0 && width > fillExtrusionWidth)
+                        {
+                            // Calculated width is wider than the specified infill width.
+                            // Recalculate the thickness based on the width.
+                            width = (float)fillExtrusionWidth;
+                            thickness = (float)(2.0 * a / fillExtrusionWidth);
+                        }
                     }
                 }
             }
