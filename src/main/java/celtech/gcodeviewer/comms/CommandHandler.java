@@ -354,24 +354,10 @@ public class CommandHandler {
                     processedOK = true;
                     break;
 
-                case "filamentfactor":
-                case "ff":
-                    renderParameters.setFilamentFactorForTool(toolIndex, value);
-                    processedOK = true;
-                    break;
-
                 case "hide":
                 case "h":
                     renderParameters.setShowFlagForTool(toolIndex, false);
                     processedOK = true;
-                    break;
-
-                case "nozzleejectvolume":
-                case "nev":
-                    if (value > 0.0) {
-                        renderParameters.setNozzleEjectVolumeForTool(toolIndex, value);
-                        processedOK = true;
-                    }
                     break;
 
                 case "show":

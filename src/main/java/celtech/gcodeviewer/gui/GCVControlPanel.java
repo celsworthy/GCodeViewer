@@ -12,7 +12,9 @@ import org.lwjgl.system.*;
 import java.nio.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import org.joml.Vector3f;
 
@@ -45,6 +47,7 @@ public class GCVControlPanel {
     
     List<Integer> toolList = new ArrayList<>();
     List<String> typeList = new ArrayList<>();
+    Map<String, String> typeI18nMap = new HashMap<>();
     
     public GCVControlPanel() {
     }
@@ -88,6 +91,8 @@ public class GCVControlPanel {
     
     public void setTypeList(List<String> typeList) {
         this.typeList = typeList;
+        typeI18nMap.clear();
+        typeList.forEach(t -> typeI18nMap.put(t, MessageLookup.i18n(t)));
     }
 
     public void layout(NkContext ctx, int x, int y, RenderParameters renderParameters) {
@@ -179,7 +184,8 @@ public class GCVControlPanel {
                                 nk_layout_row_push(ctx, w);
                                 boolean currentValue = renderParameters.getShowFlagForType(t);
                                 checkBuffer.put(0, (currentValue ? 1 : 0));
-                                nk_checkbox_label(ctx, t, checkBuffer);
+                                
+                                nk_checkbox_label(ctx, typeI18nMap.get(t), checkBuffer);
                                 nk_layout_row_end(ctx);
                                 renderParameters.setShowFlagForType(t, (checkBuffer.get(0) != 0));
                             });

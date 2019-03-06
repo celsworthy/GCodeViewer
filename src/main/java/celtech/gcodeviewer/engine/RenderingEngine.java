@@ -47,7 +47,6 @@ import static org.lwjgl.system.MemoryStack.stackPush;
  */
 public class RenderingEngine {
     
-    private static final double MINIMUM_ITERATION_TIME = 0.01; // (100 frames per second)
     private static final double FPS_UPDATE_INTERVAL = 1.0; // 1 update per second.
     
     private final static float MINIMUM_STEP = 0.0005f;
@@ -371,6 +370,14 @@ public class RenderingEngine {
                         minDataValues[dataIndex] = lineProcessor.getMinDataValue(dataIndex);
                         maxDataValues[dataIndex] = lineProcessor.getMaxDataValue(dataIndex);
                     }
+
+                    Map<String, Double> settingsMap = processor.getSettings();
+                    double ejectVolume = settingsMap.getOrDefault("nozzle0_ejectionvolume", -1.0);
+                    if (ejectVolume > 0.0)
+                        renderParameters.setNozzleEjectVolumeForTool(0, ejectVolume);
+                    ejectVolume = settingsMap.getOrDefault("nozzle1_ejectionvolume", -1.0);
+                    if (ejectVolume > 0.0)
+                        renderParameters.setNozzleEjectVolumeForTool(1, ejectVolume);
 
                     renderParameters.setNumberOfLines(processor.getLines().size());
                     renderParameters.setFirstSelectedLine(0);
