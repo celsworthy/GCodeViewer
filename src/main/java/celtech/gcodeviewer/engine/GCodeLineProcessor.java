@@ -24,7 +24,7 @@ public class GCodeLineProcessor implements GCodeConsumer
     private final double MINIMUM_STEP = 0.01;
     private final double MINIMUM_EXTRUSION = 0.0001;
     private final double MINIMUM_HEIGHT_DIFFERENCE = 0.0001;
-    private final String NOZZLE_MOVE_TYPE = "NOZZLE-MOVE";
+    private final String VALVE_MOVE_TYPE = "VALVE-MOVE";
     
     private final GCodeViewerConfiguration configuration;
     private final RenderParameters renderParameters;
@@ -47,6 +47,7 @@ public class GCodeLineProcessor implements GCodeConsumer
     private double currentD = 0.0;
     private double currentE = 0.0;
     private double currentF = 0.0;
+    private double bScale = 1.0;
 
     private double minDataValues[] = new double[Entity.N_DATA_VALUES];
     private double maxDataValues[] = new double[Entity.N_DATA_VALUES];
@@ -347,11 +348,29 @@ public class GCodeLineProcessor implements GCodeConsumer
         
         // The rest are always absolute?
         currentA = line.getValue('A', currentA);
-        // Partial valve opens have a minimum open value. If the original value
-        // was smaller, the viewer will show this as a large blob. The original
-        // B value is included in the comment and stored in 'b'. It is used
-        // in place of B to suppress the annoying blobs.
-        currentB = line.getValue('b', line.getValue('B', currentB));
+        currentB = line.getValue('B', currentB);
+        if (hasNozzleValves)
+        {
+            // Partial valve opens have a minimum open value. If the original value
+            // was smaller, the viewer will show this as a large blob. The original
+            // B value is included in the comment and stored in 'b'. It is used
+            // in place of B to suppress the annoying blobs.
+            if (line.isValueSet('b')) {
+                double littleB = line.getValue('b', currentB);
+                bScale = littleB / currentB;
+                currentB = littleB;
+            }
+            else if (bScale < 1.0) {
+                if (currentB <= 0.0) {
+                    currentB = 0.0;
+                    bScale = 1.0;
+                }
+                else {
+                    double scaledB = currentB * bScale;
+                    currentB = scaledB;
+                }
+            }
+        }
         currentF = line.getValue('F', currentF);
         
         if (layerHeightUpdateRequired && currentZ > currentLayerHeight + MINIMUM_HEIGHT_DIFFERENCE)
@@ -419,7 +438,7 @@ public class GCodeLineProcessor implements GCodeConsumer
         }
         if (line.isValueSet('B'))
         {
-            currentB = line.getValue('M', line.getValue('B', currentB));
+            currentB = line.getValue('B', currentB);
             previousB = currentB;
         }
 
@@ -450,7 +469,7 @@ public class GCodeLineProcessor implements GCodeConsumer
                                   Math.abs(deltaE) > MINIMUM_EXTRUSION);
         boolean isExtrusion = (isNozzleMove || isFilamentMove);
         if (isNozzleMove)
-            typeSet.add(NOZZLE_MOVE_TYPE);
+            typeSet.add(VALVE_MOVE_TYPE);
 
         Vector3f direction = new Vector3f((float)(currentX - previousX), (float)(currentY - previousY), (float)(currentZ - previousZ));
         float length = direction.length();
@@ -519,7 +538,7 @@ public class GCodeLineProcessor implements GCodeConsumer
                                        currentLayer, currentLine, currentTool, !isExtrusion, null);
             if (isExtrusion)
             {
-                String t = (isNozzleMove ? NOZZLE_MOVE_TYPE : currentType);
+                String t = (isNozzleMove ? VALVE_MOVE_TYPE : currentType);
                 entity.setType(t);
                 entity.setTypeIndex(renderParameters.getIndexForType(t));
                 Vector3f typeColour = configuration.getColourForType(t);
