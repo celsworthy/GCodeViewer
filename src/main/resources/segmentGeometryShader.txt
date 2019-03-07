@@ -29,7 +29,11 @@ void main()
 		// vDimensions has the segment length in x and width in y,
 		// and thickness in z. 
 		vec4 dd = vec4(0.5 * vDimensions[0].x * d, 0.0);
-		vec4 dp = vec4(0.5 * vDimensions[0].y * d, 0.0); // Direction and length of end pyramids.
+		vec4 dp; // Direction and length of end pyramids.
+		if (vDimensions[0].x < vDimensions[0].y)
+			dp = vec4(0.5 * vDimensions[0].x * d, 0.0);
+		else
+			dp = vec4(0.5 * vDimensions[0].y * d, 0.0);
 		vec4 nn = vec4(0.5 * vDimensions[0].y * n, 0.0);
 		vec4 bb = vec4(0.5 * vDimensions[0].z * b, 0.0);
 		
