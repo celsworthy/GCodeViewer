@@ -17,35 +17,38 @@ import org.joml.Vector4f;
 
 public class SegmentLoader {
     
+    private static final int POSITION_ATTRIBUTE = 0;
+    private static final int DIRECTION_ATTRIBUTE = 1;
+    private static final int NORMAL_ATTRIBUTE = 2;
+    private static final int DIMENSION_ATTRIBUTE = 3;
+    private static final int COLOUR_ATTRIBUTE = 4;
+    private static final int ATTRIBUTES_ATTRIBUTE = 5;
+
     private final List<RawEntity> segmentEntities = new ArrayList<>();
-    private double currentLayerHeight = 0.0;
-    private double layerThickness = 0.0;
-    private int currentLayer = 0;
-    private boolean firstSegment = true;
 
     public RawEntity loadToVAO(List<Entity> segments) {
         RawEntity segmentEntity = createVAO(segments.size());
         segmentEntities.add(segmentEntity);
-        storeVector3InAttributeList(segmentEntity, 0, segments, Entity::getPosition);
-        storeVector4InAttributeList(segmentEntity, 1, segments, (Entity s) -> {
+        storeVector3InAttributeList(segmentEntity, POSITION_ATTRIBUTE, segments, Entity::getPosition);
+        storeVector4InAttributeList(segmentEntity, DIRECTION_ATTRIBUTE, segments, (Entity s) -> {
                 Vector3f d = s.getDirection();
                 Vector4f d4 = new Vector4f(d.x(), d.y(), d.z(), 1.0f);
                 return d4;
             });
-        storeVector4InAttributeList(segmentEntity, 2, segments, (Entity s) -> {
+        storeVector4InAttributeList(segmentEntity, NORMAL_ATTRIBUTE, segments, (Entity s) -> {
                 Vector3f n = s.getNormal();
                 Vector4f n4 = new Vector4f(n.x(), n.y(), n.z(), 1.0f);
                 return n4;
             });
-        storeVector4InAttributeList(segmentEntity, 3, segments, (Entity s) -> {
+        storeVector4InAttributeList(segmentEntity, DIMENSION_ATTRIBUTE, segments, (Entity s) -> {
                 int layerNumber = s.getLayer();
                 if (layerNumber == Entity.NULL_LAYER)
                     layerNumber = s.getLineNumber();
                 Vector4f v = new Vector4f(s.getLength(), s.getWidth(), s.getThickness(), 1.0f);
                 return v;
             });
-        storeVector3InAttributeList(segmentEntity, 4, segments, Entity::getColour);
-        storeVector4InAttributeList(segmentEntity, 5, segments, (Entity s) -> {
+        storeVector3InAttributeList(segmentEntity, COLOUR_ATTRIBUTE, segments, Entity::getColour);
+        storeVector4InAttributeList(segmentEntity, ATTRIBUTES_ATTRIBUTE, segments, (Entity s) -> {
                 int layerNumber = s.getLayer();
                 if (layerNumber == Entity.NULL_LAYER)
                     layerNumber = s.getLineNumber();
@@ -69,9 +72,9 @@ public class SegmentLoader {
         int vboId = glGenBuffers();
         glBindBuffer(GL_ARRAY_BUFFER, vboId);
         glBufferData(GL_ARRAY_BUFFER, floatBuffer, GL_STATIC_DRAW);
-        glVertexAttribPointer(3, 3, GL_FLOAT, false, 0, 0);
+        glVertexAttribPointer(COLOUR_ATTRIBUTE, 3, GL_FLOAT, false, 0, 0);
         glBindBuffer(GL_ARRAY_BUFFER, 0);
-        segmentEntity.setVboId(3, vboId);
+        segmentEntity.setVboId(COLOUR_ATTRIBUTE, vboId);
         glBindVertexArray(0);
     }
 

@@ -451,6 +451,7 @@ public class RenderingEngine {
             segments.size() > 0 &&
             masterRenderer.getSegmentEntity() != null) {
             segmentLoader.reloadColours(masterRenderer.getSegmentEntity(), segments);
+            renderParameters.setRenderRequired();
         }
     }
         
