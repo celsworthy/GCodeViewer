@@ -45,6 +45,7 @@ public class RenderParameters {
     private int lastSelectedLine = 0;
     
     private boolean showMoves = false;
+    private boolean showAngles = false;
     private boolean showOnlySelected = false;
     private int showTools = 0xFFFF; 
     private ColourMode colourMode = ColourMode.COLOUR_AS_TOOL;
@@ -98,6 +99,7 @@ public class RenderParameters {
         this.bottomLayerToRender = guiConfiguration.getBottomLayerToRender();
         this.firstSelectedLine = guiConfiguration.getFirstSelectedLine();
         this.lastSelectedLine = guiConfiguration.getLastSelectedLine();
+        this.showAngles = guiConfiguration.getShowAngles();
         this.showMoves = guiConfiguration.getShowMoves();
         this.showOnlySelected = guiConfiguration.getShowOnlySelected();
         this.showTools = guiConfiguration.getShowTools(); 
@@ -110,6 +112,7 @@ public class RenderParameters {
         guiConfiguration.setBottomLayerToRender(this.bottomLayerToRender);
         guiConfiguration.setFirstSelectedLine(this.firstSelectedLine);
         guiConfiguration.setLastSelectedLine(this.lastSelectedLine);
+        guiConfiguration.setShowAngles(this.showAngles);
         guiConfiguration.setShowMoves(this.showMoves);
         guiConfiguration.setShowOnlySelected(this.showOnlySelected);
         guiConfiguration.setShowTools(this.showTools); 
@@ -218,6 +221,17 @@ public class RenderParameters {
             renderRequired = 2;
         firstSelectedLine = 0;
         lastSelectedLine = 0;
+    }
+
+    public boolean getShowAngles() {
+        return showAngles;
+    }
+
+    public void setShowAngles(boolean showAngles) {
+        if (this.showAngles != showAngles) {
+            this.showAngles = showAngles;
+            renderRequired = 2;
+        }
     }
 
     public boolean getShowMoves() {

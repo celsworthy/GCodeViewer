@@ -4,6 +4,7 @@ import celtech.gcodeviewer.engine.RawEntity;
 import celtech.gcodeviewer.engine.RawModel;
 import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.engine.RenderingEngine;
+import celtech.gcodeviewer.shaders.AngleShader;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.CenterPoint;
 import celtech.gcodeviewer.entities.Entity;
@@ -33,11 +34,14 @@ public class MasterRenderer {
 
     private static final float FOV = 70f;
     private static final float NEAR_PLANE = 0.1f;
-    private static final float FAR_PLANE = 1000.0f;
+    private static final float FAR_PLANE = 2500.0f;
     
 //    private final StaticShader staticShader = new StaticShader();
 //    private final StaticRenderer staticEntityRenderer;
     
+    private final AngleShader angleShader = new AngleShader();
+    private final AngleRenderer angleRenderer;
+
     private final SegmentShader segmentShader = new SegmentShader();
     private final SegmentRenderer segmentRenderer;
 
@@ -68,6 +72,7 @@ public class MasterRenderer {
     public MasterRenderer(RenderParameters renderParameters) {
         createProjectionMatrix(renderParameters.getWindowWidth(), renderParameters.getWindowHeight());
 //        this.staticEntityRenderer = new StaticRenderer(staticShader, projectionMatrix);
+        this.angleRenderer = new AngleRenderer(angleShader, projectionMatrix);
         this.segmentRenderer = new SegmentRenderer(segmentShader, projectionMatrix);
         this.moveRenderer = new MoveRenderer(moveShader, projectionMatrix);
         this.lineModelRenderer = new LineModelRenderer(lineModelShader, projectionMatrix);
@@ -116,6 +121,8 @@ public class MasterRenderer {
 
         if (segmentEntity != null) {
             segmentRenderer.render(segmentEntity, camera, light, renderParameters);
+            if (renderParameters.getShowAngles())
+                angleRenderer.render(segmentEntity, camera, light, renderParameters);
         }
         
         if (moveEntity != null && renderParameters.getShowMoves()) {
@@ -241,6 +248,7 @@ public class MasterRenderer {
         lineModelRenderer.loadProjectionMatrix(projectionMatrix);
         lineRenderer.setProjectionMatrix(projectionMatrix);
         segmentRenderer.setProjectionMatrix(projectionMatrix);
+        angleRenderer.setProjectionMatrix(projectionMatrix);
         moveRenderer.setProjectionMatrix(projectionMatrix);
         floorRenderer.loadProjectionMatrix(projectionMatrix);
     }

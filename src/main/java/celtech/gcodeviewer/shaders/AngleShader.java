@@ -14,10 +14,10 @@ import org.joml.Vector3f;
  *
  * @author George Salter
  */
-public class SegmentShader  extends ShaderProgram {
+public class AngleShader  extends ShaderProgram {
     private static final String VERTEX_FILE = SHADER_DIRECTORY + "segmentVertexShader.txt";
-    private static final String GEOMETRY_FILE = SHADER_DIRECTORY + "segmentGeometryShader.txt";
-    private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "segmentFragmentShader.txt";
+    private static final String GEOMETRY_FILE = SHADER_DIRECTORY + "angleGeometryShader.txt";
+    private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "angleFragmentShader.txt";
     
     private int location_lightPosition;
     private int location_lightColour;
@@ -36,7 +36,7 @@ public class SegmentShader  extends ShaderProgram {
     private Matrix4f projectionMatrix;
     private Matrix4f viewMatrix;
             
-    public SegmentShader() {
+    public AngleShader() {
         super(VERTEX_FILE, GEOMETRY_FILE, FRAGMENT_FILE);
     }
             

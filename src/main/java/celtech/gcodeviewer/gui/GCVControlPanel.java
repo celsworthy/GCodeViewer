@@ -103,6 +103,7 @@ public class GCVControlPanel {
             float groupPaddingX = ctx.style().window().group_padding().x();
             float groupPaddingY = ctx.style().window().group_padding().y();
             boolean colourAsType = (renderParameters.getColourMode() == RenderParameters.ColourMode.COLOUR_AS_TYPE);
+            boolean colourAsData = (renderParameters.getColourMode() == RenderParameters.ColourMode.COLOUR_AS_DATA);
             
             if (panelExpanded) {
                 panelWidth = GUI_CONTROL_PANEL_WIDTH;
@@ -151,7 +152,7 @@ public class GCVControlPanel {
                             String label = showToolNMsg.replaceAll("#1", Integer.toString(t));
                             boolean currentValue = renderParameters.getShowFlagForTool(t);
                             checkBuffer.put(0, (currentValue ? 1 : 0));
-                            if (!colourAsType)
+                            if (!colourAsType && !colourAsData)
                             {
                                 Vector3f c = renderParameters.getColourForTool(t);
                                 tc.set((byte)(255.0f * c.x() + 0.5f), (byte)(255.0f * c.y() + 0.5f), (byte)(255.0f * c.z() + 0.5f), (byte)255);
@@ -170,10 +171,18 @@ public class GCVControlPanel {
                         layoutCheckboxRow(ctx,
                                           w,
                                           colourAsTypeMsg,
-                                          (renderParameters.getColourMode() == RenderParameters.ColourMode.COLOUR_AS_TYPE),
-                                          (f) -> { renderParameters.setColourMode(f ? RenderParameters.ColourMode.COLOUR_AS_TYPE 
-                                                                                    : RenderParameters.ColourMode.COLOUR_AS_TOOL); });
-
+                                          (renderParameters.getColourMode() == RenderParameters.ColourMode.COLOUR_AS_TYPE ||
+                                           renderParameters.getColourMode() == RenderParameters.ColourMode.COLOUR_AS_DATA),
+                                          (f) -> {
+                                              if (f) {
+                                                  if (colourAsData)
+                                                      renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_DATA);
+                                                  else
+                                                      renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TYPE);
+                                              }
+                                              else
+                                                  renderParameters.setColourMode(RenderParameters.ColourMode.COLOUR_AS_TOOL);
+                                          });
                         if (colourAsType) {
                             typeList.forEach(t -> {
                                 Vector3f c = renderParameters.getColourForType(t);

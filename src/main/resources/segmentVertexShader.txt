@@ -17,17 +17,20 @@ in vec4 normal;
 in vec3 colour;
 in vec4 dimensions; // x = length, y = width, z = thickness, w = 1.0
 in vec4 attributes; // x = type, y = layer, z = line, w = tool
+in vec4 angles; // x = a, y = b, z = 0, w = 0
 
 out vec4 vDirection;
 out vec4 vDimensions;
 out vec4 vNormal;
 out vec4 vColour;
+out vec4 vAngles;
 
 void main(void) {
     gl_Position = vec4(position, 1.0);
 	vDimensions = dimensions;
 	vDirection = direction;
 	vNormal = normal;
+	vAngles = angles;
 	
 	int tool = int(attributes.w + 0.5);
 
@@ -35,12 +38,6 @@ void main(void) {
 		
 	if (((showTools & toolFlag) == toolFlag) &&
 		(attributes.y >= bottomVisibleLayer && attributes.y <= topVisibleLayer)) {
-		
-//     	if (attributes.z >= firstSelectedLine && attributes.z < lastSelectedLine)
-//			vColour = vec4(selectColour, 1.0);
-//		else if ((showFlags & 8) == 8) // Show only selected.
-//			vColour = vec4(0.0, 0.0, 0.0, 0.0);
-//		else if ((showFlags & 2) == 2) { // Colour as type
 		if ((showFlags & 2) == 2) { // Colour as type
 			int type = int(attributes.x + 0.5);
 			int typeFlag = 1 << type;

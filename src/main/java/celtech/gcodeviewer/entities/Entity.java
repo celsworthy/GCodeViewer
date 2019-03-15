@@ -104,7 +104,7 @@ public class Entity {
         return thickness;
     }
 
-    public void gsetThickness(float thickness) {
+    public void setThickness(float thickness) {
         this.width = thickness;
     }
 

@@ -5,7 +5,7 @@ import celtech.gcodeviewer.engine.RenderParameters;
 import celtech.gcodeviewer.entities.Camera;
 import celtech.gcodeviewer.entities.Entity;
 import celtech.gcodeviewer.entities.Light;
-import celtech.gcodeviewer.shaders.SegmentShader;
+import celtech.gcodeviewer.shaders.AngleShader;
 import celtech.gcodeviewer.utils.MatrixUtils;
 import java.util.List;
 import java.util.Map;
@@ -15,12 +15,12 @@ import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL20.*;
 import static org.lwjgl.opengl.GL30.*;
 
-public class SegmentRenderer {
+public class AngleRenderer {
    
-    private final SegmentShader shader;
+    private final AngleShader shader;
     private Matrix4f projectionMatrix;
     
-    public SegmentRenderer(SegmentShader shader, Matrix4f projectionMatrix) {
+    public AngleRenderer(AngleShader shader, Matrix4f projectionMatrix) {
         this.shader = shader;
         this.projectionMatrix = projectionMatrix;
     }

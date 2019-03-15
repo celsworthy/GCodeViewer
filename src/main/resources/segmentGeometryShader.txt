@@ -10,6 +10,7 @@ in vec4 vColour[]; // Output from vertex shader for each vertex
 in vec4 vNormal[];
 in vec4 vDimensions[]; // x = length, y = width, z = thickness, w = 1.0.
 in vec4 vDirection[];
+in vec4 vAngles[];
 
 out vec4 fColour; // Output to fragment shader
 out vec3 fNormal;

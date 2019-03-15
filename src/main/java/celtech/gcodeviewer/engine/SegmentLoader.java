@@ -23,6 +23,7 @@ public class SegmentLoader {
     private static final int DIMENSION_ATTRIBUTE = 3;
     private static final int COLOUR_ATTRIBUTE = 4;
     private static final int ATTRIBUTES_ATTRIBUTE = 5;
+    private static final int ANGLE_ATTRIBUTE = 6;
 
     private final List<RawEntity> segmentEntities = new ArrayList<>();
 
@@ -53,6 +54,12 @@ public class SegmentLoader {
                 if (layerNumber == Entity.NULL_LAYER)
                     layerNumber = s.getLineNumber();
                 Vector4f v = new Vector4f(s.getTypeIndex(), layerNumber, s.getLineNumber(), s.getToolNumber());
+                return v;
+            });
+        storeVector4InAttributeList(segmentEntity, ANGLE_ATTRIBUTE, segments, (Entity s) -> {
+                float a = 0.01745329252f * s.getDataValue(0); // A in radians.
+                float b = 0.01745329252f * s.getDataValue(1); // B in radians.
+                Vector4f v = new Vector4f((float)Math.cos(a), (float)Math.sin(a), (float)Math.cos(b), (float)Math.sin(b));
                 return v;
             });
         unbindVAO();

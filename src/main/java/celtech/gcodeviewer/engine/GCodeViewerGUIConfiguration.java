@@ -37,6 +37,8 @@ public class GCodeViewerGUIConfiguration {
     private int lastSelectedLine = 0;
     
     @JsonIgnore
+    private boolean showAngles = false;
+    @JsonIgnore
     private boolean showMoves = false;
     @JsonIgnore
     private boolean showOnlySelected = false;
@@ -150,6 +152,16 @@ public class GCodeViewerGUIConfiguration {
     @JsonProperty
     public void setLastSelectedLine(int lastSelectedLine) {
         this.lastSelectedLine = lastSelectedLine;
+    }
+
+    @JsonProperty
+    public boolean getShowAngles() {
+        return showAngles;
+    }
+
+    @JsonProperty
+    public void setShowAngles(boolean showAngles) {
+        this.showAngles = showAngles;
     }
 
     @JsonProperty
