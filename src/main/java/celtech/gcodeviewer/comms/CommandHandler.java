@@ -286,6 +286,11 @@ public class CommandHandler {
     private void processHideCommand(String command, Scanner commandScanner) {
         String  commandParameter = commandScanner.next().toLowerCase();
         switch (commandParameter) {
+            case "angles":
+            case "a":
+                renderParameters.setShowAngles(false);
+                break;
+
             case "moves":
             case "m":
                 renderParameters.setShowMoves(false);
@@ -312,6 +317,11 @@ public class CommandHandler {
     private void processShowCommand(String command, Scanner commandScanner) {
         String  commandParameter = commandScanner.next().toLowerCase();
         switch (commandParameter) {
+            case "angles":
+            case "a":
+                renderParameters.setShowAngles(true);
+                break;
+                
             case "moves":
             case "m":
                 renderParameters.setShowMoves(true);
