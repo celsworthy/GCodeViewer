@@ -106,35 +106,19 @@ public class CommandHandler {
                                 break;
                                     
                             case "last":
-                            case "l":
+                            case "la":
                                 if (commandScanner.hasNextInt())
                                     renderParameters.setLastSelectedLine(commandScanner.nextInt());
                                 else
-                                    renderParameters.setLastSelectedLine(0);
+                                    renderParameters.setLastSelectedLine(renderParameters.getNumberOfLines());
                                 break;
 
                             case "load":
-                            case "ld":
+                            case "lo":
                                 if (commandScanner.hasNext())
                                     renderingEngine.startLoadingGCodeFile(commandScanner.nextLine().trim());
                                 else
                                     renderingEngine.startLoadingGCodeFile(renderingEngine.getCurrentFilePath());
-                                break;
-
-                            case "l1":
-                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\snake.gcode");
-                                break;
-
-                            case "l2":
-                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\gear-box.gcode");
-                                break;
-
-                            case "l3":
-                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\spiral-65-0p5.gcode");
-                                break;
-
-                            case "l4":
-                                renderingEngine.startLoadingGCodeFile("D:\\CEL\\Dev\\GCodeViewer\\cones_robox.gcode");
                                 break;
 
                             case "printer":
@@ -286,6 +270,11 @@ public class CommandHandler {
     private void processHideCommand(String command, Scanner commandScanner) {
         String  commandParameter = commandScanner.next().toLowerCase();
         switch (commandParameter) {
+            case "angles":
+            case "a":
+                renderParameters.setShowAngles(false);
+                break;
+
             case "moves":
             case "m":
                 renderParameters.setShowMoves(false);
@@ -312,6 +301,11 @@ public class CommandHandler {
     private void processShowCommand(String command, Scanner commandScanner) {
         String  commandParameter = commandScanner.next().toLowerCase();
         switch (commandParameter) {
+            case "angles":
+            case "a":
+                renderParameters.setShowAngles(true);
+                break;
+                
             case "moves":
             case "m":
                 renderParameters.setShowMoves(true);

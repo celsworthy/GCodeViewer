@@ -4,3 +4,5 @@
 /nb-configuration.xml
 *.gcode
 GCodeViewerGUI.json
+release/
+proguard/
