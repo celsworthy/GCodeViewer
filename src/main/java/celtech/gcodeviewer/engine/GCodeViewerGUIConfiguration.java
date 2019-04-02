@@ -47,7 +47,7 @@ public class GCodeViewerGUIConfiguration {
     @JsonIgnore
     private int showTypes = 0xFFFF; 
     @JsonIgnore
-    private RenderParameters.ColourMode colourMode = RenderParameters.ColourMode.COLOUR_AS_TOOL;
+    private RenderParameters.ColourMode colourMode = RenderParameters.ColourMode.COLOUR_AS_TYPE;
     @JsonIgnore
     private boolean showLineNumbers = false;
 
