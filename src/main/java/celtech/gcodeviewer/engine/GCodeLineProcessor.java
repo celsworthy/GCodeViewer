@@ -348,26 +348,29 @@ public class GCodeLineProcessor implements GCodeConsumer
         
         // The rest are always absolute?
         currentA = line.getValue('A', currentA);
-        currentB = line.getValue('B', currentB);
-        if (hasNozzleValves)
+        if (line.isValueSet('B'))
         {
-            // Partial valve opens have a minimum open value. If the original value
-            // was smaller, the viewer will show this as a large blob. The original
-            // B value is included in the comment and stored in 'b'. It is used
-            // in place of B to suppress the annoying blobs.
-            if (line.isValueSet('b')) {
-                double littleB = line.getValue('b', currentB);
-                bScale = littleB / currentB;
-                currentB = littleB;
-            }
-            else if (bScale < 1.0) {
-                if (currentB <= 0.0) {
-                    currentB = 0.0;
-                    bScale = 1.0;
+            currentB = line.getValue('B', currentB);
+            if (hasNozzleValves)
+            {
+                // Partial valve opens have a minimum open value. If the original value
+                // was smaller, the viewer will show this as a large blob. The original
+                // B value is included in the comment and stored in 'b'. It is used
+                // in place of B to suppress the annoying blobs.
+                if (line.isValueSet('b')) {
+                    double littleB = line.getValue('b', currentB);
+                    bScale = littleB / currentB;
+                    currentB = littleB;
                 }
-                else {
-                    double scaledB = currentB * bScale;
-                    currentB = scaledB;
+                else if (bScale < 1.0) {
+                    if (currentB <= 0.0) {
+                        currentB = 0.0;
+                        bScale = 1.0;
+                    }
+                    else {
+                        double scaledB = currentB * bScale;
+                        currentB = scaledB;
+                    }
                 }
             }
         }
