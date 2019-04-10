@@ -225,7 +225,7 @@ public class RenderingEngine {
 
             if (renderParameters.getViewResetRequired())
             {
-                GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+                PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
                 Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
                 camera.reset(centerPointStartPos, printVolumeDetails.getDefaultCameraDistance());
                 renderParameters.clearViewResetRequired();
@@ -508,7 +508,7 @@ public class RenderingEngine {
     public void setPrinterType(String printerType) {
         if (camera == null || !this.printerType.equalsIgnoreCase(printerType)) {
             this.printerType = printerType;
-            GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+            PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
             this.printVolumeWidth = printVolumeDetails.getDimensions().x();
             this.printVolumeDepth = printVolumeDetails.getDimensions().y();
             this.printVolumeHeight = printVolumeDetails.getDimensions().z();
