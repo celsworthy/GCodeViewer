@@ -74,15 +74,7 @@ public class GCodeViewer {
         {
             init();
             loop();
-
-            // Free the window callbacks and destroy the window
-            glfwFreeCallbacks(windowId);
-            glfwDestroyWindow(windowId);
-
-            // Terminate GLFW and free the error callback
-            glfwTerminate();
-            glfwSetErrorCallback(null).free();
-            guiConfiguration.saveToJSON(commandLineArgs.projectDirectory.toString());
+            shutdown();
         }
         else
             STENO.error(MessageLookup.i18n("GCodeViewer.NoLicence"));
@@ -233,6 +225,17 @@ public class GCodeViewer {
                                              .map(File::toString)
                                              .findFirst()
                                              .orElse(""));
+    }
+
+    private void shutdown() {
+        // Free the window callbacks and destroy the window
+        glfwFreeCallbacks(windowId);
+        glfwDestroyWindow(windowId);
+
+        // Terminate GLFW and free the error callback
+        glfwTerminate();
+        glfwSetErrorCallback(null).free();
+        guiConfiguration.saveToJSON(commandLineArgs.projectDirectory.toString());
     }
     
     public synchronized boolean validateLicence() 

@@ -449,17 +449,18 @@ public class GUIManager {
             case GLFW_KEY_DOWN:
                 if (action == GLFW_PRESS || action == GLFW_REPEAT) {
                     int step = 1;
-                    if ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
+                    if ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL || // Control key on Windows and Linux
+                         (mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER) // Command key on MacOS.
                         step = 5;
                     if ((mods & GLFW_MOD_SHIFT) == GLFW_MOD_SHIFT) {
                         if (key == GLFW_KEY_UP) {
-                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT | GLFW_MOD_SUPER)) == GLFW_MOD_ALT) // ALT key and not CONTROL and not SUPER
                                 renderParameters.setBottomLayerToRender(renderParameters.getTopLayerToRender());
                             else
                                 renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() + step);
                         }
                         else {
-                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT | GLFW_MOD_SUPER)) == GLFW_MOD_ALT) // ALT key and not CONTROL and not SUPER
                                 renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
                             else
                                 renderParameters.setBottomLayerToRender(renderParameters.getBottomLayerToRender() - step);                            
@@ -467,13 +468,13 @@ public class GUIManager {
                     }
                     else {
                         if (key == GLFW_KEY_UP) {
-                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT | GLFW_MOD_SUPER)) == GLFW_MOD_ALT) // ALT key and not CONTROL and not SUPER
                                 renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
                             else
                                 renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() + step);
                         }
                         else {
-                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT)) == GLFW_MOD_ALT)
+                            if ((mods & (GLFW_MOD_CONTROL | GLFW_MOD_ALT | GLFW_MOD_SUPER)) == GLFW_MOD_ALT) // ALT key and not CONTROL and not SUPER
                                 renderParameters.setTopLayerToRender(renderParameters.getBottomLayerToRender());
                             else
                                 renderParameters.setTopLayerToRender(renderParameters.getTopLayerToRender() - step);
