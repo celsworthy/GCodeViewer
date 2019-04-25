@@ -142,7 +142,9 @@ public class Camera {
                 float sensitivity = MOUSE_CONTROL_SENSITIVITY / getSensitivityModifier();
 
                 boolean controlPressed = glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) != GLFW_RELEASE || 
-                                         glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) !=GLFW_RELEASE;
+                                             glfwGetKey(window, GLFW_KEY_RIGHT_CONTROL) != GLFW_RELEASE ||
+                                             glfwGetKey(window, GLFW_KEY_LEFT_SUPER) != GLFW_RELEASE || 
+                                             glfwGetKey(window, GLFW_KEY_RIGHT_SUPER) != GLFW_RELEASE;
                 boolean altPressed = glfwGetKey(window, GLFW_KEY_LEFT_ALT) != GLFW_RELEASE || 
                                          glfwGetKey(window, GLFW_KEY_RIGHT_ALT) !=GLFW_RELEASE;
                 boolean mousePressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) != GLFW_RELEASE ||

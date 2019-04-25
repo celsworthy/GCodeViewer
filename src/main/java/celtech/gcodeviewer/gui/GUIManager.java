@@ -426,11 +426,15 @@ public class GUIManager {
 
         switch (key) {
             case GLFW_KEY_A:
-                if (action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
+                if (action == GLFW_PRESS &&
+                    ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ||
+                     (mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER))
                     renderParameters.setAllLayersToRender();
                 break;
             case GLFW_KEY_R:
-                if (action == GLFW_PRESS && (mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL)
+                if (action == GLFW_PRESS &&
+                    ((mods & GLFW_MOD_CONTROL) == GLFW_MOD_CONTROL ||
+                     (mods & GLFW_MOD_SUPER) == GLFW_MOD_SUPER))
                     renderParameters.setViewResetRequired();
                 break;
             case GLFW_KEY_DELETE:
