@@ -215,14 +215,10 @@ public class RenderingEngine {
             renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_NO_ACTION);
             frameRendered = renderFrame();
 
-            System.out.println("Polling " + Long.toHexString(windowId) + " ...");
             guiManager.pollEvents(windowId);
-            System.out.println("... done");
-
-            System.out.println("commandHandler.processCommands() ...");
+            
             if (commandHandler.processCommands())
                 glfwSetWindowShouldClose(windowId, true);
-            System.out.println("... done");
             
             if (fileLoader != null && fileLoader.loadFinished())
                 completeLoadingGCodeFile();

@@ -66,20 +66,22 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
         return Sequence(
                     FirstOf('G', 'M', 'T'),
                     commandLetterValue.set(match().charAt(0)),
+                    ZeroOrMore(' '),
                     OneOrMore(Digit()),
                     commandNumberValue.set(Integer.valueOf(match())),
-                    Optional(' '),
+                    ZeroOrMore(' '),
                     ZeroOrMore(
                         Sequence(
                             CharRange('A', 'Z'),
                             valKey.set(match().charAt(0)),
+                            ZeroOrMore(' '),
                             Optional(
                                 Sequence(
                                     FloatingPointNumber(),
-                                    valValue.set(Double.valueOf(match()))
+                                    valValue.set(Double.valueOf(match())),
+                                    ZeroOrMore(' ')
                                 )
                             ),
-                            Optional(' '),
                             new Action()
                             {
                                 @Override
@@ -118,7 +120,13 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     {
         return Sequence(
                     ZeroOrMore(' '),
-                    IgnoreCase(";TYPE:"),
+                    ZeroOrMore(' '),
+                    ';',
+                    ZeroOrMore(' '),
+                    IgnoreCase("TYPE"),
+                    ZeroOrMore(' '),
+                    ':',
+                    ZeroOrMore(' '),
                     OneOrMore(
                         FirstOf(
                             CharRange('a', 'z'),
@@ -152,24 +160,36 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
                     ZeroOrMore(' '),
                     IgnoreCase("LAYER"),
                     ZeroOrMore(' '),
-                    Optional(':'),
-                    ZeroOrMore(' '),
+                    Optional(
+                        Sequence(
+                            ':',
+                            ZeroOrMore(' ')
+                        )
+                    ),
                     Sequence(
                         Optional(
-                            FirstOf(
-                                Ch('+'),
-                                Ch('-')
-                            )
+                            Sequence(    
+                                FirstOf(
+                                    Ch('+'),
+                                    Ch('-')
+                                ),
+                                ZeroOrMore(' ')
+                            )       
                         ),
                         OneOrMore(Digit())),
                     layerValue.set(Integer.valueOf(match())),
-                    ZeroOrMore(' '),
+                    
                     Optional(
                         Sequence(
+                            ZeroOrMore(' '),
                             IgnoreCase("HEIGHT"),
                             ZeroOrMore(' '),
-                            Optional(':'),
-                            ZeroOrMore(' '),
+                            Optional(
+                                Sequence(
+                                    ':',
+                                    ZeroOrMore(' ')
+                                )
+                            ),
                             PositiveFloatingPointNumber(),
                             heightValue.set(Double.valueOf(match()))
                         )
@@ -322,9 +342,12 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     {
         return Sequence(
                     Optional(
-                        FirstOf(
-                            Ch('+'),
-                            Ch('-')
+                        Sequence(
+                            FirstOf(
+                                Ch('+'),
+                                Ch('-')
+                            ),
+                            ZeroOrMore(' ')
                         )
                     ),
                     UnsignedFloatingPointNumber()
@@ -351,7 +374,12 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     {
         //Positive double e.g. 1.23
         return Sequence(
-                Optional(Ch('+')),
+                Optional(
+                    Sequence(
+                        Ch('+'),
+                        ZeroOrMore(' ')
+                    )
+                ),
                 UnsignedFloatingPointNumber());
     }
 
@@ -361,6 +389,7 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
         //Negative double e.g. -1.23
         return Sequence(
                 Ch('-'),
+                ZeroOrMore(' '),
                 UnsignedFloatingPointNumber());
     }
 }
