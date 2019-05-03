@@ -48,7 +48,7 @@ public class RenderParameters {
     private boolean showAngles = false;
     private boolean showOnlySelected = false;
     private int showTools = 0xFFFF; 
-    private ColourMode colourMode = ColourMode.COLOUR_AS_TOOL;
+    private ColourMode colourMode = ColourMode.COLOUR_AS_TYPE;
     private Vector3f moveColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private Vector3f selectColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private List<Vector3f> toolColours = new ArrayList<>();

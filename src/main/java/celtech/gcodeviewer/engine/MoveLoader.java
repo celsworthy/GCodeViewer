@@ -23,7 +23,10 @@ public class MoveLoader {
         storeSegmentInAttributeList(moveEntity, 0, moves);
         store2xInteger2InAttributeList(moveEntity, 1, moves, (Entity m) -> {
                 Integer[] i2 = new Integer[2];
-                i2[0] = m.getLayer();
+                int layerNumber = m.getLayer();
+                if (layerNumber == Entity.NULL_LAYER)
+                    layerNumber = m.getLineNumber();
+                i2[0] = layerNumber;
                 i2[1] = m.getLineNumber();
                 return i2;
             });

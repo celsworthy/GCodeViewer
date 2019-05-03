@@ -28,6 +28,7 @@ import static org.lwjgl.glfw.GLFW.glfwHideWindow;
 import static org.lwjgl.glfw.GLFW.glfwIconifyWindow;
 import static org.lwjgl.glfw.GLFW.glfwRestoreWindow;
 import static org.lwjgl.glfw.GLFW.glfwSetCharCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetFramebufferSizeCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowPosCallback;
 import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
@@ -66,7 +67,8 @@ public class RenderingEngine {
     private List<Entity> segments = null;
     private List<Entity> moves = null;
     private Camera camera = null;
-    
+    private Light light = null;
+
     private final MasterRenderer masterRenderer;
     private final GUIManager guiManager;
     
@@ -145,7 +147,7 @@ public class RenderingEngine {
         Vector3f lightPos = new Vector3f(configuration.getLightPosition().x(),
                                          configuration.getLightPosition().y(),
                                          configuration.getLightPosition().z());
-        Light light = new Light(lightPos, configuration.getLightColour());
+        light = new Light(lightPos, configuration.getLightColour());
 
         lineModel = modelLoader.loadToVAO(new float[]{-0.5f, 0, 0, 0.5f, 0, 0});
         
@@ -211,46 +213,10 @@ public class RenderingEngine {
                     break;                    
             }
             renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_NO_ACTION);
-            frameRendered = false;
-            
-            GL11.glViewport(0, 0, renderParameters.getWindowWidth(), renderParameters.getWindowHeight());
-            try (MemoryStack stack = stackPush()) {
-                IntBuffer w = stack.mallocInt(1);
-                IntBuffer h = stack.mallocInt(1);
+            frameRendered = renderFrame();
 
-                glfwGetFramebufferSize(windowId, w, h);
-                renderParameters.setDisplayWidth(w.get(0));
-                renderParameters.setDisplayHeight(h.get(0));
-            }
-
-            if (renderParameters.getViewResetRequired())
-            {
-                GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
-                Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
-                camera.reset(centerPointStartPos, printVolumeDetails.getDefaultCameraDistance());
-                renderParameters.clearViewResetRequired();
-            }
-            camera.move();
-            
-            // Set the light to the camera position so that it behaves like a headtorch on the camera.
-            light.getPosition().set(camera.getPosition());
-            
-            renderParameters.checkLimits();
-
-            if (renderParameters.getRenderRequired())
-            {
-                frameRendered = true;
-                masterRenderer.render(camera, light);
-
-                guiManager.render();
-
-                glfwSwapInterval(1);
-                glfwSwapBuffers(windowId); // swap the color buffers
-                renderParameters.clearRenderRequired();
-            }
-            
             guiManager.pollEvents(windowId);
-
+            
             if (commandHandler.processCommands())
                 glfwSetWindowShouldClose(windowId, true);
             
@@ -300,18 +266,71 @@ public class RenderingEngine {
         fileLoader = null;
     }
     
+    private boolean renderFrame() {
+        boolean frameRendered = false;
+
+        try (MemoryStack stack = stackPush()) {
+            IntBuffer w = stack.mallocInt(1);
+            IntBuffer h = stack.mallocInt(1);
+            glfwGetFramebufferSize(windowId, w, h);
+
+            int displayWidth = w.get(0);
+            int displayHeight = h.get(0);
+            if (displayWidth != renderParameters.getDisplayWidth() ||
+                displayHeight != renderParameters.getDisplayHeight()) {
+                renderParameters.setDisplayWidth(w.get(0));
+                renderParameters.setDisplayHeight(h.get(0));
+                masterRenderer.createProjectionMatrix(displayWidth, displayHeight);
+                masterRenderer.reloadProjectionMatrix();
+            }
+        }
+        GL11.glViewport(0, 0, renderParameters.getDisplayWidth(), renderParameters.getDisplayHeight());
+
+        if (renderParameters.getViewResetRequired())
+        {
+            PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+            Vector3f centerPointStartPos = new Vector3f(printVolumeOffsetX + 0.5f * printVolumeWidth, printVolumeOffsetY + 0.5f * printVolumeDepth, printVolumeOffsetZ + 0.5f * printVolumeHeight);
+            camera.reset(centerPointStartPos, printVolumeDetails.getDefaultCameraDistance());
+            renderParameters.clearViewResetRequired();
+        }
+        camera.move();
+
+        // Set the light to the camera position so that it behaves like a headtorch on the camera.
+        light.getPosition().set(camera.getPosition());
+
+        renderParameters.checkLimits();
+
+        if (renderParameters.getRenderRequired())
+        {
+            frameRendered = true;
+            masterRenderer.render(camera, light);
+
+            guiManager.render();
+
+            glfwSwapInterval(1);
+            glfwSwapBuffers(windowId); // swap the color buffers
+            renderParameters.clearRenderRequired();
+        }
+        
+        return frameRendered;
+    }
+
     private void createWindowResizeCallback() {
         glfwSetWindowSizeCallback(windowId, (window, width, height) -> {
+//            System.out.println("createWindowResizeCallback(" + Long.toHexString(window) + ", " + Integer.toString(width) + ", " + Integer.toString(height) + ")");
             renderParameters.setWindowWidth(width);
             renderParameters.setWindowHeight(height);
-            masterRenderer.createProjectionMatrix(width, height);
-            masterRenderer.reloadProjectionMatrix();
         });
         glfwSetWindowPosCallback(windowId, (window, xPos, yPos) -> {
+//            System.out.println("glfwSetWindowPosCallback(" + Long.toHexString(window) + ", " + Integer.toString(xPos) + ", " + Integer.toString(yPos) + ")");
             renderParameters.setWindowXPos(xPos);
             renderParameters.setWindowYPos(yPos);
         });
-
+        glfwSetFramebufferSizeCallback(windowId, (window, width, height) -> {
+//            System.out.println("glfwSetFramebufferSizeCallback(" + Long.toHexString(window) + ", " + Integer.toString(width) + ", " + Integer.toString(height) + ")");
+            renderParameters.setRenderRequired();
+            renderFrame();
+        });
     }
 
     public void startLoadingGCodeFile(String gCodeFile) {
@@ -508,7 +527,7 @@ public class RenderingEngine {
     public void setPrinterType(String printerType) {
         if (camera == null || !this.printerType.equalsIgnoreCase(printerType)) {
             this.printerType = printerType;
-            GCodeViewerConfiguration.PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
+            PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
             this.printVolumeWidth = printVolumeDetails.getDimensions().x();
             this.printVolumeDepth = printVolumeDetails.getDimensions().y();
             this.printVolumeHeight = printVolumeDetails.getDimensions().z();
