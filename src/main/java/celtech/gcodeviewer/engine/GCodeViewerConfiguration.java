@@ -17,6 +17,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +106,9 @@ public class GCodeViewerConfiguration {
     
     @JsonIgnore
     private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewerConfiguration.class.getName());
-    
+    @JsonIgnore
+    private static final String CONFIG_FILE_NAME = "GCodeViewer.json";
+
     @JsonIgnore
     private Map<String, Vector3f> typeColourMap = new HashMap<>();
     @JsonIgnore
@@ -145,21 +149,34 @@ public class GCodeViewerConfiguration {
     }
 
     @JsonIgnore
-    public static GCodeViewerConfiguration loadFromJSON() {
+    public static GCodeViewerConfiguration loadFromJSON(Path configDirectory) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         SimpleModule module = new SimpleModule();
         module.addDeserializer(Vector3f.class, new Vector3fToJsonConvertor.Vector3fDeserializer());
         objectMapper.registerModule(module);
-        String configPath = getApplicationInstallDirectory() + "GCodeViewer.json";
-            
         GCodeViewerConfiguration configuration = null;
-        try {
-            configuration = objectMapper.readValue(new File(configPath), GCodeViewerConfiguration.class);
+        if (configDirectory != null) {
+            Path configPath = configDirectory.resolve(CONFIG_FILE_NAME);
+            try {
+                configuration = objectMapper.readValue(configPath.toFile(), GCodeViewerConfiguration.class);
+            }
+            catch (IOException ex) {
+                STENO.error("Couldn't load custom configuration from \"" +  configPath + " \" - using installed configuration file");
+                configuration = null;
+            }
         }
-        catch (IOException ex) {
-            STENO.error("Couldn't load configuration - using defaults");
-            configuration = new GCodeViewerConfiguration();
+        
+        if (configuration == null) {
+            Path configPath = Paths.get(getApplicationInstallDirectory()).resolve(CONFIG_FILE_NAME);
+
+            try {
+                configuration = objectMapper.readValue(configPath.toFile(), GCodeViewerConfiguration.class);
+            }
+            catch (IOException ex) {
+                STENO.error("Couldn't load configuration from \"" +  configPath + " \" - using defaults");
+                configuration = new GCodeViewerConfiguration();
+            }
         }
         return configuration;
     }

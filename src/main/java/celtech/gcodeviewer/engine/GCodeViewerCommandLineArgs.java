@@ -23,6 +23,8 @@ public class GCodeViewerCommandLineArgs {
     String printerType = "RBX01";
     @Parameter(names={"--project-directory", "-pd"}, converter = PathConverter.class, description = "directory in which the interface configuration is stored")
     Path projectDirectory = Paths.get(".");
+    @Parameter(names={"--config-directory", "-cd"}, converter = PathConverter.class, description = "directory in which the viewer configuration is stored")
+    Path configDirectory = null;
     @Parameter(names={"--always-on-top", "-wt"}, description = "flag to indicate window should always be above other desktop windows")
     boolean windowAlwaysOnTop = false;
     @Parameter(names={"--centered", "-wc"}, description = "flag to indicate window should be centered on screen")

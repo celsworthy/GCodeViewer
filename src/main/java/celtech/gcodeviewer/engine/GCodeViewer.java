@@ -20,6 +20,7 @@ import org.lwjgl.system.*;
 import java.nio.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Path;
 import java.util.Optional;
 import libertysystems.configuration.ConfigNotLoadedException;
 
@@ -64,8 +65,8 @@ public class GCodeViewer {
         STENO.debug("Running " + PROGRAM_NAME);
         
         this.commandLineArgs = commandLineArgs;
-        configuration = GCodeViewerConfiguration.loadFromJSON();
-        guiConfiguration = GCodeViewerGUIConfiguration.loadFromJSON(commandLineArgs.projectDirectory.toString());
+        configuration = GCodeViewerConfiguration.loadFromJSON(commandLineArgs.configDirectory);
+        guiConfiguration = GCodeViewerGUIConfiguration.loadFromJSON(commandLineArgs.projectDirectory);
         
         MessageLookup.loadMessages(configuration.getApplicationInstallDirectory(),
                                    MessageLookup.getDefaultApplicationLocale(commandLineArgs.languageTag));

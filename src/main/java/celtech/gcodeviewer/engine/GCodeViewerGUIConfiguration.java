@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import libertysystems.stenographer.Stenographer;
 import libertysystems.stenographer.StenographerFactory;
 
@@ -55,17 +56,17 @@ public class GCodeViewerGUIConfiguration {
     }
 
     @JsonIgnore
-    public static GCodeViewerGUIConfiguration loadFromJSON(String projectDirectory) {
+    public static GCodeViewerGUIConfiguration loadFromJSON(Path projectDirectory) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        String configPath = projectDirectory + File.separator + GUI_CONFIG_FILE_NAME;
+        Path configPath = projectDirectory.resolve(GUI_CONFIG_FILE_NAME);
             
         GCodeViewerGUIConfiguration configuration = null;
         try {
-            configuration = objectMapper.readValue(new File(configPath), GCodeViewerGUIConfiguration.class);
+            configuration = objectMapper.readValue(configPath.toFile(), GCodeViewerGUIConfiguration.class);
         }
         catch (IOException ex) {
-            STENO.error("Couldn't load gui configuration");
+            STENO.error("Couldn't load gui configuration from \"" + configPath.toString() + "\"");
             configuration = new GCodeViewerGUIConfiguration();
         }
         return configuration;

@@ -551,4 +551,12 @@ public class RenderingEngine {
             renderParameters.setRenderRequired();
         }
     }
+
+    public boolean getHasNozzleValves() {
+        return configuration.getHasNozzleValves();
+    }
+
+    public void setHasNozzleValves(boolean hasNozzleValves) {
+        configuration.setHasNozzleValves(hasNozzleValves);
+    }
 }

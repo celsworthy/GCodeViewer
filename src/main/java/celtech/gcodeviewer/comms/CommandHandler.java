@@ -121,6 +121,19 @@ public class CommandHandler {
                                     renderingEngine.startLoadingGCodeFile(renderingEngine.getCurrentFilePath());
                                 break;
 
+                            case "nozzle-valves":
+                            case "n":
+                                if (commandScanner.hasNext()) {
+                                    String state = commandScanner.next().toUpperCase();
+                                    if (state.equals("ON")) {
+                                        renderingEngine.setHasNozzleValves(true);
+                                    }
+                                    else if (state.equals("OFF")) {
+                                        renderingEngine.setHasNozzleValves(false);
+                                    }
+                                }                                
+                                break;
+
                             case "printer":
                             case "p":
                                 String printerType = commandScanner.next().toUpperCase();
