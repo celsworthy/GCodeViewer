@@ -5,9 +5,9 @@ import static org.lwjgl.opengl.GL30.glDeleteVertexArrays;
 
 public class RawEntity {
     public static final int N_VBO_ATTRIBUTES = 8;
-    private final int vaoId;
+    private int vaoId;
     private final int vboAttributes[] = new int[N_VBO_ATTRIBUTES];
-    private final int vertexCount;
+    private int vertexCount;
     
     public RawEntity(int vaoId, int vertexCount) {
         this.vaoId = vaoId;
@@ -49,5 +49,8 @@ public class RawEntity {
                 vboAttributes[attributeNumber] = 0;
             }
         }
+        // OpenGL errors occur without this, although I don't understand why.
+        vaoId = 0;
+        vertexCount = 0;
     }
 }

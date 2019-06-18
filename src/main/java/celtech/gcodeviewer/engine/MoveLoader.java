@@ -36,6 +36,7 @@ public class MoveLoader {
     
     public void cleanUp() {
         moveEntities.stream().forEach(moveEntity -> moveEntity.cleanup());
+        moveEntities.clear();
     }
     
     private RawEntity createVAO(int nVertices) {

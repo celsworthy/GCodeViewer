@@ -87,6 +87,7 @@ public class SegmentLoader {
 
     public void cleanUp() {
         segmentEntities.stream().forEach(segment -> segment.cleanup());
+        segmentEntities.clear();
     }
     
     private RawEntity createVAO(int nVertices) {

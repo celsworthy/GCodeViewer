@@ -116,7 +116,12 @@ public class CommandHandler {
                             case "load":
                             case "lo":
                                 if (commandScanner.hasNext())
-                                    renderingEngine.startLoadingGCodeFile(commandScanner.nextLine().trim());
+                                {
+                                    String filePath = commandScanner.nextLine().trim();
+                                    if (filePath.length() > 2 && filePath.startsWith("\"") && filePath.endsWith("\""))
+                                        filePath = filePath.substring(1, filePath.length() - 1);
+                                    renderingEngine.startLoadingGCodeFile(filePath);
+                                }
                                 else
                                     renderingEngine.startLoadingGCodeFile(renderingEngine.getCurrentFilePath());
                                 break;

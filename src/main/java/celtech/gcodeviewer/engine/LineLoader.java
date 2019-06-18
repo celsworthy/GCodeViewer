@@ -29,6 +29,7 @@ public class LineLoader {
     
     public void cleanUp() {
         lineEntities.stream().forEach(lineEntity -> lineEntity.cleanup());
+        lineEntities.clear();
     }
     
     private RawEntity createVAO(int nVertices) {
