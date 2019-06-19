@@ -125,7 +125,7 @@ public class MasterRenderer {
                 angleRenderer.render(segmentEntity, camera, light, renderParameters);
         }
         
-        if (moveEntity != null && renderParameters.getShowMoves()) {
+        if (moveEntity != null && (renderParameters.getShowMoves() || renderParameters.getShowStylus())) {
             moveRenderer.render(moveEntity, camera, light, renderParameters);
         }
 

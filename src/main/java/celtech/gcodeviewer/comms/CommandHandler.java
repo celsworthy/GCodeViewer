@@ -298,6 +298,11 @@ public class CommandHandler {
                 renderParameters.setShowMoves(false);
                 break;
 
+            case "stylus":
+            case "s":
+                renderParameters.setShowStylus(false);
+                break;
+
             case "tool":
             case "t":
                 if (commandScanner.hasNextInt())
@@ -329,6 +334,11 @@ public class CommandHandler {
                 renderParameters.setShowMoves(true);
                 break;
 
+            case "stylus":
+            case "s":
+                renderParameters.setShowStylus(true);
+                break;
+                
             case "tool":
             case "t":
                 if (commandScanner.hasNextInt())

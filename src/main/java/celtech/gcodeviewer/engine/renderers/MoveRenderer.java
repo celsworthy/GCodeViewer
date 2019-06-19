@@ -39,6 +39,10 @@ public class MoveRenderer {
             MasterRenderer.checkErrors();
             shader.loadSelectColour(renderParameters.getSelectColour());
             MasterRenderer.checkErrors();
+            shader.loadStylusColour(renderParameters.getStylusColour());
+            MasterRenderer.checkErrors();
+            shader.loadStylusHeight(renderParameters.getStylusHeight());
+            MasterRenderer.checkErrors();
             shader.loadShowFlags(renderParameters.getShowFlags());
             MasterRenderer.checkErrors();
             shader.loadLayerLimits(renderParameters.getTopLayerToRender(),

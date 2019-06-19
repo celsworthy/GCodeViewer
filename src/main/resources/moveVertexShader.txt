@@ -5,9 +5,11 @@ uniform int firstSelectedLine;
 uniform int lastSelectedLine;
 uniform int topVisibleLayer;
 uniform int bottomVisibleLayer;
-uniform int showFlags; // 2 = show colour as type. 4 = show colour as data. 8 = show only selected
+uniform int showFlags; // 1 = show moves 2 = show colour as type. 4 = show colour as data. 8 = show only selected 16 = show stylus
 uniform vec3 moveColour;
 uniform vec3 selectColour;
+uniform vec3 stylusColour;
+uniform float stylusHeight;
 
 in vec3 position;
 in vec2 attributes; // x = layer, y = line
@@ -19,24 +21,21 @@ void main(void) {
 
 	if (attributes.x >= bottomVisibleLayer && attributes.x <= topVisibleLayer) {
 	
-//     	if (attributes.y >= firstSelectedLine && attributes.y < lastSelectedLine)
-//			vColour = vec4(selectColour, 1.0);
-//		else if ((showFlags & 4) == 4) // Show only selected.
-//			vColour = vec4(0.0, 0.0, 0.0, 0.0);
-//		else
-//			vColour = vec4(moveColour, 1.0);
-
-		vColour = vec4(moveColour, 1.0);
+        if ((showFlags & 16) == 16 && position.z <= stylusHeight) // Show stylus 
+            vColour = vec4(stylusColour, 1.0);
+        else if ((showFlags & 1) == 1) // Show moves
+            vColour = vec4(moveColour, 1.0);
+        else
+            vColour = vec4(0.0, 0.0, 0.0, 0.0);
+            
      	if (firstSelectedLine != lastSelectedLine &&
 			(attributes.y < firstSelectedLine || attributes.y >= lastSelectedLine)) {
 
 			if ((showFlags & 8) == 8) // Show only selected.
 				vColour = vec4(0.0, 0.0, 0.0, 0.0);
 			else
-				vColour = vec4(0.6 * moveColour, 1.0); // Make unselected things darker.
+				vColour = vec4(0.6 * vColour.rgb, vColour.a); // Make unselected things darker.
 		}
-		else
-			vColour = vec4(moveColour, 1.0);
 	}
 	else
 		vColour = vec4(0.0, 0.0, 0.0, 0.0);

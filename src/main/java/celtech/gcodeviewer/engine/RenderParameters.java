@@ -47,10 +47,13 @@ public class RenderParameters {
     private boolean showMoves = false;
     private boolean showAngles = false;
     private boolean showOnlySelected = false;
+    private boolean showStylus = false;
     private int showTools = 0xFFFF; 
     private ColourMode colourMode = ColourMode.COLOUR_AS_TYPE;
     private Vector3f moveColour = new Vector3f(0.0f, 0.0f, 0.0f);
     private Vector3f selectColour = new Vector3f(0.0f, 0.0f, 0.0f);
+    private Vector3f stylusColour = new Vector3f(0.0f, 0.0f, 0.0f);
+    private float stylusHeight = 0.0f;
     private List<Vector3f> toolColours = new ArrayList<>();
     private List<Vector3f> dataColourPalette = new ArrayList<>();
     private int showTypes = 0xFFFF; 
@@ -92,6 +95,8 @@ public class RenderParameters {
         defaultFilamentFactor = configuration.getDefaultFilamentFactor();
         toolNozzleEjectVolumes = configuration.getToolNozzleEjectVolumes();
         defaultNozzleEjectVolume = configuration.getDefaultNozzleEjectVolume();
+        stylusHeight = configuration.getStylusHeight();
+        stylusColour = configuration.getStylusColour();
     }
             
     public void setFromGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
@@ -101,6 +106,7 @@ public class RenderParameters {
         this.lastSelectedLine = guiConfiguration.getLastSelectedLine();
         this.showAngles = guiConfiguration.getShowAngles();
         this.showMoves = guiConfiguration.getShowMoves();
+        this.showStylus = guiConfiguration.getShowStylus();
         this.showOnlySelected = guiConfiguration.getShowOnlySelected();
         this.showTools = guiConfiguration.getShowTools(); 
         this.showTypes = guiConfiguration.getShowTypes(); 
@@ -114,6 +120,7 @@ public class RenderParameters {
         guiConfiguration.setLastSelectedLine(this.lastSelectedLine);
         guiConfiguration.setShowAngles(this.showAngles);
         guiConfiguration.setShowMoves(this.showMoves);
+        guiConfiguration.setShowStylus(this.showStylus);
         guiConfiguration.setShowOnlySelected(this.showOnlySelected);
         guiConfiguration.setShowTools(this.showTools); 
         guiConfiguration.setShowTypes(this.showTypes); 
@@ -256,6 +263,17 @@ public class RenderParameters {
         }
     }
 
+    public boolean getShowStylus() {
+        return showStylus;
+    }
+
+    public void setShowStylus(boolean showStylus) {
+        if (this.showStylus != showStylus) {
+            this.showStylus = showStylus;
+            renderRequired = 2;
+        }
+    }
+
     public ColourMode getColourMode() {
         return colourMode;
     }
@@ -280,11 +298,29 @@ public class RenderParameters {
         return selectColour;
     }
 
-    public void getSelectColour(Vector3f selectColour) {
+    public void setSelectColour(Vector3f selectColour) {
         this.selectColour = selectColour;
         renderRequired = 2;
     }
     
+    public Vector3f getStylusColour() {
+        return stylusColour;
+    }
+
+    public void setStylusColour(Vector3f stylusColour) {
+        this.stylusColour = stylusColour;
+        renderRequired = 2;
+    }
+
+    public float getStylusHeight() {
+        return stylusHeight;
+    }
+
+    public void setStylusHeight(float stylusHeight) {
+        this.stylusHeight = stylusHeight;
+        renderRequired = 2;
+    }
+  
     public List<Vector3f> getToolColours() {
         return toolColours;
     }
@@ -447,6 +483,10 @@ public class RenderParameters {
             
         if (showOnlySelected)
             showFlags += 8;
+
+        if (showStylus)
+            showFlags += 16;
+
         return showFlags;
     }
 

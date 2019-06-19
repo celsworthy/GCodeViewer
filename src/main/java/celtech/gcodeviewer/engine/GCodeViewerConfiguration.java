@@ -122,6 +122,10 @@ public class GCodeViewerConfiguration {
     @JsonIgnore
     private Vector3f selectColour = new Vector3f(1.0f, 1.0f, 0.0f);
     @JsonIgnore
+    private Vector3f stylusColour = new Vector3f(1.0f, 0.0f, 1.0f);
+    @JsonIgnore
+    private float stylusHeight = 0.0f;
+    @JsonIgnore
     private Vector3f defaultColour = new Vector3f(0.9882f, 0.3608f, 0.0471f);
     @JsonIgnore
     private PrintVolumeDetails defaultPrintVolumeDetails = new PrintVolumeDetails(new Vector3f(210.0f, 150.0f, 100.0f),
@@ -407,6 +411,27 @@ public class GCodeViewerConfiguration {
     public void setSelectColour(Vector3f selectColour) {
         this.selectColour = selectColour;
     }
+    
+    @JsonProperty
+    public Vector3f getStylusColour() {
+        return stylusColour;
+    }
+
+    @JsonProperty
+    public void setStylusColour(Vector3f stylusColour) {
+        this.stylusColour = stylusColour;
+    }
+    
+    @JsonProperty
+    public float getStylusHeight() {
+        return stylusHeight;
+    }
+
+    @JsonProperty
+    public void setStylusHeight(float stylusHeight) {
+        this.stylusHeight = stylusHeight;
+    }
+
 
     @JsonProperty
     public boolean getWindowAlwaysOnTop() {

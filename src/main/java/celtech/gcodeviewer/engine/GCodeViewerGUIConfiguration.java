@@ -42,6 +42,8 @@ public class GCodeViewerGUIConfiguration {
     @JsonIgnore
     private boolean showMoves = false;
     @JsonIgnore
+    private boolean showStylus = false;
+    @JsonIgnore
     private boolean showOnlySelected = false;
     @JsonIgnore
     private int showTools = 0xFFFF; 
@@ -173,6 +175,16 @@ public class GCodeViewerGUIConfiguration {
     @JsonProperty
     public void setShowMoves(boolean showMoves) {
         this.showMoves = showMoves;
+    }
+
+    @JsonProperty
+    public boolean getShowStylus() {
+        return showStylus;
+    }
+
+    @JsonProperty
+    public void setShowStylus(boolean showStylus) {
+        this.showStylus = showStylus;
     }
 
     @JsonProperty

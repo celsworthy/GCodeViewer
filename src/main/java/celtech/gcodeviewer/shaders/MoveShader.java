@@ -12,6 +12,7 @@ import org.joml.Vector3f;
  */
 public class MoveShader  extends ShaderProgram {
     private static final String VERTEX_FILE = SHADER_DIRECTORY + "moveVertexShader.txt";
+    private static final String GEOMETRY_FILE = SHADER_DIRECTORY + "moveGeometryShader.txt";
     private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "moveFragmentShader.txt";
     
     private int location_compositeMatrix;
@@ -21,13 +22,15 @@ public class MoveShader  extends ShaderProgram {
     private int location_lastSelectedLine;
     private int location_moveColour;
     private int location_selectColour;
+    private int location_stylusColour;
+    private int location_stylusHeight;
     private int location_showFlags;
     
     private Matrix4f projectionMatrix;
     private Matrix4f viewMatrix;
             
     public MoveShader() {
-        super(VERTEX_FILE, null, FRAGMENT_FILE);
+        super(VERTEX_FILE, GEOMETRY_FILE, FRAGMENT_FILE);
     }
             
     @Override
@@ -45,6 +48,8 @@ public class MoveShader  extends ShaderProgram {
         location_lastSelectedLine = super.getUniformLocation("lastSelectedLine");
         location_moveColour = super.getUniformLocation("moveColour");
         location_selectColour = super.getUniformLocation("selectColour");
+        location_stylusColour = super.getUniformLocation("stylusColour");
+        location_stylusHeight = super.getUniformLocation("stylusHeight");
         location_showFlags = super.getUniformLocation("showFlags");
     }
     
@@ -78,6 +83,14 @@ public class MoveShader  extends ShaderProgram {
 
     public void loadSelectColour(Vector3f selectColour) {
         super.loadVector3(location_selectColour, selectColour);
+    }
+
+    public void loadStylusColour(Vector3f stylusColour) {
+        super.loadVector3(location_stylusColour, stylusColour);
+    }
+
+    public void loadStylusHeight(float stylusHeight) {
+        super.loadFloat(location_stylusHeight, stylusHeight);
     }
 
     public void loadShowFlags(int showFlags) {

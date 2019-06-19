@@ -7,7 +7,7 @@
         <ApplicationDataStorageDirectory>$APPDATA_HOME$/#ApplicationConfiguration:AppFolderName#/</ApplicationDataStorageDirectory>
         <UserDataStorageDirectory>$USER_HOME$/</UserDataStorageDirectory>
         <DefaultLocaleLanguageTag>en-GB</DefaultLocaleLanguageTag>
-		<FakeInstallDirectory>D:\CEL\Dev\GCodeViewer\</FakeInstallDirectory>
+		<FakeInstallDirectory>D:\CEL\Java11\GCodeViewer\</FakeInstallDirectory>
     </ApplicationConfiguration>
     <Stenographer>
        <logfilename>#ApplicationConfiguration:ApplicationDataStorageDirectory#GCodeViewer.log</logfilename>
