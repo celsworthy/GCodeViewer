@@ -38,27 +38,31 @@ void main(void) {
 		
 	if (((showTools & toolFlag) == toolFlag) &&
 		(attributes.y >= bottomVisibleLayer && attributes.y <= topVisibleLayer)) {
-		if ((showFlags & 2) == 2) { // Colour as type
-			int type = int(attributes.x + 0.5);
-			int typeFlag = 1 << type;
-			if ((showTypes & typeFlag) == typeFlag)
-				vColour = vec4(typeColours[type].rgb, 1.0);
-			else
-				vColour = vec4(0.0, 0.0, 0.0, 0.0);
-		}
-		else if ((showFlags & 4) == 4) // Colour as data.
-			vColour = vec4(colour, 1.0);
-		else
-			vColour = vec4(toolColours[tool].rgb, 1.0);
+            if ((showFlags & 2) == 2) { // Colour as type
+                    int type = int(attributes.x + 0.5);
+                    int typeFlag = 1 << type;
+                    if ((showTypes & typeFlag) == typeFlag)
+                            vColour = vec4(typeColours[type].rgb, 1.0);
+                    else
+                            vColour = vec4(0.0, 0.0, 0.0, 0.0);
+            }
+            else if ((showFlags & 4) == 4) // Colour as data.
+                    vColour = vec4(colour, 1.0);
+            else
+                    vColour = vec4(toolColours[tool].rgb, 1.0);
 
-     	if (firstSelectedLine != lastSelectedLine &&
+            if(vColour.a >= 0.001 && (vColour.r + vColour.g + vColour.b) < 0.3) {
+                vColour.rgb += 0.2; // Make very dark items lighter
+            }
+
+            if (firstSelectedLine != lastSelectedLine &&
 			(attributes.z < firstSelectedLine || attributes.z >= lastSelectedLine)) {
 
 			if ((showFlags & 8) == 8) // Show only selected.
 				vColour = vec4(0.0, 0.0, 0.0, 0.0);
 			else
 				vColour.rgb *= 0.6; // Make unselected things darker.
-		}
+            }
 	}
 	else
 		vColour = vec4(0.0, 0.0, 0.0, 0.0);
