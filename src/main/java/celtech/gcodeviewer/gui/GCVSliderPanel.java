@@ -7,7 +7,7 @@ package celtech.gcodeviewer.gui;
 import celtech.gcodeviewer.engine.RenderParameters;
 import static celtech.gcodeviewer.engine.renderers.GUIRenderer.GUI_GCODE_PANEL_X;
 import static celtech.gcodeviewer.gui.GCVGCodePanel.GUI_GCODE_PANEL_WIDTH;
-import celtech.gcodeviewer.i18n.MessageLookup;
+import celuk.language.I18n;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
@@ -43,8 +43,8 @@ public class GCVSliderPanel {
     }
 
     public void loadMessages() {
-        topLayerMsg = MessageLookup.i18n(topLayerMsg);
-        bottomLayerMsg = MessageLookup.i18n(bottomLayerMsg);
+        topLayerMsg = I18n.t(topLayerMsg);
+        bottomLayerMsg = I18n.t(bottomLayerMsg);
     }
 
     public void setPanelExpanded(boolean panelExpanded) {

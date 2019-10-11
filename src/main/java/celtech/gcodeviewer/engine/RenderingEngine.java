@@ -9,7 +9,7 @@ import celtech.gcodeviewer.entities.Floor;
 import celtech.gcodeviewer.entities.Light;
 import celtech.gcodeviewer.entities.PrintVolume;
 import celtech.gcodeviewer.gui.GUIManager;
-import celtech.gcodeviewer.i18n.MessageLookup;
+import celuk.language.I18n;
 import java.io.File;
 import java.nio.IntBuffer;
 import java.util.Iterator;
@@ -424,7 +424,7 @@ public class RenderingEngine {
                     
                     // Update the window title with the file name.
                     File f = new File(currentFilePath);
-                    glfwSetWindowTitle(windowId, MessageLookup.i18n("window.titleWithFileName").replaceAll("#1", f.getName()));
+                    glfwSetWindowTitle(windowId, I18n.t("window.titleWithFileName").replaceAll("#1", f.getName()));
                 }
             }
             catch (RuntimeException ex)

@@ -6,7 +6,7 @@ package celtech.gcodeviewer.gui;
 
 import celtech.gcodeviewer.engine.LayerDetails;
 import celtech.gcodeviewer.engine.RenderParameters;
-import celtech.gcodeviewer.i18n.MessageLookup;
+import celuk.language.I18n;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
@@ -85,12 +85,12 @@ public class GCVGCodePanel {
     }
     
     public void loadMessages() {
-        firstSelectedMsg = MessageLookup.i18n(firstSelectedMsg);
-        lastSelectedMsg = MessageLookup.i18n(lastSelectedMsg);
-        goToLineMsg = MessageLookup.i18n(goToLineMsg);
-        goToFirstSelectedMsg = MessageLookup.i18n(goToFirstSelectedMsg);
-        goToLastSelectedMsg = MessageLookup.i18n(goToLastSelectedMsg);
-        showLineNumbersMsg = MessageLookup.i18n(showLineNumbersMsg);
+        firstSelectedMsg = I18n.t(firstSelectedMsg);
+        lastSelectedMsg = I18n.t(lastSelectedMsg);
+        goToLineMsg = I18n.t(goToLineMsg);
+        goToFirstSelectedMsg = I18n.t(goToFirstSelectedMsg);
+        goToLastSelectedMsg = I18n.t(goToLastSelectedMsg);
+        showLineNumbersMsg = I18n.t(showLineNumbersMsg);
     }
     
     public void setLines(List<String> lines) {

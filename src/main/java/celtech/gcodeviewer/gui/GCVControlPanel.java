@@ -4,7 +4,7 @@
  */
 package celtech.gcodeviewer.gui;
 
-import celtech.gcodeviewer.i18n.MessageLookup;
+import celuk.language.I18n;
 import celtech.gcodeviewer.engine.RenderParameters;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
@@ -53,12 +53,12 @@ public class GCVControlPanel {
     }
 
     public void loadMessages() {
-        resetViewMsg = MessageLookup.i18n(resetViewMsg);
-        showMovesMsg = MessageLookup.i18n(showMovesMsg);
-        showOnlySelectedMsg = MessageLookup.i18n(showOnlySelectedMsg);
-        showToolNMsg = MessageLookup.i18n(showToolNMsg);
-        colourAsTypeMsg = MessageLookup.i18n(colourAsTypeMsg);
-        frameTimeMsg = MessageLookup.i18n(frameTimeMsg);
+        resetViewMsg = I18n.t(resetViewMsg);
+        showMovesMsg = I18n.t(showMovesMsg);
+        showOnlySelectedMsg = I18n.t(showOnlySelectedMsg);
+        showToolNMsg = I18n.t(showToolNMsg);
+        colourAsTypeMsg = I18n.t(colourAsTypeMsg);
+        frameTimeMsg = I18n.t(frameTimeMsg);
     }
     
     public void setPanelExpanded(boolean panelExpanded) {
@@ -92,7 +92,7 @@ public class GCVControlPanel {
     public void setTypeList(List<String> typeList) {
         this.typeList = typeList;
         typeI18nMap.clear();
-        typeList.forEach(t -> typeI18nMap.put(t, MessageLookup.i18n(t)));
+        typeList.forEach(t -> typeI18nMap.put(t, I18n.t(t)));
     }
 
     public void layout(NkContext ctx, int x, int y, RenderParameters renderParameters) {

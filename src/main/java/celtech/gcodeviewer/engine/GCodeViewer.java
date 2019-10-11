@@ -1,11 +1,11 @@
 package celtech.gcodeviewer.engine;
 
-import celtech.gcodeviewer.i18n.MessageLookup;
 import celtech.gcodeviewer.comms.CommandHandler;
 import celtech.roboxbase.licence.Licence;
 import celtech.roboxbase.licence.LicenceType;
 import celtech.roboxbase.licence.LicenceUtilities;
 import celtech.roboxbase.licence.NoHardwareLicenceTimer;
+import celuk.language.I18n;
 import com.beust.jcommander.JCommander;
 import java.io.File;
 import java.io.InputStream;
@@ -68,8 +68,8 @@ public class GCodeViewer {
         configuration = GCodeViewerConfiguration.loadFromJSON(commandLineArgs.configDirectory);
         guiConfiguration = GCodeViewerGUIConfiguration.loadFromJSON(commandLineArgs.projectDirectory);
         
-        MessageLookup.loadMessages(configuration.getApplicationInstallDirectory(),
-                                   MessageLookup.getDefaultApplicationLocale(commandLineArgs.languageTag));
+        I18n.loadMessages(configuration.getApplicationInstallDirectory(),
+                          I18n.getDefaultApplicationLocale(commandLineArgs.languageTag));
         
         if (validateLicence())
         {
@@ -78,7 +78,7 @@ public class GCodeViewer {
             shutdown();
         }
         else
-            STENO.error(MessageLookup.i18n("GCodeViewer.NoLicence"));
+            STENO.error(I18n.t("GCodeViewer.NoLicence"));
             
         System.out.println("Goodbye!");
     }
@@ -111,7 +111,7 @@ public class GCodeViewer {
         glfwWindowHint(GLFW_RESIZABLE, (commandLineArgs.windowResizable ? GLFW_TRUE : GLFW_FALSE)); // the window will be resizable
         glfwWindowHint(GLFW_DECORATED, (commandLineArgs.windowDecorated ? GLFW_TRUE : GLFW_FALSE)); // the window will be decorated
         glfwWindowHint(GLFW_FLOATING, (commandLineArgs.windowAlwaysOnTop || configuration.getWindowAlwaysOnTop() ? GLFW_TRUE : GLFW_FALSE)); // the window will stay on top.
-        windowId = glfwCreateWindow(windowWidth, windowHeight, MessageLookup.i18n("window.title"), NULL, NULL);
+        windowId = glfwCreateWindow(windowWidth, windowHeight, I18n.t("window.title"), NULL, NULL);
         if ( windowId == NULL ) {
             throw new RuntimeException("Unable to create the GLFW window");
         }
