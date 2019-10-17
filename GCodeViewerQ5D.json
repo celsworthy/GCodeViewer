@@ -71,6 +71,9 @@
 "stylusColour":[0.5686, 0.0157, 0.2],
 "stylusHeight":0.1,
 "defaultFilamentFactor":1.0,
+"hasNozzleValves":true,
+"extruderLetterD":"D",
+"extruderLetterE":"E",
 "defaultNozzleEjectVolume":0.3,
 "toolNozzleEjectVolumes":[0.3, 0.3, 0.3, 0.3],
 "printVolumeDetailsMap":[
