@@ -82,7 +82,7 @@ public class GCodeViewerConfiguration {
             Map<String, PrintVolumeDetails> pvdMap = new HashMap<>();
             for (final JsonNode entryNode : node) {
                 JsonNode pvdNode;
-                String typeName = entryNode.get("type").asText();
+                String typeName = entryNode.get("type").asText().toUpperCase();
                 pvdNode = entryNode.get("dimensions");
                 Vector3f dimensions = new Vector3f(pvdNode.get(0).floatValue(),
                                                    pvdNode.get(1).floatValue(),
@@ -239,7 +239,7 @@ public class GCodeViewerConfiguration {
 
     @JsonIgnore
     public PrintVolumeDetails getPrintVolumeDetailsForType(String type) {
-        return printVolumeDetailsMap.getOrDefault(type, defaultPrintVolumeDetails);
+        return printVolumeDetailsMap.getOrDefault(type.trim().toUpperCase(), defaultPrintVolumeDetails);
     }
     
     @JsonIgnore

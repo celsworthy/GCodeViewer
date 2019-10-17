@@ -161,9 +161,7 @@ public class RenderingEngine {
         lineModel = modelLoader.loadToVAO(new float[]{-0.5f, 0, 0, 0.5f, 0, 0});
         
         // Set printer type to null to force load of initial printer type.
-        String initialPrinterType = printerType;
-        printerType = null;
-        setPrinterType(initialPrinterType);
+        setPrinterType(printerType);
         
         glfwSetCharCallback(windowId, (window, codepoint) -> {
             guiManager.onChar(window, codepoint);
@@ -560,8 +558,10 @@ public class RenderingEngine {
     }
     
     public void setPrinterType(String printerType) {
+        // Camera is null during initialisation, so this is a
+        // sneaky way to force the printer type to be setup.
         if (camera == null || !this.printerType.equalsIgnoreCase(printerType)) {
-            this.printerType = printerType;
+            this.printerType = printerType.toUpperCase();
             PrintVolumeDetails printVolumeDetails = configuration.getPrintVolumeDetailsForType(printerType);
             this.printVolumeWidth = printVolumeDetails.getDimensions().x();
             this.printVolumeDepth = printVolumeDetails.getDimensions().y();
