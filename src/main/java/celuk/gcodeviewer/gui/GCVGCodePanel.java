@@ -9,7 +9,6 @@ import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
-import java.text.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +24,7 @@ public class GCVGCodePanel extends GCVPanel {
 
     public static final int GUI_GCODE_PANEL_WIDTH = 550;
     public static final int GUI_GCODE_MIN_PANEL_WIDTH = 200;
+    public static final int GUI_GCODE_MIN_PANEL_HEIGHT = 200;
     public static final int GUI_GCODE_PANEL_SIDE_WIDTH = 10;
     public static final int GUI_GCODE_RESIZE_BAR_WIDTH = 5;
     public static final int GUI_GCODE_PANEL_ROW_HEIGHT = 35;
@@ -35,8 +35,12 @@ public class GCVGCodePanel extends GCVPanel {
     public static final int GUI_GCODE_PANEL_LINE_WIDTH = 80 * GUI_GCODE_PANEL_CHAR_WIDTH;
     public static final int GUI_GCODE_PANEL_CLOSED_HEIGHT = 30;
     public static final int GUI_GCODE_PANEL_TOP_HEIGHT = 82;
-    public static final int GUI_GCODE_PANEL_SCROLL_PADDING = 10;
+    public static final int GUI_GCODE_PANEL_SCROLL_BAR_HEIGHT = 30;
     public static final int GUI_GCODE_PANEL_FIDDLE_FACTOR = 10;
+    public static final int GUI_GCODE_PANEL_MAX_WIDTH = GUI_GCODE_PANEL_LINE_WIDTH
+                                                            + GUI_GCODE_RESIZE_BAR_WIDTH
+                                                            + GUI_GCODE_PANEL_SIDE_WIDTH
+                                                            + 30; // Fiddle factor to make it work.
     private static final String LINE_NUMBER_POSTFIX = " :";
 
     private String firstSelectedMsg = "gcodePanel.firstSelected";
@@ -59,11 +63,9 @@ public class GCVGCodePanel extends GCVPanel {
     boolean dragging = false;
     int dragStartLine = 0;
 
-    private int[] hOffset = new int[1];
-    private int[] vOffset = new int[1];
+    private final int[] hOffset = new int[1];
+    private final int[] vOffset = new int[1];
 
-    private int firstSelected = 0;
-    private int lastSelected = 0;
     private boolean goToLineBlank = true;
     private int goToLine = 0;
     private int topLine = 0;
@@ -71,8 +73,7 @@ public class GCVGCodePanel extends GCVPanel {
     private boolean topLineEdited = false;
     private boolean showLineNumbers = false;
     
-    private final DecimalFormat format = new DecimalFormat();
-    final NkPluginFilter numberFilter;
+    private final NkPluginFilter numberFilter;
     
     public GCVGCodePanel() {
         hOffset[0] = 0;
@@ -184,12 +185,14 @@ public class GCVGCodePanel extends GCVPanel {
             
             if (panelExpanded) {
                 float maxWidth = renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_WIDTH - 2.0f * GUI_GCODE_PANEL_X;
+                if (maxWidth > GUI_GCODE_PANEL_MAX_WIDTH)
+                    maxWidth = GUI_GCODE_PANEL_MAX_WIDTH;
                 if (expandedPanelWidth > maxWidth)
                     expandedPanelWidth = maxWidth;
                 panelWidth = expandedPanelWidth;
                 panelHeight = renderParameters.getWindowHeight() - 2 * y;
-                if (panelHeight < GUI_GCODE_MIN_PANEL_WIDTH)
-                    panelHeight = GUI_GCODE_MIN_PANEL_WIDTH;
+                if (panelHeight < GUI_GCODE_MIN_PANEL_HEIGHT)
+                    panelHeight = GUI_GCODE_MIN_PANEL_HEIGHT;
             }
             else {
                 panelWidth = GUI_GCODE_PANEL_SIDE_WIDTH + 4.0f * windowPaddingX;
@@ -226,6 +229,7 @@ public class GCVGCodePanel extends GCVPanel {
     }
     private void layoutTopRow(NkContext ctx, float width, RenderParameters renderParameters) {
         try (MemoryStack stack = stackPush()) {
+            boolean setScroll = false;
             nk_layout_row_begin(ctx, NK_STATIC, GUI_GCODE_PANEL_ROW_HEIGHT, 7); // 7 = 5 widgets + 2 dummy buttons (see layoutProperty method).
             int step = 1;
             if (renderParameters.getNumberOfLines() < 1000)
@@ -253,6 +257,7 @@ public class GCVGCodePanel extends GCVPanel {
             if (nk_button_label(ctx, goToFirstSelectedMsg) &&
                 renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
                 vOffset[0] = lineToOffset(renderParameters.getFirstSelectedLine(), true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                setScroll = true;
             }
             layoutProperty(ctx,
                            lastSelectedMsg,
@@ -267,6 +272,7 @@ public class GCVGCodePanel extends GCVPanel {
             if (nk_button_label(ctx, goToLastSelectedMsg) &&
                 renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
                 vOffset[0] = lineToOffset(renderParameters.getLastSelectedLine() - 1, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                setScroll = true;
             }
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, "*"))
@@ -302,7 +308,8 @@ public class GCVGCodePanel extends GCVPanel {
             }
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, goToLineMsg) && !goToLineBlank && lines != null) {
-                vOffset[0] = lineToOffset(goToLine, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                vOffset[0]  = lineToOffset(goToLine, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                setScroll = true;
             }
             IntBuffer checkBuffer = stack.mallocInt(1);
             checkBuffer.put(0, (showLineNumbers ? 1 : 0));
@@ -310,6 +317,10 @@ public class GCVGCodePanel extends GCVPanel {
             nk_checkbox_label(ctx, showLineNumbersMsg, checkBuffer);
             nk_layout_row_end(ctx);
             showLineNumbers = (checkBuffer.get(0) != 0);
+
+            if (setScroll) {
+                nk_group_set_scroll(ctx, "GCode", hOffset[0], vOffset[0]);
+            }
         }
     }
     
@@ -345,24 +356,49 @@ public class GCVGCodePanel extends GCVPanel {
             layoutTopRow(ctx, width, renderParameters);
             if (lines != null && layerList != null)
             {
+                nk_group_get_scroll(ctx, "GCode", hOffset, vOffset);
+                int hScroll = hOffset[0];
+                int vScroll = vOffset[0];
+                if ( vScroll < 0) {
+                    vScroll = 0;
+                    vOffset[0] = 0;
+                    nk_group_set_scroll(ctx, "GCode", hOffset[0], vOffset[0]);
+                }
+                //System.out.println("layoutLayers hScroll = " + hScroll);
+                //System.out.println("             vScroll = " + vScroll);
+
                 // Assume all the offsets in the layers have been calculated.
                 float viewHeight = (panelHeight - GUI_GCODE_PANEL_TOP_HEIGHT);
-                int viewBegin = (int)(vOffset[0] / (float)GUI_GCODE_PANEL_LINE_HEIGHT);
-                if (viewBegin < 0)
-                    viewBegin = 0;
-                int viewCount = (int)((viewHeight - GUI_GCODE_PANEL_SCROLL_PADDING) / (float)GUI_GCODE_PANEL_LINE_HEIGHT);
+                int viewBegin = (int)(vScroll / (float)GUI_GCODE_PANEL_LINE_HEIGHT);
+                int viewCount = (int)((viewHeight - GUI_GCODE_PANEL_SCROLL_BAR_HEIGHT) / (float)GUI_GCODE_PANEL_LINE_HEIGHT);
                 if (viewCount < 0)
                     viewCount = 0;
-                if (viewCount > maxOffset - viewBegin)
-                    viewCount = maxOffset - viewBegin;
 
-                int remainingHeight = (maxOffset - viewCount) * GUI_GCODE_PANEL_LINE_HEIGHT;
-
-                // Clamp the offset.
-                if ( vOffset[0] < 0)
-                     vOffset[0] = 0;
-                if (vOffset[0] > remainingHeight)
-                    vOffset[0] = remainingHeight;
+                /*
+                //Can't get this to work as the viewCount is not correct - it seems that the line height varies.
+                if (viewBegin + viewCount > maxOffset) {
+                    viewBegin = maxOffset - viewCount;
+                    if (viewBegin < 0) {
+                        viewBegin = 0;
+                        viewCount = maxOffset;
+                    }
+                    vScroll = viewBegin * GUI_GCODE_PANEL_LINE_HEIGHT;
+                    vOffset[0] = vScroll;
+                    nk_group_set_scroll(ctx, "GCode", hOffset[0], vOffset[0]);
+                }
+                //System.out.println("             adjusted vScroll = " + vScroll);
+                */
+                int totalHeight = maxOffset * GUI_GCODE_PANEL_LINE_HEIGHT;
+                int vHeight = viewCount * GUI_GCODE_PANEL_LINE_HEIGHT;
+                int remainingHeight = (maxOffset - viewBegin - viewCount) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                
+                //System.out.println("             maxOffset = " + maxOffset);
+                //System.out.println("             viewHeight = " + viewHeight);
+                //System.out.println("             totalHeight = " + totalHeight);
+                //System.out.println("             vScroll = " + vScroll);
+                //System.out.println("             viewCount = " + viewCount);
+                //System.out.println("             vHeight = " + vHeight);
+                //System.out.println("             remainingHeight = " + remainingHeight);
 
                 nk_layout_row_dynamic(ctx, viewHeight, 1);
                 NkColor textColour = NkColor.mallocStack(stack);
@@ -375,13 +411,14 @@ public class GCVGCodePanel extends GCVPanel {
                 originalTextColour.set(ctx.style().text().color());
                 int scrollShowingButtons = ctx.style().scrollv().show_buttons();
                 ctx.style().scrollv().show_buttons(1);
-                int previousVOffset = vOffset[0];
-                vOffset[0] = 0;
-                if (nk_group_scrolled_offset_begin(ctx, hOffset, vOffset, "GCode", 0)) {
-                    // This test is required to stop mouse clicks on the scroll bar being registered as
-                    // clicks on a GCode line.
-                    boolean mouseInArea = (ctx.input().mouse().pos().x() >= panelX &&
-                                           ctx.input().mouse().pos().x() <= panelX + panelWidth - 25);
+                if (nk_group_begin(ctx, "GCode", 0)) {
+                    // Allocate the area before the start of the scrolled area.
+                    // Nothing is drawn in this area as it is not visible.
+                    if (vScroll > 0)
+                    {
+                        nk_layout_row_begin(ctx, NK_STATIC, vScroll, 1);
+                        nk_layout_row_end(ctx);
+                    }
                     // Find the layer in which the view begins.
                     LayerDetails currentDetails = null;
                     int currentLayerIndex = 0;
@@ -534,8 +571,12 @@ public class GCVGCodePanel extends GCVPanel {
                     
                     lineNumberSpace = ((int)Math.floor(Math.log10(lineIndex)) + 3) * GUI_GCODE_PANEL_CHAR_WIDTH;
 
-                    vOffset[0] = vOffset[0] + previousVOffset;
-                    nk_layout_row_dynamic(ctx, remainingHeight, 1);
+                    // Allocate the remaining area. Again, nothing is drawn as it is empty or not visible.
+                    // The total allocated area dictates the size of the scroll bar slider.
+                    if (remainingHeight > 0) {
+                        nk_layout_row_begin(ctx, NK_STATIC, remainingHeight, 1);
+                        nk_layout_row_end(ctx);
+                    }
                     nk_group_end(ctx);
                 }
                 ctx.style().text().color(originalTextColour);
@@ -543,7 +584,7 @@ public class GCVGCodePanel extends GCVPanel {
             }
         }
     }
-    
+
     @Override
     protected void layoutSideButton(NkContext ctx, RenderParameters renderParameters) {
         try (MemoryStack stack = stackPush()) {
