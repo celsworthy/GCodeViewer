@@ -65,6 +65,7 @@ public class GCVGCodePanel extends GCVPanel {
 
     private final int[] hOffset = new int[1];
     private final int[] vOffset = new int[1];
+    private float lineHeight = GUI_GCODE_PANEL_LINE_HEIGHT;
 
     private boolean goToLineBlank = true;
     private int goToLine = 0;
@@ -72,8 +73,8 @@ public class GCVGCodePanel extends GCVPanel {
     private int lineNumberSpace = GUI_GCODE_PANEL_CHAR_WIDTH;
     private boolean topLineEdited = false;
     private boolean showLineNumbers = false;
-    
     private final NkPluginFilter numberFilter;
+    private boolean linesReloaded = false;
     
     public GCVGCodePanel() {
         hOffset[0] = 0;
@@ -91,11 +92,13 @@ public class GCVGCodePanel extends GCVPanel {
     }
     
     public void setLines(List<String> lines) {
+        linesReloaded = true;
         this.lines = lines;
     }
 
     public void setLayerMap(Map<Integer, LayerDetails> layerMap) {
         this.layerMap = layerMap;
+        linesReloaded = true;
         if (layerMap != null) {
             this.layerList = new ArrayList( this.layerMap.keySet());
             Collections.sort(this.layerList);
@@ -182,7 +185,7 @@ public class GCVGCodePanel extends GCVPanel {
             float windowPaddingY = ctx.style().window().padding().y();
             float groupPaddingX = ctx.style().window().group_padding().x();
             float groupPaddingY = ctx.style().window().group_padding().y();
-            
+            lineHeight = GUI_GCODE_PANEL_LINE_HEIGHT + ctx.style().window().spacing().y();
             if (panelExpanded) {
                 float maxWidth = renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_WIDTH - 2.0f * GUI_GCODE_PANEL_X;
                 if (maxWidth > GUI_GCODE_PANEL_MAX_WIDTH)
@@ -203,7 +206,16 @@ public class GCVGCodePanel extends GCVPanel {
             nk_rect(panelX, panelY, panelWidth, panelHeight, rect);
                 
             if (nk_begin(ctx, "GCode Panel", rect, NK_WINDOW_NO_SCROLLBAR)) {
-                if (panelExpanded) {
+                if (linesReloaded) {
+                    // If the lines were reloaded, then the scroll needs to be reset to the
+                    // start, otherwise it might crash trying to display non-existent lines.
+                    linesReloaded = false;
+                    vOffset[0] = 0;
+                    hOffset[0] = 0;
+                    nk_group_set_scroll(ctx, "GCode", hOffset[0], vOffset[0]);
+                }
+
+                if (panelExpanded) {                    
                     float w = rect.w() - 4.0f * windowPaddingX - GUI_GCODE_PANEL_SIDE_WIDTH - GUI_GCODE_RESIZE_BAR_WIDTH;
                     nk_layout_row_begin(ctx, NK_STATIC, rect.h() - 2.0f * windowPaddingY, 3);
                     nk_layout_row_push(ctx, GUI_GCODE_PANEL_SIDE_WIDTH);
@@ -256,7 +268,7 @@ public class GCVGCodePanel extends GCVPanel {
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, goToFirstSelectedMsg) &&
                 renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
-                vOffset[0] = lineToOffset(renderParameters.getFirstSelectedLine(), true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                vOffset[0] = Math.round(lineToOffset(renderParameters.getFirstSelectedLine(), true) * lineHeight);
                 setScroll = true;
             }
             layoutProperty(ctx,
@@ -271,7 +283,7 @@ public class GCVGCodePanel extends GCVPanel {
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, goToLastSelectedMsg) &&
                 renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
-                vOffset[0] = lineToOffset(renderParameters.getLastSelectedLine() - 1, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                vOffset[0] = Math.round(lineToOffset(renderParameters.getLastSelectedLine() - 1, true) * lineHeight);
                 setScroll = true;
             }
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
@@ -308,7 +320,7 @@ public class GCVGCodePanel extends GCVPanel {
             }
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, goToLineMsg) && !goToLineBlank && lines != null) {
-                vOffset[0]  = lineToOffset(goToLine, true) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                vOffset[0]  = Math.round(lineToOffset(goToLine, true) * lineHeight);
                 setScroll = true;
             }
             IntBuffer checkBuffer = stack.mallocInt(1);
@@ -317,7 +329,7 @@ public class GCVGCodePanel extends GCVPanel {
             nk_checkbox_label(ctx, showLineNumbersMsg, checkBuffer);
             nk_layout_row_end(ctx);
             showLineNumbers = (checkBuffer.get(0) != 0);
-
+            
             if (setScroll) {
                 nk_group_set_scroll(ctx, "GCode", hOffset[0], vOffset[0]);
             }
@@ -356,47 +368,30 @@ public class GCVGCodePanel extends GCVPanel {
             layoutTopRow(ctx, width, renderParameters);
             if (lines != null && layerList != null)
             {
+                float lineHeight = GUI_GCODE_PANEL_LINE_HEIGHT + ctx.style().window().spacing().y();
                 nk_group_get_scroll(ctx, "GCode", hOffset, vOffset);
                 int hScroll = hOffset[0];
                 int vScroll = vOffset[0];
-                if ( vScroll < 0) {
-                    vScroll = 0;
-                    vOffset[0] = 0;
-                    nk_group_set_scroll(ctx, "GCode", hOffset[0], vOffset[0]);
-                }
                 //System.out.println("layoutLayers hScroll = " + hScroll);
                 //System.out.println("             vScroll = " + vScroll);
 
                 // Assume all the offsets in the layers have been calculated.
                 float viewHeight = (panelHeight - GUI_GCODE_PANEL_TOP_HEIGHT);
-                int viewBegin = (int)(vScroll / (float)GUI_GCODE_PANEL_LINE_HEIGHT);
-                int viewCount = (int)((viewHeight - GUI_GCODE_PANEL_SCROLL_BAR_HEIGHT) / (float)GUI_GCODE_PANEL_LINE_HEIGHT);
+                int viewBegin = Math.round(vScroll / (float)lineHeight);
+                int viewCount = Math.round((viewHeight - GUI_GCODE_PANEL_SCROLL_BAR_HEIGHT) / lineHeight);
                 if (viewCount < 0)
                     viewCount = 0;
-
-                /*
-                //Can't get this to work as the viewCount is not correct - it seems that the line height varies.
-                if (viewBegin + viewCount > maxOffset) {
-                    viewBegin = maxOffset - viewCount;
-                    if (viewBegin < 0) {
-                        viewBegin = 0;
-                        viewCount = maxOffset;
-                    }
-                    vScroll = viewBegin * GUI_GCODE_PANEL_LINE_HEIGHT;
-                    vOffset[0] = vScroll;
-                    nk_group_set_scroll(ctx, "GCode", hOffset[0], vOffset[0]);
-                }
-                //System.out.println("             adjusted vScroll = " + vScroll);
-                */
-                int totalHeight = maxOffset * GUI_GCODE_PANEL_LINE_HEIGHT;
-                int vHeight = viewCount * GUI_GCODE_PANEL_LINE_HEIGHT;
-                int remainingHeight = (maxOffset - viewBegin - viewCount) * GUI_GCODE_PANEL_LINE_HEIGHT;
+                float remainingHeight = (maxOffset - viewBegin - viewCount) * lineHeight;
+                if (remainingHeight < 0.0F)
+                    remainingHeight = 0.0F;
                 
+                //float totalHeight = maxOffset * lineHeight;
+                //float vHeight = viewCount * lineHeight;
+                //System.out.println("             viewBegin = " + viewBegin);
+                //System.out.println("             viewCount = " + viewCount);
                 //System.out.println("             maxOffset = " + maxOffset);
                 //System.out.println("             viewHeight = " + viewHeight);
                 //System.out.println("             totalHeight = " + totalHeight);
-                //System.out.println("             vScroll = " + vScroll);
-                //System.out.println("             viewCount = " + viewCount);
                 //System.out.println("             vHeight = " + vHeight);
                 //System.out.println("             remainingHeight = " + remainingHeight);
 
@@ -454,7 +449,7 @@ public class GCVGCodePanel extends GCVPanel {
                             }
                         }
                         boolean mouseIsClicked = false;
-                        nk_layout_row_begin(ctx, NK_STATIC, GUI_GCODE_PANEL_LINE_HEIGHT, 2);
+                        nk_layout_row_begin(ctx, NK_STATIC, lineHeight, 2);
                         if (currentDetails != null && index == currentDetails.getStartOffset())
                         {
                             // Draw a tree entry

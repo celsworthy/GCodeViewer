@@ -360,14 +360,20 @@ public class GCodeLineParser extends BaseParser<GCodeLine>
     @SuppressSubnodes
     Rule UnsignedFloatingPointNumber()
     {
-        //Positive double e.g. 1.23
-        return Sequence(
-                    OneOrMore(Digit()),
-                    Optional(
-                        Sequence(
-                            Ch('.'),
-                            OneOrMore(Digit())
+        //unsigned double e.g. 123, 1.23 or .123
+        return FirstOf(
+                    Sequence(
+                        OneOrMore(Digit()),
+                        Optional(
+                            Sequence(
+                                Ch('.'),
+                                OneOrMore(Digit())
+                            )
                         )
+                    ),
+                    Sequence(
+                        Ch('.'),
+                        OneOrMore(Digit())
                     )
                 );
     }
