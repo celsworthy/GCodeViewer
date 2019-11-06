@@ -57,9 +57,9 @@ public class SegmentLoader {
                 return v;
             });
         storeVector4InAttributeList(segmentEntity, ANGLE_ATTRIBUTE, segments, (Entity s) -> {
-                float a = 0.01745329252f * s.getDataValue(0); // A in radians.
-                float b = 0.01745329252f * s.getDataValue(1); // B in radians.
-                Vector4f v = new Vector4f((float)Math.cos(a), (float)Math.sin(a), (float)Math.cos(b), (float)Math.sin(b));
+                float b = 0.01745329252f * s.getDataValue(Entity.DATA_B); // B in radians.
+                float c = 0.01745329252f * s.getDataValue(Entity.DATA_C); // C in radians.
+                Vector4f v = new Vector4f((float)Math.cos(b), (float)Math.sin(b), (float)Math.cos(c), (float)Math.sin(c));
                 return v;
             });
         unbindVAO();

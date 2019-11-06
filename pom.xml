@@ -6,7 +6,7 @@
     
     <groupId>celuk</groupId>
     <artifactId>GCodeViewer</artifactId>
-    <version>4.00.03</version>
+    <version>4.01.00</version>
     <packaging>jar</packaging>
     <name>GCodeViewer</name>
     

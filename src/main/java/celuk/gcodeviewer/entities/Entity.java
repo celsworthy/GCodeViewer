@@ -5,7 +5,13 @@ import org.joml.Vector3f;
 
 public class Entity {
 
-    public final static int N_DATA_VALUES = 5;
+public final static int N_DATA_VALUES = 6;
+    public final static int DATA_A = 0;
+    public final static int DATA_B = 1;
+    public final static int DATA_C = 2;
+    public final static int DATA_D = 3;
+    public final static int DATA_E = 4;
+    public final static int DATA_F = 5;
     public final static int NULL_LAYER = -9999;
     
     private RawModel model;
