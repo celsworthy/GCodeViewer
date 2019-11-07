@@ -35,6 +35,7 @@ public class GCodeLineProcessor implements GCodeConsumer
     private double previousZ = 0.0;
     private double previousA = 0.0;
     private double previousB = 0.0;
+    private double previousC = 0.0;
     private double previousD = 0.0;
     private double previousE = 0.0;
     private double previousF = 0.0;
@@ -44,6 +45,7 @@ public class GCodeLineProcessor implements GCodeConsumer
     private double currentZ = 0.0;
     private double currentA = 0.0;
     private double currentB = 0.0;
+    private double currentC = 0.0;
     private double currentD = 0.0;
     private double currentE = 0.0;
     private double currentF = 0.0;
@@ -175,6 +177,7 @@ public class GCodeLineProcessor implements GCodeConsumer
         previousZ = 0.0;
         previousA = 0.0;
         previousB = 0.0;
+        previousC = 0.0;
         previousD = 0.0;
         previousE = 0.0;
         previousF = 0.0;
@@ -184,6 +187,7 @@ public class GCodeLineProcessor implements GCodeConsumer
         currentZ = 0.0;
         currentA = 0.0;
         currentB = 0.0;
+        currentC = 0.0;
         currentD = 0.0;
         currentE = 0.0;
         currentF = 0.0;
@@ -378,6 +382,7 @@ public class GCodeLineProcessor implements GCodeConsumer
                 }
             }
         }
+        currentC = line.getValue('C', currentC);
         currentF = line.getValue('F', currentF);
         
         if (layerHeightUpdateRequired && currentZ > currentLayerHeight + MINIMUM_HEIGHT_DIFFERENCE)
@@ -411,6 +416,8 @@ public class GCodeLineProcessor implements GCodeConsumer
             currentA = 0.0;
         if (line.isValueSet('B'))
             currentB = 0.0;
+        if (line.isValueSet('C'))
+            currentC = 0.0;
         if (line.isValueSet(extruderLetterD))
             currentD = 0.0;
         if (line.isValueSet(extruderLetterE))
@@ -447,6 +454,12 @@ public class GCodeLineProcessor implements GCodeConsumer
         {
             currentB = line.getValue('B', currentB);
             previousB = currentB;
+        }
+
+        if (line.isValueSet('C'))
+        {
+            currentC = line.getValue('C', currentC);
+            previousC = currentC;
         }
 
         if (line.isValueSet(extruderLetterD))
@@ -551,11 +564,12 @@ public class GCodeLineProcessor implements GCodeConsumer
                 Vector3f typeColour = configuration.getColourForType(t);
                 entity.setTypeColour(typeColour);
                 entity.setColour(typeColour);
-                entity.setDataValue(0, (float)currentA);
-                entity.setDataValue(1, (float)currentB);
-                entity.setDataValue(2, (float)currentD);
-                entity.setDataValue(3, (float)currentE);
-                entity.setDataValue(4, (float)currentF);
+                entity.setDataValue(Entity.DATA_A, (float)currentA);
+                entity.setDataValue(Entity.DATA_B, (float)currentB);
+                entity.setDataValue(Entity.DATA_C, (float)currentC);
+                entity.setDataValue(Entity.DATA_D, (float)currentD);
+                entity.setDataValue(Entity.DATA_E, (float)currentE);
+                entity.setDataValue(Entity.DATA_F, (float)currentF);
                 segments.add(entity);
             }
             else
@@ -571,6 +585,7 @@ public class GCodeLineProcessor implements GCodeConsumer
             previousZ = currentZ;
             previousA = currentA;
             previousB = currentB;
+            previousC = currentC;
             previousD = currentD;
             previousE = currentE;
             previousF = currentF;
@@ -583,19 +598,21 @@ public class GCodeLineProcessor implements GCodeConsumer
             previousZ = currentZ;
             previousA = currentA;
             previousB = currentB;
+            previousC = currentC;
             previousD = currentD;
             previousE = currentE;
             previousF = currentF;
         }
         
-        updateDataRange(0, currentA);
-        updateDataRange(1, currentB);
-        updateDataRange(2, currentD);
-        updateDataRange(3, currentE);
-        updateDataRange(4, currentF);
-        updateDataRange(5, currentX);
-        updateDataRange(6, currentY);
-        updateDataRange(7, currentZ);
+        updateDataRange(Entity.DATA_A, currentA);
+        updateDataRange(Entity.DATA_B, currentB);
+        updateDataRange(Entity.DATA_C, currentC);
+        updateDataRange(Entity.DATA_D, currentD);
+        updateDataRange(Entity.DATA_E, currentE);
+        updateDataRange(Entity.DATA_F, currentF);
+        // updateDataRange(Entity.DATA_X, currentX);
+        // updateDataRange(Entity.DATA_Y, currentY);
+        // updateDataRange(Entity.DATA_Z, currentZ);
     }
     
     private void completeLayerDetails() {
