@@ -57,8 +57,14 @@ public class GCodeLineProcessor implements GCodeConsumer
     private int currentTool = 0;
     private Set<Integer> toolSet = new HashSet<>();
  
-    boolean relativeMoves = false;
-    private boolean relativeExtrusion = false;
+    private boolean relativeXMoves = false;
+    private boolean relativeYMoves = false;
+    private boolean relativeZMoves = false;
+    private boolean relativeAMoves = false;
+    private boolean relativeBMoves = false;
+    private boolean relativeCMoves = false;
+    private boolean relativeDMoves = false;
+    private boolean relativeEMoves = false;
     private boolean hasNozzleValves = false;
     private char extruderLetterD = 'D';
     private char extruderLetterE = 'E';
@@ -84,7 +90,8 @@ public class GCodeLineProcessor implements GCodeConsumer
         this.configuration = configuration;
         this.renderParameters = renderParameters;
         this.settingsMap = settingsMap;
-        this.relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
+        this.relativeDMoves = configuration.getRelativeExtrusionAsDefault();
+        this.relativeEMoves = configuration.getRelativeExtrusionAsDefault();
         this.hasNozzleValves = configuration.getHasNozzleValves();
         this.extruderLetterD = configuration.getExtruderLetterD();
         this.extruderLetterE = configuration.getExtruderLetterE();
@@ -201,8 +208,14 @@ public class GCodeLineProcessor implements GCodeConsumer
         currentTool = 0;
         toolSet.clear();
         
-        relativeMoves = false;
-        relativeExtrusion = configuration.getRelativeExtrusionAsDefault();
+        relativeXMoves = false;
+        relativeYMoves = false;
+        relativeZMoves = false;
+        relativeAMoves = false;
+        relativeBMoves = false;
+        relativeCMoves = false;
+        relativeDMoves = configuration.getRelativeExtrusionAsDefault();
+        relativeEMoves = configuration.getRelativeExtrusionAsDefault();
 
         currentLayer = Entity.NULL_LAYER;
         currentLayerHeight = 0;
@@ -252,11 +265,11 @@ public class GCodeLineProcessor implements GCodeConsumer
                 break;
 
             case 90:
-                relativeMoves = false; // Use absolute coordinates on X Y Z axes.
+                setRelativeMoves(line, false); // Use absolute coordinates on specified axes.
                 break;
 
             case 91:
-                relativeMoves = true; // Use relative coordinates on X Y Z axes.
+                setRelativeMoves(line, true); // Use relative coordinates on specified axes.
                 break;
 
             case 92:
@@ -274,11 +287,15 @@ public class GCodeLineProcessor implements GCodeConsumer
         switch (line.commandNumber)
         {
             case 82:
-                relativeExtrusion = false; // Use absolute coordinates on extruder axes.
+                // Use absolute coordinates on extruder axes.
+                relativeDMoves = false;
+                relativeEMoves = false;
                 break;
 
             case 83:
-                relativeExtrusion = true; // Use relative coordinates on extruder axes.
+                // Use relative coordinates on extruder axes.
+                relativeDMoves = true;
+                relativeEMoves = true;
                 break;
 
             default:
@@ -330,35 +347,44 @@ public class GCodeLineProcessor implements GCodeConsumer
     
     public void processMove(GCodeLine line)
     {
-        if (relativeMoves)
-        {
+        if (relativeAMoves)
+            currentA += line.getValue('A', 0.0);
+        else
+            currentA = line.getValue('A', currentA);
+
+        if (relativeAMoves)
+            currentC += line.getValue('C', 0.0);
+        else
+            currentC = line.getValue('C', currentC);
+        if (relativeXMoves)
             currentX += line.getValue('X', 0.0);
-            currentY += line.getValue('Y', 0.0);
-            currentZ += line.getValue('Z', 0.0);
-        }
         else
-        {
             currentX = line.getValue('X', currentX);
-            currentY = line.getValue('Y', currentY);
-            currentZ = line.getValue('Z', currentZ);
-        }
-        
-        if (relativeExtrusion)
-        {
-            currentD += line.getValue(extruderLetterD, 0.0);
-            currentE += line.getValue(extruderLetterE, 0.0);
-        }
+        if (relativeYMoves)
+            currentY += line.getValue('Y', 0.0);
         else
-        {
-            currentD = line.getValue(extruderLetterD, currentD);
-            currentE = line.getValue(extruderLetterE, currentE);
-        }
+            currentY = line.getValue('Y', currentY);
+        if (relativeZMoves)
+            currentZ += line.getValue('Z', 0.0);
+        else
+            currentZ = line.getValue('Z', currentZ);
         
-        // The rest are always absolute?
-        currentA = line.getValue('A', currentA);
+        if (relativeDMoves)
+            currentD += line.getValue(extruderLetterD, 0.0);
+        else
+            currentD = line.getValue(extruderLetterD, currentD);
+        if (relativeEMoves)
+            currentE += line.getValue(extruderLetterE, 0.0);
+        else
+            currentE = line.getValue(extruderLetterE, currentE);
+        
         if (line.isValueSet('B'))
         {
-            currentB = line.getValue('B', currentB);
+            if (relativeBMoves && !hasNozzleValves)
+                currentB += line.getValue('B', 0.0);
+            else
+                currentB = line.getValue('B', currentB);
+            
             if (hasNozzleValves)
             {
                 // Partial valve opens have a minimum open value. If the original value
@@ -382,7 +408,8 @@ public class GCodeLineProcessor implements GCodeConsumer
                 }
             }
         }
-        currentC = line.getValue('C', currentC);
+        
+        // F is always absolute?
         currentF = line.getValue('F', currentF);
         
         if (layerHeightUpdateRequired && currentZ > currentLayerHeight + MINIMUM_HEIGHT_DIFFERENCE)
@@ -479,6 +506,34 @@ public class GCodeLineProcessor implements GCodeConsumer
         }
     }
     
+    public void setRelativeMoves(GCodeLine line, boolean isRelative)
+    {
+        if (line.hasNoValues())
+        {
+            relativeXMoves = isRelative;
+            relativeYMoves = isRelative;
+            relativeZMoves = isRelative;
+        }
+        else {
+            if (line.isValueSet('X'))
+                relativeXMoves = isRelative;
+            if (line.isValueSet('Y'))
+                relativeYMoves = isRelative;
+            if (line.isValueSet('Z'))
+                relativeZMoves = isRelative;
+            if (line.isValueSet('A'))
+                relativeAMoves = isRelative;
+            if (line.isValueSet('B'))
+                relativeBMoves = isRelative;
+            if (line.isValueSet('C'))
+                relativeBMoves = isRelative;
+            if (line.isValueSet(extruderLetterD))
+                relativeDMoves = isRelative;
+            if (line.isValueSet(extruderLetterE))
+                relativeEMoves = isRelative;
+        }
+    }
+
     public void generateEntity()
     {
         double deltaB = currentB - previousB;

@@ -44,4 +44,14 @@ public class GCodeLine {
     {
         return valueMap.getOrDefault(c, defaultValue);
     }
+    
+    public boolean hasNoValues()
+    {
+        return valueMap.isEmpty();
+    }
+    
+    public Map<Character, Double> getValueMap()
+    {
+        return valueMap;
+    }
 }
