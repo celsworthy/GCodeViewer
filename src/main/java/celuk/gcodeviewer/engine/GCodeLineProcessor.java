@@ -351,19 +351,22 @@ public class GCodeLineProcessor implements GCodeConsumer
             currentA += line.getValue('A', 0.0);
         else
             currentA = line.getValue('A', currentA);
-
-        if (relativeAMoves)
+        
+        if (relativeCMoves)
             currentC += line.getValue('C', 0.0);
         else
             currentC = line.getValue('C', currentC);
+        
         if (relativeXMoves)
             currentX += line.getValue('X', 0.0);
         else
-            currentX = line.getValue('X', currentX);
+            currentX = line.getValue('X', currentX)
+                    ;
         if (relativeYMoves)
             currentY += line.getValue('Y', 0.0);
         else
             currentY = line.getValue('Y', currentY);
+        
         if (relativeZMoves)
             currentZ += line.getValue('Z', 0.0);
         else
@@ -373,6 +376,7 @@ public class GCodeLineProcessor implements GCodeConsumer
             currentD += line.getValue(extruderLetterD, 0.0);
         else
             currentD = line.getValue(extruderLetterD, currentD);
+        
         if (relativeEMoves)
             currentE += line.getValue(extruderLetterE, 0.0);
         else
@@ -526,7 +530,7 @@ public class GCodeLineProcessor implements GCodeConsumer
             if (line.isValueSet('B'))
                 relativeBMoves = isRelative;
             if (line.isValueSet('C'))
-                relativeBMoves = isRelative;
+                relativeCMoves = isRelative;
             if (line.isValueSet(extruderLetterD))
                 relativeDMoves = isRelative;
             if (line.isValueSet(extruderLetterE))
