@@ -39,8 +39,6 @@ import org.lwjgl.nuklear.NkContext;
 import org.lwjgl.nuklear.NkMouse;
 import org.lwjgl.nuklear.NkStyleButton;
 import org.lwjgl.nuklear.NkStyleEdit;
-import org.lwjgl.nuklear.NkStyleItem;
-import org.lwjgl.nuklear.NkStyleItemData;
 import org.lwjgl.nuklear.NkStyleProperty;
 import org.lwjgl.nuklear.NkStyleToggle;
 import org.lwjgl.nuklear.NkStyleWindow;

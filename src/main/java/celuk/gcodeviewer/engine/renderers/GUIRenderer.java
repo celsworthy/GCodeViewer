@@ -168,10 +168,11 @@ public class GUIRenderer {
     }
 
     public void render() {
+        renderParameters.setUseResizeCursor(false);
         controlPanel.layout(nkContext, GUI_CONTROL_PANEL_X, GUI_CONTROL_PANEL_Y, renderParameters);
         gCodePanel.layout(nkContext, GUI_GCODE_PANEL_X, GUI_GCODE_PANEL_Y, renderParameters);
         sliderPanel.layout(nkContext, GUI_SLIDER_PANEL_X, GUI_SLIDER_PANEL_Y, !gCodePanel.isPanelExpanded(), gCodePanel.getPanelWidth(), renderParameters);
- 
+    
         glEnable(GL_BLEND);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
