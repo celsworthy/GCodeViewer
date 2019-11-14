@@ -59,10 +59,12 @@ public class GCVGCodePanel extends GCVPanel {
     private List<String> lines = null;
     private Map<Integer, LayerDetails> layerMap = null;
     private List<Integer> layerList = null;
-    private int numberOfDisplayLines = 0;
+    private int totalNumberOfLines = 0;
     private int offsetToFirstLayer = 0;
-    private int displayLineOffset = 0;
-
+    private int lineOffset = 0;
+    private float totalColumnWidth = GUI_GCODE_PANEL_LINE_WIDTH;
+    private float columnOffset = 0;
+    
     boolean dragging = false;
     int dragStartLine = 0;
 
@@ -112,33 +114,33 @@ public class GCVGCodePanel extends GCVPanel {
         // using an old-school for loop because it has the
         // side effect of setting the offsets in the layer
         // details.
-        int nLinesToDisplay = 0;
+        int lineCount = 0;
         if (layerList == null || layerList.size() == 0) {
             offsetToFirstLayer = lines.size();
-            nLinesToDisplay = lines.size();
+            lineCount = lines.size();
         }
         else
         {
-            nLinesToDisplay = 0;
+            lineCount = 0;
             for (int i = 0; i < layerList.size(); ++i) {
                 int layer = layerList.get(i);
                 LayerDetails details = layerMap.get(layer);
                 if (i == 0) {
                     offsetToFirstLayer = details.getStartLine();
-                    nLinesToDisplay = offsetToFirstLayer;
+                    lineCount = offsetToFirstLayer;
                 }
-                details.setStartOffset(nLinesToDisplay);
+                details.setStartOffset(lineCount);
                 if (closeAllLayers)
                     details.setLayerOpen(false);
                 if (details.getLayerOpen())
-                    nLinesToDisplay += details.getNumberOfLines();
+                    lineCount += details.getNumberOfLines();
                 else
-                    ++nLinesToDisplay;
+                    ++lineCount;
 
-                details.setEndOffset(nLinesToDisplay);
+                details.setEndOffset(lineCount);
             }
         }
-        numberOfDisplayLines = nLinesToDisplay;
+        totalNumberOfLines = lineCount;
     }
 
     private int lineToOffset(int line, boolean autoExpand) {
@@ -211,7 +213,8 @@ public class GCVGCodePanel extends GCVPanel {
                     // If the lines were reloaded, then the scroll needs to be reset to the
                     // start, otherwise it might crash trying to display non-existent lines.
                     linesReloaded = false;
-                    displayLineOffset = 0;
+                    lineOffset = 0;
+                    columnOffset = 0.0f;
                 }
 
                 if (panelExpanded) {                    
@@ -267,7 +270,7 @@ public class GCVGCodePanel extends GCVPanel {
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, goToFirstSelectedMsg) &&
                 renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
-                displayLineOffset = lineToOffset(renderParameters.getFirstSelectedLine(), true);
+                lineOffset = lineToOffset(renderParameters.getFirstSelectedLine(), true);
             }
             layoutProperty(ctx,
                            lastSelectedMsg,
@@ -281,7 +284,7 @@ public class GCVGCodePanel extends GCVPanel {
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, goToLastSelectedMsg) &&
                 renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
-                displayLineOffset = lineToOffset(renderParameters.getLastSelectedLine() - 1, true);
+                lineOffset = lineToOffset(renderParameters.getLastSelectedLine() - 1, true);
             }
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, "*"))
@@ -317,7 +320,7 @@ public class GCVGCodePanel extends GCVPanel {
             }
             nk_layout_row_push(ctx, GUI_GCODE_PANEL_BUTTON_WIDTH);
             if (nk_button_label(ctx, goToLineMsg) && !goToLineBlank && lines != null) {
-                displayLineOffset = lineToOffset(goToLine, true);
+                lineOffset = lineToOffset(goToLine, true);
             }
             IntBuffer checkBuffer = stack.mallocInt(1);
             checkBuffer.put(0, (showLineNumbers ? 1 : 0));
@@ -357,9 +360,7 @@ public class GCVGCodePanel extends GCVPanel {
 
     private int layoutLayers(NkContext ctx, int nViewLines, RenderParameters renderParameters) {
         int nLinesShown = 0;
-        float xOffset = 0.0f; //For horizontal scrolling.
         try (MemoryStack stack = stackPush()) {
-            NkRect areaBounds = NkRect.mallocStack(stack);
             float viewHeight = nk_window_get_height(ctx);
             
             if (lines != null && layerList != null)
@@ -375,12 +376,12 @@ public class GCVGCodePanel extends GCVPanel {
                 // Find the layer in which the view begins.
                 LayerDetails currentDetails = null;
                 int currentLayerIndex = 0;
-                if (displayLineOffset >= offsetToFirstLayer)
+                if (lineOffset >= offsetToFirstLayer)
                 {
                     for (int i = 0; currentDetails == null && i < layerList.size(); ++i) {
                          LayerDetails details = layerMap.get(layerList.get(i));
-                         if (displayLineOffset >= details.getStartOffset() &&
-                             displayLineOffset < details.getEndOffset()) {
+                         if (lineOffset >= details.getStartOffset() &&
+                             lineOffset < details.getEndOffset()) {
                              currentDetails = details;
                              currentLayerIndex = i;
                          }
@@ -392,9 +393,9 @@ public class GCVGCodePanel extends GCVPanel {
                 int labelSpace = (showLineNumbers ? lineNumberSpace : GUI_GCODE_PANEL_CHAR_WIDTH);
                 int lineIndex = 0;
                 NkRect currentBounds = NkRect.mallocStack(stack);
-                currentBounds.set(xOffset, 0.0f, 0.0f, lineHeight);
+                currentBounds.set(-columnOffset, 0.0f, 0.0f, lineHeight);
                 for (int i = 0; i < nViewLines; ++i) {
-                    int index = displayLineOffset + i;
+                    int index = lineOffset + i;
                     if (index == offsetToFirstLayer &&
                         currentDetails == null &&
                         layerList != null &&
@@ -469,13 +470,14 @@ public class GCVGCodePanel extends GCVPanel {
                         }
                         nk_label(ctx, lines.get(lineIndex), NK_TEXT_LEFT);
                     }
-                    currentBounds.x(xOffset);
+                    currentBounds.x(-columnOffset);
                     currentBounds.y(currentBounds.y() + lineHeight);
                     
                     if (mouseIsClicked) {
                         // Annoyingly, mouse clicks are registered when they
                         // are in the scrolled area or in the scroll bar. The following
-                        // code checks the mouse click in the scrolled area.
+                        // code checks the mouse click is in the scrolled area.
+                        NkRect areaBounds = NkRect.mallocStack(stack);
                         nk_layout_space_bounds(ctx, areaBounds);
                         if (nk_input_has_mouse_click_in_rect(ctx.input(), NK_BUTTON_LEFT, areaBounds)) {
                             if (nk_input_is_key_down(ctx.input(), NK_KEY_SHIFT) &&
@@ -546,64 +548,83 @@ public class GCVGCodePanel extends GCVPanel {
         try (MemoryStack stack = stackPush()) {
             NkStyleScrollbar barStyle = ctx.style().scrollv();
             float barWidth = ctx.style().window().scrollbar_size().x();
-            float areaWidth = width - barWidth - ctx.style().window().group_padding().x();
-            float viewHeight = panelHeight - 2.0f * (ctx.style().window().spacing().y() + GUI_GCODE_PANEL_ROW_HEIGHT);
-            int viewLines = Math.round(viewHeight / lineHeight);
-            int maxOffset = numberOfDisplayLines - viewLines;
-            NkRect currentBounds = NkRect.mallocStack(stack);
-            currentBounds.set(0.0f, 0.0f, 0.0f, viewHeight);
+            float barHeight = ctx.style().window().scrollbar_size().y();
+            float viewWidth = width - barWidth - ctx.style().window().group_padding().x();
+            float viewHeight = panelHeight - barHeight - 2.0f * (ctx.style().window().spacing().y() + GUI_GCODE_PANEL_ROW_HEIGHT);
+            int viewLines = (int)(viewHeight / lineHeight); // Truncate so only whole lines are shown.
             nk_layout_space_begin(ctx, NK_STATIC, viewHeight, 10000);
-            currentBounds.w(areaWidth);
+            NkRect currentBounds = NkRect.mallocStack(stack);
+
+            currentBounds.set(0.0f, 0.0f, viewWidth, viewHeight);
             nk_layout_space_push(ctx, currentBounds);
             if (nk_group_begin(ctx, "ScrolledLayers", NK_WINDOW_NO_SCROLLBAR)) {
                 layoutLayers(ctx, viewLines, renderParameters);
                 nk_group_end(ctx);
             }
-            currentBounds.x(currentBounds.x() + areaWidth);
-            currentBounds.w(barWidth);
+            
+            currentBounds.set(viewWidth, 0.0f, barWidth, viewHeight);
             nk_layout_space_push(ctx, currentBounds);
-            nk_layout_row_push(ctx, barWidth);
-            float cursorHeight = 0.0f;
-            float beforeHeight = 0.0f;
-            float afterHeight = 0.0f;
-            if (maxOffset <= 0)
+            rectLocalToScreen(ctx, stack, currentBounds);
+            layoutVerticalScrollbar(ctx, currentBounds, viewLines, renderParameters);
+
+            currentBounds.set(0.0f, viewHeight, viewWidth, barHeight);
+            nk_layout_space_push(ctx, currentBounds);
+            rectLocalToScreen(ctx, stack, currentBounds);
+            layoutHorizontalScrollbar(ctx, currentBounds, viewWidth, renderParameters);
+            nk_layout_space_end(ctx);
+        }
+    }
+
+    private void rectLocalToScreen(NkContext ctx, MemoryStack stack, NkRect rect) {
+        NkVec2 v2 = NkVec2.mallocStack(stack);
+        v2.set(rect.x(), rect.y());
+        nk_layout_space_to_screen(ctx, v2);
+        rect.x(v2.x());
+        rect.y(v2.y());
+    }
+    
+    private void layoutHorizontalScrollbar(NkContext ctx, NkRect barBounds, float viewWidth, RenderParameters renderParameters) {
+        try (MemoryStack stack = stackPush()) {
+            NkStyleScrollbar barStyle = ctx.style().scrollv();
+            float maxOffset = totalColumnWidth - viewWidth;
+            float cursorWidth = 0.0f;
+            float beforeWidth = 0.0f;
+            float afterWidth = 0.0f;
+            if (maxOffset <= 0.0f)
             {
-                displayLineOffset = 0;
-                cursorHeight = viewHeight;
+                columnOffset = 0.0f;
+                cursorWidth = barBounds.w();
             }
             else
             {
-                float cursorFraction = viewLines / (float)numberOfDisplayLines;
-                cursorHeight = Math.max(cursorFraction * viewHeight, GUI_GCODE_PANEL_MIN_SCROLLBAR_SIZE);
+                float cursorFraction = viewWidth / totalColumnWidth;
+                cursorWidth = Math.max(cursorFraction * barBounds.w(), GUI_GCODE_PANEL_MIN_SCROLLBAR_SIZE);
 
-                float remainingHeight = viewHeight - cursorHeight;
-                beforeHeight = remainingHeight * (displayLineOffset / (float)maxOffset);
-                afterHeight = remainingHeight - beforeHeight;
+                float remainingWidth = barBounds.w() - cursorWidth;
+                beforeWidth = remainingWidth * columnOffset / maxOffset;
+                afterWidth = remainingWidth - beforeWidth;
             }
-            NkCommandBuffer canvas = nk_window_get_canvas(ctx);
-            NkRect widgetBounds = NkRect.mallocStack(stack);
             NkRect afterBounds = NkRect.mallocStack(stack);
             NkRect beforeBounds = NkRect.mallocStack(stack);
             NkRect cursorBounds = NkRect.mallocStack(stack);
             
-            nk_widget_bounds(ctx, widgetBounds);
-            afterBounds.set(widgetBounds.x(), widgetBounds.y() + beforeHeight + cursorHeight, widgetBounds.w(), afterHeight);
-            beforeBounds.set(widgetBounds.x(), widgetBounds.y(), widgetBounds.w(), beforeHeight);
-            cursorBounds.set(widgetBounds.x(), widgetBounds.y() + beforeHeight, widgetBounds.w(), cursorHeight);
+            beforeBounds.set(barBounds.x(), barBounds.y(), beforeWidth, barBounds.h());
+            cursorBounds.set(barBounds.x() + beforeWidth, barBounds.y(), cursorWidth, barBounds.h());
+            afterBounds.set(barBounds.x() + beforeWidth + cursorWidth, barBounds.y(), afterWidth, barBounds.h());
 
             int[] state = new int[1];
-            displayLineOffset = scrollbarBehaviour(ctx.input(),
-                                            state,
-                                            true,
-                                            widgetBounds,
-                                            cursorBounds,
-                                            beforeBounds,
-                                            afterBounds,
-                                            displayLineOffset,
-                                            numberOfDisplayLines,
-                                            viewLines,
-                                            true,
-                                            renderParameters);
+            columnOffset = scrollbarBehaviour(ctx,
+                                              state,
+                                              true,
+                                              barBounds,
+                                              cursorBounds,
+                                              beforeBounds,
+                                              afterBounds,
+                                              columnOffset,
+                                              totalColumnWidth,
+                                              viewWidth,
+                                              false,
+                                              renderParameters);
 
             NkColor backgroundColour;
             NkColor cursorColour;
@@ -621,26 +642,93 @@ public class GCVGCodePanel extends GCVPanel {
             }
             
             // Draw the background and cursor.
-            nk_fill_rect(canvas, widgetBounds, barStyle.rounding(), backgroundColour);
+            NkCommandBuffer canvas = nk_window_get_canvas(ctx);
+            nk_fill_rect(canvas, barBounds, barStyle.rounding(), backgroundColour);
             nk_fill_rect(canvas, cursorBounds, barStyle.rounding_cursor(), cursorColour);
-            nk_layout_space_end(ctx);
         }
     }
 
-    private int scrollbarBehaviour(NkInput input,
+    private void layoutVerticalScrollbar(NkContext ctx, NkRect barBounds, float viewLines, RenderParameters renderParameters) {
+        try (MemoryStack stack = stackPush()) {
+            NkStyleScrollbar barStyle = ctx.style().scrollv();
+            float maxOffset = totalNumberOfLines - viewLines;
+            float cursorHeight = 0.0f;
+            float beforeHeight = 0.0f;
+            float afterHeight = 0.0f;
+            if (maxOffset <= 0)
+            {
+                lineOffset = 0;
+                cursorHeight = barBounds.h();
+            }
+            else
+            {
+                float cursorFraction = viewLines / (float)totalNumberOfLines;
+                cursorHeight = Math.max(cursorFraction * barBounds.h(), GUI_GCODE_PANEL_MIN_SCROLLBAR_SIZE);
+
+                float remainingHeight = barBounds.h() - cursorHeight;
+                beforeHeight = remainingHeight * (lineOffset / (float)maxOffset);
+                afterHeight = remainingHeight - beforeHeight;
+            }
+            NkRect afterBounds = NkRect.mallocStack(stack);
+            NkRect beforeBounds = NkRect.mallocStack(stack);
+            NkRect cursorBounds = NkRect.mallocStack(stack);
+            
+            beforeBounds.set(barBounds.x(), barBounds.y(), barBounds.w(), beforeHeight);
+            cursorBounds.set(barBounds.x(), barBounds.y() + beforeHeight, barBounds.w(), cursorHeight);
+            afterBounds.set(barBounds.x(), barBounds.y() + beforeHeight + cursorHeight, barBounds.w(), afterHeight);
+
+            int[] state = new int[1];
+            lineOffset = Math.round(scrollbarBehaviour(ctx,
+                                                       state,
+                                                       true,
+                                                       barBounds,
+                                                       cursorBounds,
+                                                       beforeBounds,
+                                                       afterBounds,
+                                                       lineOffset,
+                                                       totalNumberOfLines,
+                                                       viewLines,
+                                                       true,
+                                                       renderParameters));
+
+            NkColor backgroundColour;
+            NkColor cursorColour;
+            if ((state[0] &  NK_WIDGET_STATE_ACTIVE) ==  NK_WIDGET_STATE_ACTIVE) {
+                backgroundColour = barStyle.active().data().color();
+                cursorColour = barStyle.cursor_active().data().color();
+            }
+            else if ((state[0] &  NK_WIDGET_STATE_HOVERED) ==  NK_WIDGET_STATE_HOVERED) {
+                backgroundColour = barStyle.hover().data().color();
+                cursorColour = barStyle.cursor_hover().data().color();
+            }
+            else {
+                backgroundColour = barStyle.normal().data().color();
+                cursorColour = barStyle.cursor_normal().data().color();
+            }
+            
+            // Draw the background and cursor.
+            NkCommandBuffer canvas = nk_window_get_canvas(ctx);
+            nk_fill_rect(canvas, barBounds, barStyle.rounding(), backgroundColour);
+            nk_fill_rect(canvas, cursorBounds, barStyle.rounding_cursor(), cursorColour);
+        }
+    }
+
+    private float scrollbarBehaviour(NkContext ctx,
                                    int[] state,
                                    boolean hasScrolling,
-                                   NkRect widgetBounds,
+                                   NkRect barBounds,
                                    NkRect cursorBounds,
                                    NkRect beforeBounds,
                                    NkRect afterBounds,
-                                   int scrollOffset,
-                                   int maxLines,
-                                   int viewLines,
+                                   float scrollOffset,
+                                   float maxSize,
+                                   float viewSize,
                                    boolean isVertical,
                                    RenderParameters renderParameters)
     {
         // Port of nk_scrollbar_behavior() from nuklear.h
+        NkInput input = ctx.input();
+        float newOffset = scrollOffset;
         if ((state[0] & NK_WIDGET_STATE_MODIFIED) == NK_WIDGET_STATE_MODIFIED)
             state[0] = NK_WIDGET_STATE_INACTIVE | NK_WIDGET_STATE_MODIFIED;
         else
@@ -652,134 +740,158 @@ public class GCVGCodePanel extends GCVPanel {
         boolean left_mouse_down = input.mouse().buttons(NK_BUTTON_LEFT).down() != 0;
         boolean left_mouse_clicked = input.mouse().buttons(NK_BUTTON_LEFT).clicked() != 0;
         boolean left_mouse_click_in_cursor = nk_input_has_mouse_click_down_in_rect(input, NK_BUTTON_LEFT, cursorBounds, 1);
-        if (nk_input_is_mouse_hovering_rect(input, widgetBounds))
+        if (nk_input_is_mouse_hovering_rect(input, barBounds))
             state[0] = NK_WIDGET_STATE_HOVERED;
 
-        boolean renderRequired = false;
-        if (maxLines <= viewLines)
+        if (maxSize <= viewSize)
             return 0;
         
-        int maxOffset = maxLines - viewLines;
+        float maxOffset = maxSize - viewSize;
         if (maxOffset < 0)
             maxOffset = 0;
         if (left_mouse_down && left_mouse_click_in_cursor && !left_mouse_clicked) {
             /* update cursor by mouse dragging */
             state[0] = NK_WIDGET_STATE_ACTIVE;
-            renderRequired = true;
             if (isVertical) {
-                if (input.mouse().pos().y() < widgetBounds.y() - 10.0f)
-                    scrollOffset = 0;
-                else if (input.mouse().pos().y() > widgetBounds.y() + widgetBounds.h() + 10.0f)
-                    scrollOffset = maxOffset;
-                else {
-                    scrollOffset += input.mouse().delta().y() * maxOffset / (widgetBounds.h() - cursorBounds.h());
-                    if (scrollOffset < 0)
-                        scrollOffset = 0;
-                    if (scrollOffset > maxOffset)
-                        scrollOffset = maxOffset;
+                if (input.mouse().pos().y() < barBounds.y() - 10.0f) {
+                    newOffset = 0.0f;
                 }
-                float cursorY = widgetBounds.y() + (scrollOffset / (float)maxOffset) * (widgetBounds.h() - cursorBounds.h());
+                else if (input.mouse().pos().y() > barBounds.y() + barBounds.h() + 10.0f) {
+                    newOffset = maxOffset;
+                }
+                else {
+                    newOffset += input.mouse().delta().y() * maxOffset / (barBounds.h() - cursorBounds.h());
+                    if (newOffset < 0)
+                        newOffset = 0;
+                    if (newOffset > maxOffset)
+                        newOffset = maxOffset;
+                }
+                float cursorY = barBounds.y() + (newOffset / (float)maxOffset) * (barBounds.h() - cursorBounds.h());
                 input.mouse().buttons(NK_BUTTON_LEFT).clicked_pos().y(cursorY + 0.5f * cursorBounds.h());
             } 
             else {
-                if (input.mouse().pos().x() < widgetBounds.x() - 10.0f)
-                    scrollOffset = 0;
-                else if (input.mouse().pos().x() > widgetBounds.x() + widgetBounds.w() + 10.0f)
-                    scrollOffset = maxOffset;
+                if (input.mouse().pos().x() < barBounds.x() - 10.0f) {
+                    newOffset = 0;
+                }
+                else if (input.mouse().pos().x() > barBounds.x() + barBounds.w() + 10.0f) {
+                    newOffset = maxOffset;
+                }
                 else {
-                    scrollOffset += input.mouse().delta().x() * maxOffset / (widgetBounds.w() - cursorBounds.w());
-                    if (scrollOffset < 0)
-                        scrollOffset = 0;
-                    if (scrollOffset > maxOffset)
-                        scrollOffset = maxOffset;
+                    newOffset += input.mouse().delta().x() * maxOffset / (barBounds.w() - cursorBounds.w());
+                    if (newOffset < 0)
+                        newOffset = 0;
+                    if (newOffset > maxOffset)
+                        newOffset = maxOffset;
                 }                
-                float cursorX = widgetBounds.x() + (scrollOffset / (float)maxOffset) * (widgetBounds.w() - cursorBounds.w());
+                float cursorX = barBounds.x() + (newOffset / (float)maxOffset) * (barBounds.w() - cursorBounds.w());
                 input.mouse().buttons(NK_BUTTON_LEFT).clicked_pos().x(cursorX + 0.5f * cursorBounds.w());
             }
         }
-        else if (hasScrolling && ((isVertical && nk_input_is_key_pressed(input, NK_KEY_UP)) ||
-                                  (!isVertical && nk_input_is_key_pressed(input, NK_KEY_LEFT)))) {
-            /* scroll page up by click on empty space or shortcut */
-            --scrollOffset;
-            if (scrollOffset < 0)
-                scrollOffset = 0;
-            renderRequired = true;
-        } 
-        else if (hasScrolling && ((isVertical && nk_input_is_key_pressed(input, NK_KEY_DOWN)) ||
-                                  (!isVertical && nk_input_is_key_pressed(input, NK_KEY_RIGHT)))) {
-            /* scroll page up by click on empty space or shortcut */
-            ++scrollOffset;
-            if (scrollOffset > maxOffset)
-                scrollOffset = maxOffset;
-            renderRequired = true;
-        } 
-        else if ((nk_input_is_key_pressed(input, NK_KEY_SCROLL_UP) && isVertical && hasScrolling) ||
-                 buttonBehaviour(dummyState, beforeBounds, input, NK_BUTTON_DEFAULT)) {
-            /* scroll page up by click on empty space or shortcut */
-            if (nk_input_is_key_down(input, NK_KEY_SHIFT))
-                --scrollOffset;
-            else if (nk_input_is_key_down(input, NK_KEY_CTRL)) {
-                // Jump to cursor position.
-                float mouseHeight = input.mouse().buttons(NK_BUTTON_LEFT).clicked_pos().y() - widgetBounds.y();
-                mouseHeight -= 0.5f * cursorBounds.h(); // Adjust height so cursor is centered on position.
-                scrollOffset = Math.round(0.5f + maxOffset * mouseHeight / (widgetBounds.h() - cursorBounds.h()));
-            }
-            else
-                scrollOffset -= viewLines;
-            if (scrollOffset < 0)
-                scrollOffset = 0;
-            renderRequired = true;
-        } 
-        else if ((nk_input_is_key_pressed(input, NK_KEY_SCROLL_DOWN) && isVertical && hasScrolling) ||
-                 buttonBehaviour(dummyState, afterBounds, input, NK_BUTTON_DEFAULT)) {
-            /* scroll page down by click on empty space or shortcut */
-            if (nk_input_is_key_down(input, NK_KEY_SHIFT))
-                ++scrollOffset;
-            else if (nk_input_is_key_down(input, NK_KEY_CTRL)) {
-                // Jump to cursor position.
-                float mouseHeight = input.mouse().buttons(NK_BUTTON_LEFT).clicked_pos().y() - widgetBounds.y();
-                mouseHeight -= 0.5f * cursorBounds.h(); // Adjust height so cursor is centered on position.
-                scrollOffset = Math.round(0.5f + maxOffset * mouseHeight / (widgetBounds.h() - cursorBounds.h()));
-            }
-            else
-                scrollOffset += viewLines;
-            if (scrollOffset > maxOffset)
-                scrollOffset = maxOffset;
-            renderRequired = true;
-        } 
-        else if (hasScrolling) {
-            float scrollDelta = (isVertical) ? input.mouse().scroll_delta().y() : input.mouse().scroll_delta().x();
-            if ((scrollDelta < 0 || (scrollDelta > 0))) {
-                int scrollStep = 10;
-                /* move cursor by mouse scrolling */
+        else if (nk_window_is_hovered(ctx)) // Only respond to keyboard or mouse clicks inside the window.
+        {
+            if ((isVertical &&
+                        (hasScrolling && nk_input_is_key_pressed(input, NK_KEY_SCROLL_UP)) ||
+                         nk_input_is_key_pressed(input, NK_KEY_UP)) ||
+                     (!isVertical && nk_input_is_key_pressed(input, NK_KEY_LEFT))) {
+                // Scroll up by keyboard.
                 if (nk_input_is_key_down(input, NK_KEY_SHIFT))
-                        scrollStep = 1;
+                    newOffset -= 1.0f;
                 else if (nk_input_is_key_down(input, NK_KEY_CTRL))
-                        scrollStep = 50;
-                
-                scrollOffset += Math.round(scrollStep * (-scrollDelta));
-                if (scrollOffset < 0)
-                    scrollOffset = 0;
-                if (scrollOffset > maxOffset)
-                    scrollOffset = maxOffset;
-            } else if (isVertical && nk_input_is_key_pressed(input, NK_KEY_SCROLL_START)) {
-                /* move cursor to the beginning  */
-                scrollOffset = 0;
-            } else if (isVertical && nk_input_is_key_pressed(input, NK_KEY_SCROLL_END)) {
-                /* move cursor to the end */
-                scrollOffset = maxOffset;
+                    newOffset -= 5.0 * viewSize;
+                else
+                    newOffset -= viewSize;
+                if (newOffset < 0)
+                    newOffset = 0;
+            } 
+            else if (buttonBehaviour(dummyState, beforeBounds, input, NK_BUTTON_DEFAULT)) {
+                // Scroll page up by click on space before cursor.
+                if (nk_input_is_key_down(input, NK_KEY_SHIFT))
+                    newOffset -= 1;
+                else if (nk_input_is_key_down(input, NK_KEY_CTRL))
+                    newOffset = scrollToMouse(input, isVertical, maxOffset, barBounds, cursorBounds);
+                else
+                    newOffset -= viewSize;
+                if (newOffset < 0)
+                    newOffset = 0;
+            }
+            else if ((isVertical &&
+                        (hasScrolling && nk_input_is_key_pressed(input, NK_KEY_SCROLL_DOWN)) ||
+                         nk_input_is_key_pressed(input, NK_KEY_DOWN)) ||
+                     (!isVertical && nk_input_is_key_pressed(input, NK_KEY_RIGHT))) {
+                // Scroll down by keyboard.
+
+                if (nk_input_is_key_down(input, NK_KEY_SHIFT))
+                    ++newOffset;
+                else if (nk_input_is_key_down(input, NK_KEY_CTRL))
+                    newOffset += 5.0 * viewSize;
+                else
+                    newOffset += viewSize;
+                if (newOffset > maxOffset)
+                    newOffset = maxOffset;
+            } 
+            else if (buttonBehaviour(dummyState, afterBounds, input, NK_BUTTON_DEFAULT)) {
+                // Scroll down by click on space after cursor.
+                if (nk_input_is_key_down(input, NK_KEY_SHIFT))
+                    newOffset += 1.0f;
+                else if (nk_input_is_key_down(input, NK_KEY_CTRL))
+                    newOffset = scrollToMouse(input, isVertical, maxOffset, barBounds, cursorBounds);
+                else
+                    newOffset += viewSize;
+                if (newOffset > maxOffset)
+                    newOffset = maxOffset;
+            } 
+            else if (hasScrolling) {
+                float scrollDelta = (isVertical) ? input.mouse().scroll_delta().y() : input.mouse().scroll_delta().x();
+                if (scrollDelta != 0.0f) {
+                    int scrollStep = 10;
+                    /* move cursor by mouse scrolling */
+                    if (nk_input_is_key_down(input, NK_KEY_SHIFT))
+                            scrollStep = 1;
+                    else if (nk_input_is_key_down(input, NK_KEY_CTRL))
+                            scrollStep = 50;
+
+                    newOffset += scrollStep * (-scrollDelta);
+                    if (newOffset < 0)
+                        newOffset = 0;
+                    if (newOffset > maxOffset)
+                        newOffset = maxOffset;
+                }
+                else if (isVertical && nk_input_is_key_pressed(input, NK_KEY_SCROLL_START)) {
+                    // Move cursor to the beginning.
+                    newOffset = 0;
+                } 
+                else if (isVertical && nk_input_is_key_pressed(input, NK_KEY_SCROLL_END)) {
+                    // Move cursor to the end.
+                    newOffset = maxOffset;
+                }
             }
         }
         if (((state[0] & NK_WIDGET_STATE_HOVER) ==  NK_WIDGET_STATE_HOVER )&&
-            !nk_input_is_mouse_prev_hovering_rect(input, widgetBounds)) {
+            !nk_input_is_mouse_prev_hovering_rect(input, barBounds)) {
             state[0] |= NK_WIDGET_STATE_ENTERED;
         }
-        else if (nk_input_is_mouse_prev_hovering_rect(input, widgetBounds))
+        else if (nk_input_is_mouse_prev_hovering_rect(input, barBounds))
             state[0] |= NK_WIDGET_STATE_LEFT;
 
-        if (renderRequired)
+        if (newOffset != scrollOffset)
             renderParameters.setRenderRequired();
 
+        return newOffset;
+    }
+    
+    private float scrollToMouse(NkInput input, boolean isVertical, float maxOffset, NkRect barBounds, NkRect cursorBounds) {
+        float scrollOffset = 0.0f;
+        if (isVertical) {
+            float mouseHeight = input.mouse().buttons(NK_BUTTON_LEFT).clicked_pos().y() - barBounds.y();
+            mouseHeight -= 0.5f * cursorBounds.h(); // Adjust height so cursor is centered on position.
+            scrollOffset = maxOffset * mouseHeight / (barBounds.h() - cursorBounds.h());
+        }
+        else {
+            float mouseWidth = input.mouse().buttons(NK_BUTTON_LEFT).clicked_pos().x() - barBounds.x();
+            mouseWidth -= 0.5f * cursorBounds.w(); // Adjust width so cursor is centered on position.
+            scrollOffset = maxOffset * mouseWidth / (barBounds.w() - cursorBounds.w());
+        }
+        
         return scrollOffset;
     }
     

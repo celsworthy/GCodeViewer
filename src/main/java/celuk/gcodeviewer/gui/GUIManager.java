@@ -504,8 +504,10 @@ public class GUIManager {
                 break;
             case GLFW_KEY_LEFT:
                 nk_input_key(nkContext, NK_KEY_LEFT, press);
+                break;
             case GLFW_KEY_RIGHT:
                 nk_input_key(nkContext, NK_KEY_RIGHT, press);
+                break;
             case GLFW_KEY_LEFT_SHIFT:
             case GLFW_KEY_RIGHT_SHIFT:
                 if (action != GLFW_REPEAT) {
