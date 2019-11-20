@@ -1,5 +1,5 @@
-set RELEASE_VERSION=4.00.02
-if not exist "%PROGUARD_HOME%" set PROGUARD_HOME=D:\Dev\proguard6.1.1
+set RELEASE_VERSION=4.01.00
+if not exist "%PROGUARD_HOME%" set PROGUARD_HOME=D:\CEL\proguard6.1.1
 if exist release rmdir /S/Q release
 mkdir release
 
@@ -11,7 +11,7 @@ robocopy /S target\lib release\lib
 
 if not exist proguard mkdir proguard
 if exist proguard\*.jar del /Y proguard\*.jar
-%JAVA_HOME%\bin\java -jar "%PROGUARD_HOME%\lib\proguard.jar" @gcodeviewer_proguard.config
+"%JAVA_HOME%\bin\java" -jar "%PROGUARD_HOME%\lib\proguard.jar" @gcodeviewer_proguard.config
 copy /Y proguard\GCodeViewerObfuscated.jar release\GCodeViewer.jar
 copy /Y proguard\Configuration-1.3Obfuscated.jar release\lib\Configuration-1.3.jar
 copy /Y proguard\Stenographer-1.10Obfuscated.jar release\lib\Stenographer-1.10.jar
