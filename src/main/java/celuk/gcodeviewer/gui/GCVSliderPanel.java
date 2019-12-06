@@ -6,11 +6,7 @@ import static celuk.gcodeviewer.engine.renderers.GUIRenderer.GUI_GCODE_PANEL_X;
 import celuk.language.I18n;
 import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
-
-import java.nio.*;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
+import java.nio.IntBuffer;
 import java.util.function.Consumer;
 
 import static org.lwjgl.nuklear.Nuklear.*;
@@ -29,17 +25,21 @@ public class GCVSliderPanel extends GCVPanel {
     public static final int GUI_SLIDER_PANEL_SIDE_WIDTH = 10;
     public static final int GUI_SLIDER_PANEL_FIDDLE_FACTOR = 10;
     
-    private String topLayerMsg = "sliderPanel.topLayer";
+    private String allLayersMsg = "sliderPanel.allLayers";
     private String bottomLayerMsg = "sliderPanel.bottomLayer";
     private String intraLayerMsg = "sliderPanel.intraLayer";
+    private String noLayersMsg = "sliderPanel.noLayers";
+    private String topLayerMsg = "sliderPanel.topLayer";
     
     public GCVSliderPanel() {
     }
 
     public void loadMessages() {
-        topLayerMsg = I18n.t(topLayerMsg);
+        allLayersMsg = I18n.t(allLayersMsg);
         bottomLayerMsg = I18n.t(bottomLayerMsg);
         intraLayerMsg = I18n.t(intraLayerMsg);
+        noLayersMsg = I18n.t(noLayersMsg);
+        topLayerMsg = I18n.t(topLayerMsg);
     }
     
     public void layout(NkContext ctx, int x, int y, boolean fullWidth, float gcodePanelWidth, RenderParameters renderParameters) {
@@ -167,9 +167,14 @@ public class GCVSliderPanel extends GCVPanel {
     private void layoutSliderTopRow(NkContext ctx,
                                     float width,
                                     RenderParameters renderParameters) {
-        nk_layout_row_begin(ctx, NK_STATIC, GUI_SLIDER_PANEL_ANNOTATION_HEIGHT, 4);
-        nk_layout_row_push(ctx, GUI_SLIDER_PANEL_TITLE_WIDTH);
-        if(nk_button_label(ctx, "*")) {
+        nk_layout_row_begin(ctx, NK_STATIC, GUI_SLIDER_PANEL_ANNOTATION_HEIGHT, 5);
+        float buttonWidth = 0.5f * GUI_SLIDER_PANEL_TITLE_WIDTH - 2.0f;
+        nk_layout_row_push(ctx, buttonWidth);
+        if(nk_button_label(ctx, noLayersMsg)) {
+            renderParameters.setNoLayersToRender();
+        }
+        nk_layout_row_push(ctx, buttonWidth);
+        if(nk_button_label(ctx, allLayersMsg)) {
             renderParameters.setAllLayersToRender();
         }
         nk_layout_row_push(ctx, GUI_SLIDER_PANEL_SLIDER_LABEL_WIDTH);

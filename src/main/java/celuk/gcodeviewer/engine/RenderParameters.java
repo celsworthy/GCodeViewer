@@ -230,6 +230,10 @@ public class RenderParameters {
         setAllLinesVisible();
     }
  
+    public void setNoLayersToRender() {
+        setNoLinesVisible();
+    }
+
     public int getNumberOfLines() {
         return numberOfLines;
     }
@@ -297,6 +301,14 @@ public class RenderParameters {
         topVisibleLine = numberOfLines - 1;
         bottomVisibleLine = 0;
         this.topLayerToRender = indexOfTopLayer;
+        this.bottomLayerToRender = indexOfBottomLayer;
+        renderRequired = 2;
+    }
+
+    public void setNoLinesVisible() {
+        topVisibleLine = 0;
+        bottomVisibleLine = 0;
+        this.topLayerToRender = indexOfBottomLayer;
         this.bottomLayerToRender = indexOfBottomLayer;
         renderRequired = 2;
     }
