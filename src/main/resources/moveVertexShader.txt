@@ -3,8 +3,8 @@
 uniform mat4 compositeMatrix;
 uniform int firstSelectedLine;
 uniform int lastSelectedLine;
-uniform int topVisibleLayer;
-uniform int bottomVisibleLayer;
+uniform int topVisibleLine;
+uniform int bottomVisibleLine;
 uniform int showFlags; // 1 = show moves 2 = show colour as type. 4 = show colour as data. 8 = show only selected 16 = show stylus
 uniform vec3 moveColour;
 uniform vec3 selectColour;
@@ -19,7 +19,7 @@ out vec4 vColour;
 void main(void) {
     gl_Position = compositeMatrix * vec4(position, 1.0);
 
-	if (attributes.x >= bottomVisibleLayer && attributes.x <= topVisibleLayer) {
+	if (attributes.y >= bottomVisibleLine && attributes.y <= topVisibleLine) {
 	
         if ((showFlags & 16) == 16 && position.z <= stylusHeight) // Show stylus 
             vColour = vec4(stylusColour, 1.0);

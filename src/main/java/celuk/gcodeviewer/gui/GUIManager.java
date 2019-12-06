@@ -70,17 +70,25 @@ public class GUIManager {
     private final GUIRenderer guiRenderer;
     
     private final ByteBuffer ttf;
+    private final RenderParameters renderParameters; 
     
     private NkContext nkContext = NkContext.create();
     private NkUserFont default_font = NkUserFont.create();
-    RenderParameters renderParameters; 
+
+    private final double animationFrameInterval;
+    private final int animationFrameStep;
+    private final int animationFastFactor;
+    private double nextFrameTime = 0.0;
     
-    public GUIManager(long windowId, boolean showAdvanceOptions, RenderParameters renderParameters) {
+    public GUIManager(long windowId, boolean showAdvanceOptions, double animationFrameInterval, int animationFrameStep, int animationFastFactor,RenderParameters renderParameters) {
         try {
             this.ttf = ioResourceToByteBuffer("/resources/FiraSans-Regular.ttf", 512 * 1024);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        this.animationFrameInterval = animationFrameInterval;
+        this.animationFrameStep = animationFrameStep;
+        this.animationFastFactor = animationFastFactor;
         this.renderParameters = renderParameters;
         setup(windowId);
         guiRenderer = new GUIRenderer(nkContext, guiShader, showAdvanceOptions, renderParameters);
@@ -389,7 +397,7 @@ public class GUIManager {
         guiRenderer.setLayerMap(layerMap);
     }
 
-    public void render() {
+public void render() {
         guiShader.start();
         guiRenderer.render();
         guiShader.stop();
@@ -566,11 +574,102 @@ public class GUIManager {
     
     public void pollEvents(long windowId) {
         nk_input_begin(nkContext);
-        if (renderParameters.getRenderRequired())
+        double currentTime = glfwGetTime();
+        boolean animating = renderParameters.getAnimationMode() != RenderParameters.AnimationMode.PAUSE;
+        if (renderParameters.getRenderRequired() || 
+                (animating && nextFrameTime <= currentTime)) {
             glfwPollEvents(); // Do not wait as we need to go around the render loop again.
-        else
+        }
+        else if (renderParameters.getAnimationMode() != RenderParameters.AnimationMode.PAUSE) {
+            glfwWaitEventsTimeout(nextFrameTime - currentTime);
+        }        
+        else {
             glfwWaitEvents();
-        
+        }        
+        currentTime = glfwGetTime();
+        if (animating) {
+            if (nextFrameTime <= currentTime) {
+                while (nextFrameTime <= currentTime)
+                    nextFrameTime +=  animationFrameInterval;
+                // IS THIS THE CORRECT PLACE FOR THIS?
+                int startLine = renderParameters.getBottomVisibleLine();
+                int endLine = renderParameters.getNumberOfLines() - 1;
+                if (renderParameters.getShowOnlySelected() &&
+                    renderParameters.getFirstSelectedLine() != renderParameters.getLastSelectedLine()) {
+                    if (startLine <  renderParameters.getFirstSelectedLine())
+                        startLine = renderParameters.getFirstSelectedLine();
+                    if (endLine > renderParameters.getLastSelectedLine())
+                        endLine = renderParameters.getLastSelectedLine();
+                    if (startLine > renderParameters.getLastSelectedLine())
+                    {
+                        // The current selection is below the bottom visible line so is not visible,
+                        renderParameters.setAnimationMode(RenderParameters.AnimationMode.PAUSE);
+                    }
+                }
+                if (renderParameters.getAnimationMode() != RenderParameters.AnimationMode.PAUSE) {
+                    int topLine = renderParameters.getTopVisibleLine();
+
+                    switch (renderParameters.getAnimationMode()) {
+                        case BACKWARD_PLAY:
+                            topLine -= animationFrameStep;
+                            break;
+
+                        case BACKWARD_FAST:
+                            if (renderParameters.getLayerMap() == null || renderParameters.getLayerMap().isEmpty()) {
+                                topLine -= animationFastFactor * animationFrameStep;
+                            }
+                            else {
+                                int layer = renderParameters.getLayerIndexForLine(topLine);
+                                if (layer > renderParameters.getIndexOfBottomLayer())
+                                    topLine = renderParameters.getLineIndexForLayer(layer - 1, true);
+                                else
+                                    topLine = startLine;
+                            }
+                            break;
+
+                        case FORWARD_PLAY:
+                            topLine += animationFrameStep;
+                            break;
+
+                        case FORWARD_FAST:
+                            if (renderParameters.getLayerMap() == null || renderParameters.getLayerMap().isEmpty()) {
+                               topLine += animationFastFactor * animationFrameStep;
+                            }
+                            else {
+                                int layer = renderParameters.getLayerIndexForLine(topLine);
+                                if (layer < renderParameters.getIndexOfTopLayer())
+                                    topLine = renderParameters.getLineIndexForLayer(layer + 1, true);
+                                else
+                                    topLine = endLine;
+                            }
+                            topLine += animationFrameStep;
+                            break;
+
+                        default:
+                            break;
+                    }
+                    if (topLine >= endLine) {
+                        topLine = endLine;
+                        if (renderParameters.getAnimationMode() == RenderParameters.AnimationMode.FORWARD_PLAY ||
+                                renderParameters.getAnimationMode() == RenderParameters.AnimationMode.FORWARD_FAST)
+                            renderParameters.setAnimationMode(RenderParameters.AnimationMode.PAUSE);
+                    }
+                    if (topLine <= startLine) {
+                        topLine = startLine;
+                        if (renderParameters.getAnimationMode() == RenderParameters.AnimationMode.BACKWARD_PLAY ||
+                                renderParameters.getAnimationMode() == RenderParameters.AnimationMode.BACKWARD_FAST)
+                            renderParameters.setAnimationMode(RenderParameters.AnimationMode.PAUSE);
+                    }
+                    if (renderParameters.getTopVisibleLine() != topLine) {
+                        renderParameters.setTopVisibleLine(topLine);
+                    }
+                }
+            }
+        }
+        else {
+           nextFrameTime = currentTime; 
+        }
+
         // This is copied from the LWJGL demo and seems to be a bit
         // of boiler plate code that hides the mouse pointer when
         // dragging.

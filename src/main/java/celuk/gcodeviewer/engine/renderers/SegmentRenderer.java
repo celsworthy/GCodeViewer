@@ -35,10 +35,10 @@ public class SegmentRenderer {
             shader.setViewMatrix(camera);
             shader.loadCompositeMatrix();
             shader.loadLight(light);
-            shader.loadLayerLimits(renderParameters.getTopLayerToRender(),
-                                   renderParameters.getBottomLayerToRender());
-            shader.loadLineLimits(renderParameters.getFirstSelectedLine(),
-                                  renderParameters.getLastSelectedLine());
+            shader.loadVisibleLimits(renderParameters.getTopVisibleLine(),
+                                     renderParameters.getBottomVisibleLine());
+            shader.loadSelectionLimits(renderParameters.getFirstSelectedLine(),
+                                       renderParameters.getLastSelectedLine());
             shader.loadShowFlags(renderParameters.getShowFlags());
             shader.loadShowTools(renderParameters.getShowTools());
             shader.loadShowTypes(renderParameters.getShowTypes());

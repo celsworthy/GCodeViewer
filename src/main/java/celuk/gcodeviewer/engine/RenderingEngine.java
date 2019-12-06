@@ -105,7 +105,6 @@ public class RenderingEngine {
     
     private double previousTime = 0.0;
     private double updateDueTime = 0.0;
-    private double averageFrameTime = 0.0;
     private double frameTimeAccumulator = 0.0;
     private int nFrames = 0;
 
@@ -135,7 +134,7 @@ public class RenderingEngine {
         commandHandler.setRenderingEngine(this);
  
         masterRenderer = new MasterRenderer(renderParameters);
-        guiManager = new GUIManager(windowId, showAdvancedOptions, renderParameters);
+        guiManager = new GUIManager(windowId, showAdvancedOptions, configuration.getAnimationFrameInterval(), configuration.getAnimationFrameStep(), configuration.getAnimationFastFactor(), renderParameters);
         guiManager.setFromGUIConfiguration(guiConfiguration);
         lineModel = null;
         
@@ -223,7 +222,22 @@ public class RenderingEngine {
                     break;                    
             }
             renderParameters.setWindowAction(RenderParameters.WindowAction.WINDOW_NO_ACTION);
+            
+            // Render the frame and update the frame timer.
+            double startTime = glfwGetTime();
             frameRendered = renderFrame();
+            if (frameRendered) {
+                double currentTime = glfwGetTime();
+                double iterationTime = currentTime - startTime;
+                frameTimeAccumulator += iterationTime;
+                ++nFrames;
+                if (currentTime > updateDueTime) {
+                    renderParameters.setFrameTime(frameTimeAccumulator / nFrames);
+                    frameTimeAccumulator = 0.0;
+                    nFrames = 0;
+                    updateDueTime = currentTime + FPS_UPDATE_INTERVAL;
+                }
+            }
             
             if (renderParameters.getLoadGCodeRequested()) {
                 renderParameters.clearLoadGCodeRequested();
@@ -252,20 +266,6 @@ public class RenderingEngine {
             if (fileLoader != null && fileLoader.loadFinished())
                 completeLoadingGCodeFile();
 
-            // Update the frame timer.
-            double currentTime = glfwGetTime();
-            double iterationTime = currentTime - previousTime;
-            previousTime = currentTime;
-            if (frameRendered) {
-                frameTimeAccumulator += iterationTime;
-                ++nFrames;
-                if (currentTime > updateDueTime) {
-                    renderParameters.setFrameTime(frameTimeAccumulator / nFrames);
-                    frameTimeAccumulator = 0.0;
-                    nFrames = 0;
-                    updateDueTime = currentTime + FPS_UPDATE_INTERVAL;
-                }
-            }
             
             // Not sure if this is strictly necessary.
             // However, if nothing is changing, this loop becomes effectively a busy wait.
@@ -447,6 +447,7 @@ public class RenderingEngine {
                     else
                         renderParameters.setIndexOfBottomLayer(0);
                     
+                    renderParameters.setLayerMap(lineProcessor.getLayerMap());
                     renderParameters.setTopLayerToRender(renderParameters.getIndexOfTopLayer());
                     renderParameters.setBottomLayerToRender(renderParameters.getIndexOfBottomLayer());
                     guiManager.setToolSet(lineProcessor.getToolSet());

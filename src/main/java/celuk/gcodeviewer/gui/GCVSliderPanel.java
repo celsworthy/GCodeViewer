@@ -1,5 +1,6 @@
 package celuk.gcodeviewer.gui;
 
+import celuk.gcodeviewer.engine.LayerDetails;
 import celuk.gcodeviewer.engine.RenderParameters;
 import static celuk.gcodeviewer.engine.renderers.GUIRenderer.GUI_GCODE_PANEL_X;
 import celuk.language.I18n;
@@ -7,6 +8,9 @@ import org.lwjgl.nuklear.*;
 import org.lwjgl.system.*;
 
 import java.nio.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.lwjgl.nuklear.Nuklear.*;
@@ -27,6 +31,7 @@ public class GCVSliderPanel extends GCVPanel {
     
     private String topLayerMsg = "sliderPanel.topLayer";
     private String bottomLayerMsg = "sliderPanel.bottomLayer";
+    private String intraLayerMsg = "sliderPanel.intraLayer";
     
     public GCVSliderPanel() {
     }
@@ -34,22 +39,28 @@ public class GCVSliderPanel extends GCVPanel {
     public void loadMessages() {
         topLayerMsg = I18n.t(topLayerMsg);
         bottomLayerMsg = I18n.t(bottomLayerMsg);
+        intraLayerMsg = I18n.t(intraLayerMsg);
     }
-
+    
     public void layout(NkContext ctx, int x, int y, boolean fullWidth, float gcodePanelWidth, RenderParameters renderParameters) {
         try (MemoryStack stack = stackPush()) {
             NkRect rect = NkRect.mallocStack(stack);
             float windowPaddingX = ctx.style().window().padding().x();
             float windowPaddingY = ctx.style().window().padding().y();
             float groupPaddingX = ctx.style().window().group_padding().x();
-            float groupPaddingY = ctx.style().window().group_padding().y();
 
             if (panelExpanded) {
                 if (fullWidth)
                     panelWidth = renderParameters.getWindowWidth() - 2.0f * x;
                 else
                     panelWidth = renderParameters.getWindowWidth() - x - 2.0f * GUI_GCODE_PANEL_X - gcodePanelWidth;
+                System.out.println("Window width = " + renderParameters.getWindowWidth());
+                System.out.println("GCode panel width = " + gcodePanelWidth);
+                System.out.println("Slider panel width = " + panelWidth);
+
                 panelHeight = GUI_SLIDER_PANEL_OPEN_HEIGHT;
+                if (!renderParameters.isLayerMapEmpty())
+                    panelHeight += GUI_SLIDER_PANEL_ROW_HEIGHT;
             }
             else {
                 panelWidth = GUI_SLIDER_PANEL_SIDE_WIDTH + 4.0f * windowPaddingX;
@@ -77,11 +88,13 @@ public class GCVSliderPanel extends GCVPanel {
                                         renderParameters.getIndexOfTopLayer(),
                                         1,
                                         renderParameters.getTopLayerToRender(),
-                                        (v) -> {
-                                            if (v < renderParameters.getBottomLayerToRender())
+                                        (layer) -> {
+                                            if (layer < renderParameters.getBottomLayerToRender()) {
                                                 renderParameters.setTopLayerToRender(renderParameters.getBottomLayerToRender());
-                                            else   
-                                                renderParameters.setTopLayerToRender(v);
+                                            }
+                                            else {
+                                                renderParameters.setTopLayerToRender(layer);
+                                            }
                                         });
                         layoutSliderRow(ctx,
                                         w,
@@ -90,12 +103,50 @@ public class GCVSliderPanel extends GCVPanel {
                                         renderParameters.getIndexOfTopLayer(),
                                         1,
                                         renderParameters.getBottomLayerToRender(),
-                                        (v) -> {
-                                            if (v > renderParameters.getTopLayerToRender())
+                                        (layer) -> {
+                                            if (layer > renderParameters.getTopLayerToRender()) {
                                                 renderParameters.setBottomLayerToRender(renderParameters.getTopLayerToRender());
-                                            else   
-                                                renderParameters.setBottomLayerToRender(v);
+                                            }
+                                            else {   
+                                                renderParameters.setBottomLayerToRender(layer);
+                                            }
                                         });
+                        
+                        int layerStartLine = 0;
+                        int layerEndLine = 0;
+                        if (!renderParameters.isLayerMapEmpty()) {
+                            LayerDetails details = renderParameters.getLayerMap().get(renderParameters.getTopLayerToRender());
+                            if (details != null) {
+                                layerStartLine = details.getStartLine();
+                                layerEndLine = details.getEndLine();
+                            }
+                            int bottomLineOfLayer = layerStartLine; // Variables used in lambda expressions have to be effectively final.
+                            int topLineOfLayer = layerEndLine;
+                            layoutSliderRow(ctx,
+                                            w,
+                                            intraLayerMsg,
+                                            bottomLineOfLayer,
+                                            topLineOfLayer,
+                                            1,
+                                            renderParameters.getTopVisibleLine(),
+                                            (line) -> {
+                                                System.out.println("Layer slider: line = " + line);
+                                                System.out.println(" topLayerToRender = " + renderParameters.getTopLayerToRender());
+                                                System.out.println(" bottomVisibleLine = " + renderParameters.getBottomVisibleLine());
+                                                System.out.println(" topVisibleLine = " + renderParameters.getTopVisibleLine());
+                                                int topVisibleLine = line;
+                                                if (topVisibleLine > topLineOfLayer) {
+                                                    topVisibleLine = topLineOfLayer;
+                                                }
+                                                if (topVisibleLine < bottomLineOfLayer) {
+                                                    topVisibleLine = bottomLineOfLayer;
+                                                }
+                                                System.out.println(" bottomLineOfLayer = " + bottomLineOfLayer);
+                                                System.out.println(" topVisibleLine = " + topVisibleLine);
+                                                System.out.println(" topLineOfLayer = " + topLineOfLayer);
+                                                renderParameters.setTopVisibleLine(topVisibleLine);
+                                            });
+                        }
                         nk_group_end(ctx);
                     }
                     nk_layout_row_push(ctx, GUI_SLIDER_PANEL_SIDE_WIDTH);
@@ -147,7 +198,9 @@ public class GCVSliderPanel extends GCVPanel {
             float groupWidth = width - GUI_SLIDER_PANEL_TITLE_WIDTH - 6.0f * ctx.style().window().group_padding().x();
             nk_layout_row_push(ctx, groupWidth);
             nk_slider_int(ctx, minValue, valueBuffer, maxValue, step);
-            setValue.accept(valueBuffer.get(0));
+            int newValue = valueBuffer.get(0);
+            if (newValue != currentValue)
+                setValue.accept(newValue);
         }
         nk_layout_row_end(ctx);
     }

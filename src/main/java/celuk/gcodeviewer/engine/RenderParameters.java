@@ -33,6 +33,15 @@ public class RenderParameters {
         WINDOW_RESTORE,
         WINDOW_SHOW
     }
+
+    public static enum AnimationMode {
+        PAUSE,
+        FORWARD_PLAY,
+        FORWARD_FAST,
+        BACKWARD_PLAY,
+        BACKWARD_FAST
+    }
+
     public static int MAX_NUMBER_OF_TOOLS = 16;
      
     private int indexOfTopLayer = 0;
@@ -43,11 +52,14 @@ public class RenderParameters {
     private int numberOfLines = 0;
     private int firstSelectedLine = 0;
     private int lastSelectedLine = 0;
+    private int topVisibleLine = 0;
+    private int bottomVisibleLine = 0;
     
     private boolean showMoves = false;
     private boolean showAngles = false;
     private boolean showOnlySelected = false;
     private boolean showStylus = false;
+    private AnimationMode animationMode = AnimationMode.PAUSE;
     private int showTools = 0xFFFF; 
     private ColourMode colourMode = ColourMode.COLOUR_AS_TYPE;
     private Vector3f moveColour = new Vector3f(0.0f, 0.0f, 0.0f);
@@ -78,7 +90,8 @@ public class RenderParameters {
     private boolean reloadGCodeRequested = false;
     private boolean useResizeCursor = false;
     private WindowAction windowAction = WindowAction.WINDOW_NO_ACTION;
-    
+    private Map<Integer, LayerDetails> layerMap = null;
+
     // Nuklear GUI requires 2 renders to update properly - the first updates the state
     // the second updates the GUI. Easy way to do this is it always set the render flag
     // to 2, and decrement by one when cleared.
@@ -105,6 +118,8 @@ public class RenderParameters {
     public void setFromGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
         this.topLayerToRender = guiConfiguration.getTopLayerToRender();
         this.bottomLayerToRender = guiConfiguration.getBottomLayerToRender();
+        this.topVisibleLine = guiConfiguration.getTopVisibleLine();
+        this.bottomVisibleLine = guiConfiguration.getBottomVisibleLine();
         this.firstSelectedLine = guiConfiguration.getFirstSelectedLine();
         this.lastSelectedLine = guiConfiguration.getLastSelectedLine();
         this.showAngles = guiConfiguration.getShowAngles();
@@ -118,7 +133,9 @@ public class RenderParameters {
 
     public void saveToGUIConfiguration(GCodeViewerGUIConfiguration guiConfiguration) {
         guiConfiguration.setTopLayerToRender(this.topLayerToRender);
-        guiConfiguration.setBottomLayerToRender(this.bottomLayerToRender);
+        guiConfiguration.setTopVisibleLine(this.topVisibleLine);
+        guiConfiguration.setBottomVisibleLine(this.bottomVisibleLine);
+        guiConfiguration.setLastSelectedLine(this.lastSelectedLine);
         guiConfiguration.setFirstSelectedLine(this.firstSelectedLine);
         guiConfiguration.setLastSelectedLine(this.lastSelectedLine);
         guiConfiguration.setShowAngles(this.showAngles);
@@ -141,6 +158,14 @@ public class RenderParameters {
         bottomLayerToRender = 0;
         frameTime = 0.0;
         renderRequired = 2;
+    }
+
+    public Map<Integer, LayerDetails> getLayerMap() {
+        return layerMap;
+    }
+
+    public void setLayerMap(Map<Integer, LayerDetails> layerMap) {
+        this.layerMap = layerMap;
     }
 
     public int getIndexOfTopLayer() {
@@ -171,6 +196,12 @@ public class RenderParameters {
                 this.topLayerToRender = topLayerToRender;
             else
                 this.topLayerToRender = this.bottomLayerToRender;
+            this.topVisibleLine = this.topLayerToRender;
+            if (this.layerMap != null && !layerMap.isEmpty()) {
+                LayerDetails details = layerMap.get(this.topLayerToRender);
+                if (details != null)
+                    this.topVisibleLine =  details.getEndLine();
+            }
             renderRequired = 2;
         }
     }
@@ -185,14 +216,18 @@ public class RenderParameters {
                 this.bottomLayerToRender = bottomLayerToRender;
             else
                 this.bottomLayerToRender = this.topLayerToRender;
+            this.bottomVisibleLine = this.bottomLayerToRender;
+            if (this.layerMap != null && !layerMap.isEmpty()) {
+                LayerDetails details = layerMap.get(this.bottomLayerToRender);
+                if (details != null)
+                    this.bottomVisibleLine =  details.getStartLine();
+            }
             renderRequired = 2;
         }
     }
 
     public void setAllLayersToRender() {
-        topLayerToRender = indexOfTopLayer;
-        bottomLayerToRender = indexOfBottomLayer;
-        renderRequired = 2;
+        setAllLinesVisible();
     }
  
     public int getNumberOfLines() {
@@ -231,6 +266,39 @@ public class RenderParameters {
             renderRequired = 2;
         firstSelectedLine = 0;
         lastSelectedLine = 0;
+    }
+
+	public int getTopVisibleLine() {
+        return topVisibleLine;
+    }
+
+    public void setTopVisibleLine(int topVisibleLine) {
+        if (this.topVisibleLine != topVisibleLine) {
+            this.topVisibleLine = topVisibleLine;
+            this.topLayerToRender = getLayerIndexForLine(this.topVisibleLine);
+            renderRequired = 2;
+        }
+    }
+
+    public int getBottomVisibleLine() {
+        return bottomVisibleLine;
+    }
+
+    public void setBottomVisibleLine(int bottomVisibleLine) {
+        if (this.bottomVisibleLine != bottomVisibleLine) {
+            this.bottomVisibleLine = bottomVisibleLine;
+            this.bottomLayerToRender = getLayerIndexForLine(this.bottomVisibleLine);
+
+            renderRequired = 2;
+        }
+    }
+
+    public void setAllLinesVisible() {
+        topVisibleLine = numberOfLines - 1;
+        bottomVisibleLine = 0;
+        this.topLayerToRender = indexOfTopLayer;
+        this.bottomLayerToRender = indexOfBottomLayer;
+        renderRequired = 2;
     }
 
     public boolean getShowAngles() {
@@ -273,6 +341,17 @@ public class RenderParameters {
     public void setShowStylus(boolean showStylus) {
         if (this.showStylus != showStylus) {
             this.showStylus = showStylus;
+            renderRequired = 2;
+        }
+    }
+
+    public AnimationMode getAnimationMode() {
+        return animationMode;
+    }
+
+    public void setAnimationMode(AnimationMode mode) {
+        if (this.animationMode != mode) {
+            this.animationMode = mode;
             renderRequired = 2;
         }
     }
@@ -737,5 +816,33 @@ public class RenderParameters {
 
     public boolean getRenderRequired() {
         return renderRequired > 0;
+    }
+    
+    public boolean isLayerMapEmpty() {
+        return (layerMap == null || layerMap.isEmpty());
+    }
+
+    public int getLayerIndexForLine(int lineIndex) {
+        int index = lineIndex;
+        if (!isLayerMapEmpty()) {
+            for (int layerIndex = getIndexOfBottomLayer(); layerIndex <= this.getIndexOfTopLayer(); ++layerIndex) {
+                LayerDetails details = layerMap.get(layerIndex);
+                if (details != null && details.getStartLine() <= lineIndex && details.getEndLine() >= lineIndex) {
+                    index = layerIndex;
+                    break;
+                }
+            }
+        }
+        return index;
+    }
+
+    public int getLineIndexForLayer(int layerIndex, boolean startLine) {
+        int index = layerIndex;
+        if (!isLayerMapEmpty()) {
+            LayerDetails details = layerMap.get(layerIndex);
+            if (details != null)
+                index = startLine ? details.getStartLine() : details.getEndLine();
+        }
+        return index;
     }
 }

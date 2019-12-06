@@ -33,6 +33,10 @@ public class GCodeViewerGUIConfiguration {
     @JsonIgnore
     private int bottomLayerToRender = 0;
     @JsonIgnore
+    private int topVisibleLine = 0;
+    @JsonIgnore
+    private int bottomVisibleLine = 0;
+    @JsonIgnore
     private int firstSelectedLine = 0;
     @JsonIgnore
     private int lastSelectedLine = 0;
@@ -135,6 +139,26 @@ public class GCodeViewerGUIConfiguration {
     @JsonProperty
     public void setBottomLayerToRender(int bottomLayerToRender) {
         this.bottomLayerToRender = bottomLayerToRender;
+    }
+
+    @JsonProperty
+    public int getTopVisibleLine() {
+        return topVisibleLine;
+    }
+
+    @JsonProperty
+    public void setTopVisibleLine(int topVisibleLine) {
+        this.topVisibleLine = topVisibleLine;
+    }
+
+    @JsonProperty
+    public int getBottomVisibleLine() {
+        return bottomVisibleLine;
+    }
+
+    @JsonProperty
+    public void setBottomVisibleLine(int bottomVisibleLine) {
+        this.bottomVisibleLine = bottomVisibleLine;
     }
 
     @JsonProperty

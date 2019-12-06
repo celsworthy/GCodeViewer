@@ -150,6 +150,12 @@ public class GCodeViewerConfiguration {
     @JsonIgnore
     private char extruderLetterE = 'E';
     @JsonIgnore
+    private double animationFrameInterval = 0.01;
+    @JsonIgnore
+    private int animationFrameStep = 1;
+    @JsonIgnore
+    private int animationFastFactor = 100;
+    @JsonIgnore
     private boolean windowAlwaysOnTop = false;
     
     GCodeViewerConfiguration() {
@@ -470,6 +476,35 @@ public class GCodeViewerConfiguration {
         this.stylusHeight = stylusHeight;
     }
 
+    @JsonProperty
+    public double getAnimationFrameInterval() {
+        return animationFrameInterval;
+    }
+
+    @JsonProperty
+    public void setAnimationFrameInterval(double animationFrameInterval) {
+        this.animationFrameInterval = animationFrameInterval;
+    }
+    
+    @JsonProperty
+    public int getAnimationFrameStep() {
+        return animationFrameStep;
+    }
+
+    @JsonProperty
+    public void setAnimationFrameStep(int animationFrameStep) {
+        this.animationFrameStep = animationFrameStep;
+    }
+
+    @JsonProperty
+    public int getAnimationFastFactor() {
+        return animationFastFactor;
+    }
+
+    @JsonProperty
+    public void setAnimationFastFactor(int animationFastFactor) {
+        this.animationFastFactor = animationFastFactor;
+    }
 
     @JsonProperty
     public boolean getWindowAlwaysOnTop() {

@@ -187,14 +187,20 @@ public class GCVGCodePanel extends GCVPanel {
             float windowPaddingX = ctx.style().window().padding().x();
             float windowPaddingY = ctx.style().window().padding().y();
             float groupPaddingX = ctx.style().window().group_padding().x();
-            float groupPaddingY = ctx.style().window().group_padding().y();
             lineHeight = GUI_GCODE_PANEL_LINE_HEIGHT + ctx.style().window().spacing().y();
             if (panelExpanded) {
-                float maxWidth = renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_WIDTH - 2.0f * GUI_GCODE_PANEL_X;
-                if (maxWidth > GUI_GCODE_PANEL_MAX_WIDTH)
-                    maxWidth = GUI_GCODE_PANEL_MAX_WIDTH;
-                if (expandedPanelWidth > maxWidth)
-                    expandedPanelWidth = maxWidth;
+                // It seems that we can get thro
+                if (renderParameters.getWindowWidth() > 0) {
+                    // It seems this called at least once when the window has been iconised so is
+                    // zero width, which caused the panel to shrink.
+                    float maxWidth = renderParameters.getWindowWidth() - GUI_CONTROL_PANEL_WIDTH - 2.0f * GUI_GCODE_PANEL_X;
+                    if (maxWidth > GUI_GCODE_PANEL_MAX_WIDTH)
+                        maxWidth = GUI_GCODE_PANEL_MAX_WIDTH;
+                    if (maxWidth < GUI_GCODE_MIN_PANEL_WIDTH)
+                        maxWidth = GUI_GCODE_MIN_PANEL_WIDTH;
+                    if (expandedPanelWidth < GUI_GCODE_MIN_PANEL_WIDTH || expandedPanelWidth > maxWidth)
+                        expandedPanelWidth = maxWidth;
+                }
                 panelWidth = expandedPanelWidth;
                 panelHeight = renderParameters.getWindowHeight() - 2 * y;
                 if (panelHeight < GUI_GCODE_MIN_PANEL_HEIGHT)

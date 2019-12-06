@@ -16,8 +16,8 @@ public class MoveShader  extends ShaderProgram {
     private static final String FRAGMENT_FILE = SHADER_DIRECTORY + "moveFragmentShader.txt";
     
     private int location_compositeMatrix;
-    private int location_topVisibleLayer;
-    private int location_bottomVisibleLayer;
+    private int location_topVisibleLine;
+    private int location_bottomVisibleLine;
     private int location_firstSelectedLine;
     private int location_lastSelectedLine;
     private int location_moveColour;
@@ -42,8 +42,8 @@ public class MoveShader  extends ShaderProgram {
     @Override
     protected void getAllUniformLocations() {
         location_compositeMatrix = super.getUniformLocation("compositeMatrix");
-        location_topVisibleLayer = super.getUniformLocation("topVisibleLayer");
-        location_bottomVisibleLayer = super.getUniformLocation("bottomVisibleLayer");
+        location_topVisibleLine = super.getUniformLocation("topVisibleLine");
+        location_bottomVisibleLine = super.getUniformLocation("bottomVisibleLine");
         location_firstSelectedLine = super.getUniformLocation("firstSelectedLine");
         location_lastSelectedLine = super.getUniformLocation("lastSelectedLine");
         location_moveColour = super.getUniformLocation("moveColour");
@@ -67,12 +67,12 @@ public class MoveShader  extends ShaderProgram {
         super.loadMatrix(location_compositeMatrix, composite);
     }
         
-    public void loadLayerLimits(int topVisibleLayer, int bottomVisibleLayer) {
-        super.loadInt(location_topVisibleLayer, topVisibleLayer);
-        super.loadInt(location_bottomVisibleLayer, bottomVisibleLayer);
+    public void loadVisibleLimits(int topVisibleLine, int bottomVisibleLine) {
+        super.loadInt(location_topVisibleLine, topVisibleLine);
+        super.loadInt(location_bottomVisibleLine, bottomVisibleLine);
     }
 
-    public void loadLineLimits(int firstSelectedLine, int lastSelectedLine) {
+    public void loadSelectionLimits(int firstSelectedLine, int lastSelectedLine) {
         super.loadInt(location_firstSelectedLine, firstSelectedLine);
         super.loadInt(location_lastSelectedLine, lastSelectedLine);
     }
