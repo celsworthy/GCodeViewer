@@ -22,11 +22,11 @@ public class GCodeViewerGUIConfiguration {
     private static final Stenographer STENO = StenographerFactory.getStenographer(GCodeViewerGUIConfiguration.class.getName());
     
     @JsonIgnore
-    private boolean sliderPanelExpanded = false;
+    private boolean sliderPanelExpanded = true; // Open by default.
     @JsonIgnore
-    private boolean gCodePanelExpanded = false;
+    private boolean gCodePanelExpanded = false; // Closed by default.
     @JsonIgnore
-    private boolean controlPanelExpanded = false;
+    private boolean controlPanelExpanded = true; // Open by default.
 
     @JsonIgnore
     private int topLayerToRender = 0;
