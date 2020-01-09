@@ -21,22 +21,22 @@ import org.lwjgl.nuklear.NkColor;
 public class GCVControlPanel extends GCVPanel {
 
     // These values are used GUI GCVControlPanel.
-    public static final int GUI_CONTROL_PANEL_WIDTH = 260;
-    public static final int GUI_CONTROL_PANEL_OPEN_HEIGHT = 265;
+    public static final int GUI_CONTROL_PANEL_WIDTH = 270;
+    public static final int GUI_CONTROL_PANEL_OPEN_HEIGHT = 300;
     public static final int GUI_CONTROL_PANEL_ROW_HEIGHT = 35;
     public static final int GUI_CONTROL_PANEL_TOOL_ROW_HEIGHT = 40;
     public static final int GUI_CONTROL_PANEL_CLOSED_HEIGHT = 30;
     public static final int GUI_CONTROL_PANEL_SIDE_WIDTH = 10;
 
-    private String resetViewMsg = "controlPanel.resetView";
+    private String colourAsTypeMsg = "controlPanel.colourAsType";
+    private String frameTimeMsg = "controlPanel.frameTime";
     private String loadGCodeMsg = "controlPanel.loadGCode";
-    private String showAnglesMsg = "controlPanel.showAngles";
     private String reloadGCodeMsg = "controlPanel.reloadGCode";
+    private String resetViewMsg = "controlPanel.resetView";
+    private String showAnglesMsg = "controlPanel.showAngles";
     private String showMovesMsg = "controlPanel.showMoves";
     private String showOnlySelectedMsg = "controlPanel.showOnlySelected";
     private String showToolNMsg = "controlPanel.showToolN";
-    private String colourAsTypeMsg = "controlPanel.colourAsType";
-    private String frameTimeMsg = "controlPanel.frameTime";
 
     private List<Integer> toolList = new ArrayList<>();
     private List<String> typeList = new ArrayList<>();
@@ -48,15 +48,15 @@ public class GCVControlPanel extends GCVPanel {
     }
 
     public void loadMessages() {
-        resetViewMsg = I18n.t(resetViewMsg);
+        colourAsTypeMsg = I18n.t(colourAsTypeMsg);
+        frameTimeMsg = I18n.t(frameTimeMsg);
         loadGCodeMsg = I18n.t(loadGCodeMsg);
-        showAnglesMsg = I18n.t(showAnglesMsg);
+        resetViewMsg = I18n.t(resetViewMsg);
         reloadGCodeMsg = I18n.t(reloadGCodeMsg);
+        showAnglesMsg = I18n.t(showAnglesMsg);
         showMovesMsg = I18n.t(showMovesMsg);
         showOnlySelectedMsg = I18n.t(showOnlySelectedMsg);
         showToolNMsg = I18n.t(showToolNMsg);
-        colourAsTypeMsg = I18n.t(colourAsTypeMsg);
-        frameTimeMsg = I18n.t(frameTimeMsg);
     }
     
     public void setToolList(List<Integer> toolList) {
@@ -195,6 +195,7 @@ public class GCVControlPanel extends GCVPanel {
                         checkboxStyle.cursor_normal().data().color().set(cbhc);
                         checkboxStyle.cursor_hover().data().color().set(cbhc);
  
+                        layoutAnimationRow(ctx, w, renderParameters);
                         // Show the frame rate.
                         nk_layout_row_dynamic(ctx, GUI_CONTROL_PANEL_ROW_HEIGHT, 1);
                         double frameTime = renderParameters.getFrameTime();
@@ -233,6 +234,101 @@ public class GCVControlPanel extends GCVPanel {
             nk_layout_row_end(ctx);
             boolean newValue = (valueBuffer.get(0) != 0);
             setSelected.accept(newValue);
+        }
+    }
+
+    private void layoutAnimationRow(NkContext ctx,
+                                    float width,
+                                    RenderParameters renderParameters) {
+
+        try (MemoryStack stack = stackPush()) {
+            
+            NkStyleButton buttonStyle = ctx.style().button();
+            NkColor originalActiveColour = NkColor.mallocStack(stack);
+            originalActiveColour.set(buttonStyle.text_active());
+            NkColor originalHoverColour = NkColor.mallocStack(stack);
+            originalHoverColour.set(buttonStyle.text_hover());
+            NkColor originalNormalColour = NkColor.mallocStack(stack);
+            originalNormalColour.set(buttonStyle.text_normal());
+            
+            NkColor normalOnColour = NkColor.mallocStack(stack);
+            normalOnColour.r((byte)0).g((byte)0).b((byte)0).a((byte)160);
+            NkColor normalOffColour = NkColor.mallocStack(stack);
+            normalOffColour.r((byte)255).g((byte)255).b((byte)255).a((byte)160);
+            NkColor hoverOnColour = NkColor.mallocStack(stack);
+            hoverOnColour.r((byte)0).g((byte)0).b((byte)0).a((byte)255);
+            NkColor hoverOffColour = NkColor.mallocStack(stack);
+            hoverOffColour.r((byte)255).g((byte)255).b((byte)255).a((byte)255);
+            NkColor activeOnColour = NkColor.mallocStack(stack);
+            activeOnColour.r((byte)0).g((byte)0).b((byte)0).a((byte)255);
+            NkColor activeOffColour = NkColor.mallocStack(stack);
+            activeOffColour.r((byte)255).g((byte)255).b((byte)255).a((byte)255);
+            
+            RenderParameters.AnimationMode currentMode = renderParameters.getAnimationMode();
+            RenderParameters.AnimationMode newMode = currentMode;
+            float buttonWidth = 0.20f * width - 4.0f; //Account for gap between buttons.
+            nk_layout_row_begin(ctx, NK_STATIC, GUI_CONTROL_PANEL_ROW_HEIGHT, 5);
+            nk_layout_row_push(ctx, buttonWidth);
+            setButtonColours(buttonStyle, 
+                             currentMode == RenderParameters.AnimationMode.BACKWARD_FAST,
+                             activeOnColour, hoverOnColour, normalOnColour,
+                             activeOffColour, hoverOffColour, normalOffColour);
+            if (nk_button_label(ctx, "<<"))
+                newMode = RenderParameters.AnimationMode.BACKWARD_FAST;
+            nk_layout_row_push(ctx, buttonWidth);
+            setButtonColours(buttonStyle, 
+                             currentMode == RenderParameters.AnimationMode.BACKWARD_PLAY,
+                             activeOnColour, hoverOnColour, normalOnColour,
+                             activeOffColour, hoverOffColour, normalOffColour);
+            if (nk_button_label(ctx, "<"))
+                newMode = RenderParameters.AnimationMode.BACKWARD_PLAY;
+            nk_layout_row_push(ctx, buttonWidth);
+            setButtonColours(buttonStyle, 
+                             currentMode == RenderParameters.AnimationMode.PAUSE,
+                             activeOnColour, hoverOnColour, normalOnColour,
+                             activeOffColour, hoverOffColour, normalOffColour);
+            if (nk_button_label(ctx, "II"))
+                newMode = RenderParameters.AnimationMode.PAUSE;
+            nk_layout_row_push(ctx, buttonWidth);
+            setButtonColours(buttonStyle, 
+                             currentMode == RenderParameters.AnimationMode.FORWARD_PLAY,
+                             activeOnColour, hoverOnColour, normalOnColour,
+                             activeOffColour, hoverOffColour, normalOffColour);
+            if (nk_button_label(ctx, ">"))
+                newMode = RenderParameters.AnimationMode.FORWARD_PLAY;
+            nk_layout_row_push(ctx, buttonWidth);
+            setButtonColours(buttonStyle, 
+                             currentMode == RenderParameters.AnimationMode.FORWARD_FAST,
+                             activeOnColour, hoverOnColour, normalOnColour,
+                             activeOffColour, hoverOffColour, normalOffColour);
+            if (nk_button_label(ctx, ">>"))
+                newMode = RenderParameters.AnimationMode.FORWARD_FAST;
+            nk_layout_row_end(ctx);
+            renderParameters.setAnimationMode(newMode);
+            buttonStyle.text_active().set(originalActiveColour);
+            buttonStyle.text_hover().set(originalHoverColour);
+            buttonStyle.text_normal().set(originalNormalColour);
+        }
+    }
+
+    private void setButtonColours(NkStyleButton buttonStyle,
+                                  boolean setOn,
+                                  NkColor activeOnColour,
+                                  NkColor hoverOnColour,
+                                  NkColor normalOnColour,
+                                  NkColor activeOffColour,
+                                  NkColor hoverOffColour,
+                                  NkColor normalOffColour)
+    {
+        if (setOn) {
+            buttonStyle.text_active().set(activeOnColour);
+            buttonStyle.text_hover().set(hoverOnColour);
+            buttonStyle.text_normal().set(normalOnColour);
+        }
+        else {
+            buttonStyle.text_active().set(activeOffColour);
+            buttonStyle.text_hover().set(hoverOffColour);
+            buttonStyle.text_normal().set(normalOffColour);
         }
     }
 }

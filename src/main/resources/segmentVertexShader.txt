@@ -2,8 +2,8 @@
 
 uniform int firstSelectedLine;
 uniform int lastSelectedLine;
-uniform int topVisibleLayer;
-uniform int bottomVisibleLayer;
+uniform int topVisibleLine;
+uniform int bottomVisibleLine;
 uniform int showFlags; // 2 = show colour as type. 4 = show colour as data. 8 = show only selected
 uniform int showTools; // Bit n(in range 0-15) 0 = hide tool n, 1 = show tool n.
 uniform int showTypes; // Bit n(in range 0-15) 0 = hide type n, 1 = show type n.
@@ -37,7 +37,7 @@ void main(void) {
 	int toolFlag = 1 << tool;
 		
 	if (((showTools & toolFlag) == toolFlag) &&
-		(attributes.y >= bottomVisibleLayer && attributes.y <= topVisibleLayer)) {
+		(attributes.z >= bottomVisibleLine && attributes.z <= topVisibleLine)) {
             if ((showFlags & 2) == 2) { // Colour as type
                     int type = int(attributes.x + 0.5);
                     int typeFlag = 1 << type;

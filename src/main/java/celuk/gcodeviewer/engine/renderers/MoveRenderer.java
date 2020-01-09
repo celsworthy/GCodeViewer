@@ -45,11 +45,11 @@ public class MoveRenderer {
             MasterRenderer.checkErrors();
             shader.loadShowFlags(renderParameters.getShowFlags());
             MasterRenderer.checkErrors();
-            shader.loadLayerLimits(renderParameters.getTopLayerToRender(),
-                                   renderParameters.getBottomLayerToRender());
+            shader.loadVisibleLimits(renderParameters.getTopVisibleLine(),
+                                     renderParameters.getBottomVisibleLine());
             MasterRenderer.checkErrors();
-            shader.loadLineLimits(renderParameters.getFirstSelectedLine(),
-                                  renderParameters.getLastSelectedLine());
+            shader.loadSelectionLimits(renderParameters.getFirstSelectedLine(),
+                                       renderParameters.getLastSelectedLine());
             MasterRenderer.checkErrors();
             bindRawModel(rawEntity);
             MasterRenderer.checkErrors();

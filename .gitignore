@@ -6,3 +6,5 @@
 GCodeViewerGUI.json
 release/
 proguard/
+proguard.mapping*
+GCodeViewer/
