@@ -1,5 +1,8 @@
 #!/bin/bash
-echo "Proguard: " ${USE_PROGUARD}
+if [[ -e ${PROGUARD_HOME} ]]
+then
+	export PROGUARD_HOME=/home/ubuntu/proguard
+fi
 mkdir -p release
 rm -rf release/*
 cp target/GCodeViewer.jar release/GCodeViewer.jar
@@ -11,11 +14,10 @@ if [ ${USE_PROGUARD} == "true" ]; then
 	echo Run Proguard
 	mkdir -p proguard
 	rm -f proguard/*.jar
-	/home/ubuntu/proguard/bin/proguard.sh @gcodeviewer_proguard_linux.config
+	${PROGUARD_HOME}/bin/proguard.sh @gcodeviewer_proguard_linux.config
 	cp proguard.mapping target/proguard.mapping.gcodeviewer.${RELEASE_VERSION}
 	cp -f proguard/GCodeViewerObfuscated.jar release/GCodeViewer.jar
-	cp -f proguard/Configuration-1.2Obfuscated.jar release/lib/Configuration-1.2.jar
-	cp -f proguard/Stenographer-1.9Obfuscated.jar release/lib/Stenographer-1.9.jar
-	cp -f proguard/Licence-1.0Obfuscated.jar release/lib/Licence-1.0.jar
+	cp -f proguard/Configuration-1.3Obfuscated.jar release/lib/Configuration-1.3.jar
+	cp -f proguard/Stenographer-1.10Obfuscated.jar release/lib/Stenographer-1.10.jar
+	cp -f proguard/Licence-1.1Obfuscated.jar release/lib/Licence-1.1.jar
 fi
-zip -r GCodeViewer.zip release/*

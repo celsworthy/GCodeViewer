@@ -1,4 +1,3 @@
-set RELEASE_VERSION=4.01.00
 if not exist "%PROGUARD_HOME%" set PROGUARD_HOME=D:\CEL\proguard6.1.1
 if exist release rmdir /S/Q release
 mkdir release

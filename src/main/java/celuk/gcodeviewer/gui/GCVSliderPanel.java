@@ -54,9 +54,9 @@ public class GCVSliderPanel extends GCVPanel {
                     panelWidth = renderParameters.getWindowWidth() - 2.0f * x;
                 else
                     panelWidth = renderParameters.getWindowWidth() - x - 2.0f * GUI_GCODE_PANEL_X - gcodePanelWidth;
-                System.out.println("Window width = " + renderParameters.getWindowWidth());
-                System.out.println("GCode panel width = " + gcodePanelWidth);
-                System.out.println("Slider panel width = " + panelWidth);
+                //System.out.println("Window width = " + renderParameters.getWindowWidth());
+                //System.out.println("GCode panel width = " + gcodePanelWidth);
+                //System.out.println("Slider panel width = " + panelWidth);
 
                 panelHeight = GUI_SLIDER_PANEL_OPEN_HEIGHT;
                 if (!renderParameters.isLayerMapEmpty())
