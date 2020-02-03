@@ -115,6 +115,11 @@ It uses three configuration files:
 	GCodeViewerGUI.json
 	Used to specify GUI parameters such as the expanded state of the panels. The location of this files is specified by the --project-directory command line option.
 
+When run from the command line, GCodeViewer can be controlled from the terminal. When started, it responds with something like this:
+
+	2020-02-03 15:28:45,876 [main] INFO - StenographerFactory initialised with logfile= ...
+	Hello!
+	
 The viewer accepts the following commands on the terminal:
 
 	bottom | b  <layer>
