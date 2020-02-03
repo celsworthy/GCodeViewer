@@ -29,12 +29,12 @@ Each project can be built from the command line using Maven:
 Running GCodeViewer
 ===================
 
-The following command will run GRoot (assuming a suitable version of java is on the path):
+The following command will run GCodeViewer (assuming a suitable version of java is on the path):
 
 	cd %GCODE_VIEWER_HOME%
 	java -DlibertySystems.configFile="GCodeViewerFake.configFile.xml" -jar ./target/GCodeViewer.jar [arguments] [gcode file]
 
-It accepts the following arguments:
+It accepts the following command line arguments:
 
     -l <tag>
 	--language-tag <tag>
@@ -48,9 +48,9 @@ It accepts the following arguments:
 	--extruder-letter-e <letter>
 	Letter to use as E extruder (Default: E)
 
-	-nv ON | OFF
-	--nozzle-valves ON | OFF
-	ON to indicate if nozzle valves are present, OFF if not. (Default: OFF)
+	-nv <mode>
+	--nozzle-valves <mode>
+	Mode value of "ON" indicates that nozzle valves are present. A value of "OFF" indicates they are not present. (Default: OFF)
 	
     -sa
 	--show-advanced-options
@@ -82,7 +82,7 @@ It accepts the following arguments:
     
 	-wh <height>
 	--window-height <height>
-	Window height on screen. (Default = -1)
+	Window height on screen. (Default = half screen height)
 	
     -wn
 	--normalised-window
@@ -94,18 +94,15 @@ It accepts the following arguments:
 	
     -ww <width>
 	--window-width <width>
-	Window width on screen. (Default: -1)
+	Window width on screen. (Default: half screen width)
     
 	-wx <x coord>
 	--window-x <x coordinate>
-	Window X position on screen (Default: -1)
+	Window X position on screen (Default: centred in x)
 	
     -wy <y coordinate>
 	--window-y <y coordinate>
-	Window Y position on screen. (Default: -1)
-
-    <File>
-	The gcode file to be displayed. (Default: <None>)
+	Window Y position on screen. (Default: centred in y)
 	
 It uses three configuration files:
 
@@ -118,7 +115,7 @@ It uses three configuration files:
 	GCodeViewerGUI.json
 	Used to specify GUI parameters such as the expanded state of the panels. The location of this files is specified by the --project-directory command line option.
 
-The viewer accepts the following commands on the command line:
+The viewer accepts the following commands on the terminal:
 
 	bottom | b  <layer>
 	Set bottom layer to render
@@ -163,6 +160,9 @@ The viewer accepts the following commands on the command line:
 	printer | p  <printer>
 	Specify the target printer, which must be one specified in the GCodeViewer.json configuration file.
 
+	quit | q
+	terminate the program.
+	
 	restore
 	r
 	Restore GCodeViewer window from iconised state.
