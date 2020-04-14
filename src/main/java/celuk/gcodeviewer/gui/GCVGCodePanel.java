@@ -410,7 +410,8 @@ public class GCVGCodePanel extends GCVPanel {
                         currentDetails = layerMap.get(layerList.get(currentLayerIndex));
                     }
                     else {
-                        if (index >= offsetToFirstLayer && index >= currentDetails.getEndOffset()) {
+                        if (index >= offsetToFirstLayer &&
+                           (currentDetails == null || index >= currentDetails.getEndOffset())) {
                             ++currentLayerIndex;
                             if (currentLayerIndex >= layerList.size())
                                 break;
